@@ -65,9 +65,9 @@ created_at: 2026-03-24
 ## Phase 4 — 🛒 Backend: Cart Module
 > **Spec:** [`epic_3_cart/`](./_harryitc/4_epic_and_stories/epic_3_cart/OVERVIEW.md)
 
-- [ ] `1_cart_api` — Schema CartItem + Service + Controller + Route
+- [x] `1_cart_api` — Schema CartItem + Service + Controller + Route
 
-**Status: 🔲 TODO**
+**Status: ✅ DONE**
 
 ---
 
@@ -127,7 +127,7 @@ created_at: 2026-03-24
 | 1 | Backend Setup | ✅ DONE |
 | 2 | Backend Auth | ✅ DONE |
 | 3 | Backend Cakes | ✅ DONE |
-| 4 | Backend Cart | 🔲 TODO |
+| 4 | Backend Cart | ✅ DONE |
 | 5 | Backend Orders | 🔲 TODO |
 | 6 | Frontend User | 🔲 TODO |
 | 7 | Frontend Admin | 🔲 TODO |
