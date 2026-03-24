@@ -55,10 +55,10 @@ created_at: 2026-03-24
 ## Phase 3 — 🎂 Backend: Cakes Module
 > **Spec:** [`epic_2_cakes/`](./_harryitc/4_epic_and_stories/epic_2_cakes/OVERVIEW.md)
 
-- [ ] `1_cake_schema` — Schema Cake + Service getAll/getById
-- [ ] `2_cake_crud_api` — Service create/update/delete + Controller + Route (with auth guard)
+- [x] `1_cake_schema` — Schema Cake + Service getAll/getById
+- [x] `2_cake_crud_api` — Service create/update/delete + Controller + Route (with auth guard)
 
-**Status: 🔲 TODO**
+**Status: ✅ DONE**
 
 ---
 
@@ -126,7 +126,7 @@ created_at: 2026-03-24
 | 0 | Docs — Epic & Stories | ✅ DONE |
 | 1 | Backend Setup | ✅ DONE |
 | 2 | Backend Auth | ✅ DONE |
-| 3 | Backend Cakes | 🔲 TODO |
+| 3 | Backend Cakes | ✅ DONE |
 | 4 | Backend Cart | 🔲 TODO |
 | 5 | Backend Orders | 🔲 TODO |
 | 6 | Frontend User | 🔲 TODO |
