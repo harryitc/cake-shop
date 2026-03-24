@@ -29,26 +29,26 @@ created_at: 2026-03-24
 
 **Spec:** không có epic riêng (cơ sở hạ tầng)
 
-- [ ] Cài dependencies: `mongoose`, `jsonwebtoken`, `bcryptjs`, `cors`, `dotenv`, `joi`
-- [ ] Tạo cấu trúc thư mục: `config/`, `routes/`, `controllers/`, `services/`, `schemas/`, `middlewares/`, `utils/`
-- [ ] `config/db.config.js` — kết nối MongoDB
-- [ ] `app.js` — cấu hình lại CORS, json, mount routes, error-handler
-- [ ] `utils/response.utils.js` — `sendSuccess()` + `sendError()`
-- [ ] `middlewares/error-handler.js` — global catch-all
-- [ ] `.env` + `.env.example`
+- [x] Cài dependencies: `mongoose`, `jsonwebtoken`, `bcryptjs`, `cors`, `dotenv`, `joi`
+- [x] Tạo cấu trúc thư mục: `config/`, `routes/`, `controllers/`, `services/`, `schemas/`, `middlewares/`, `utils/`
+- [x] `config/db.config.js` — kết nối MongoDB
+- [x] `app.js` — cấu hình lại CORS, json, mount routes, error-handler
+- [x] `utils/response.utils.js` — `sendSuccess()` + `sendError()`
+- [x] `middlewares/error-handler.js` — global catch-all
+- [x] `.env` + `.env.example`
 
-**Status: 🔲 TODO**
+**Status: ✅ DONE**
 
 ---
 
 ## Phase 2 — 🔐 Backend: Auth Module
 > **Spec:** [`epic_1_auth/`](./_harryitc/4_epic_and_stories/epic_1_auth/OVERVIEW.md)
 
-- [ ] `1_register` — Schema User + Service register + Controller + Route
-- [ ] `2_login` — Service login + Controller + Route
-- [ ] `3_auth_middleware` — `auth.middleware.js` + `role.middleware.js`
+- [x] `1_register` — Schema User + Service register + Controller + Route
+- [x] `2_login` — Service login + Controller + Route
+- [x] `3_auth_middleware` — `auth.middleware.js` + `role.middleware.js`
 
-**Status: 🔲 TODO**
+**Status: ✅ DONE**
 
 ---
 
@@ -124,8 +124,8 @@ created_at: 2026-03-24
 | Phase | Mô tả | Status |
 |-------|-------|--------|
 | 0 | Docs — Epic & Stories | ✅ DONE |
-| 1 | Backend Setup | 🔲 TODO |
-| 2 | Backend Auth | 🔲 TODO |
+| 1 | Backend Setup | ✅ DONE |
+| 2 | Backend Auth | ✅ DONE |
 | 3 | Backend Cakes | 🔲 TODO |
 | 4 | Backend Cart | 🔲 TODO |
 | 5 | Backend Orders | 🔲 TODO |
