@@ -1,0 +1,123 @@
+"use client";
+
+import { Table, Button, Skeleton, Empty, Popconfirm, message } from "antd";
+import { DeleteOutlined } from "@ant-design/icons";
+import { useCartQuery, useRemoveCartItemMutation } from "../hooks";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { CheckoutModal } from "../../orders/components/CheckoutModal";
+
+const formatPrice = (price: number) => 
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
+
+export const CartTable = () => {
+  const router = useRouter();
+  const { data: rawCart, isLoading, isError } = useCartQuery();
+  const { mutate: removeItem, isPending } = useRemoveCartItemMutation();
+  const [modalOpen, setModalOpen] = useState(false);
+
+  if (isLoading) return <div className="p-8"><Skeleton active paragraph={{ rows: 6 }} /></div>;
+  if (isError) return <div className="p-8 text-center text-red-500">Lỗi không thể tải giỏ hàng</div>;
+  
+  const cartLocal: any = rawCart || { items: [], total: 0 };
+  
+  if (cartLocal.items.length === 0) {
+    return (
+      <div className="py-20 text-center bg-white rounded-2xl shadow-sm border border-gray-100">
+        <Empty description={<span className="text-gray-500 text-lg">Giỏ hàng của bạn đang trống</span>} />
+        <Button type="primary" size="large" className="mt-6 bg-indigo-600 font-semibold" onClick={() => router.push("/cakes")}>
+          Quay lại mua sắm
+        </Button>
+      </div>
+    );
+  }
+
+  const columns = [
+    {
+      title: "Sản phẩm",
+      dataIndex: "cake",
+      key: "cake",
+      render: (cake: any) => (
+        <div className="flex items-center gap-4">
+          <img src={cake.image_url || "https://placehold.co/100x100"} alt={cake.name} className="w-16 h-16 rounded object-cover border" />
+          <Link href={`/cakes/${cake._id}`} className="font-semibold text-gray-800 hover:text-indigo-600 min-w-[150px]">
+            {cake.name}
+          </Link>
+        </div>
+      ),
+    },
+    {
+      title: "Đơn giá",
+      key: "price",
+      render: (_: any, record: any) => formatPrice(record.cake.price)
+    },
+    {
+      title: "Số lượng",
+      dataIndex: "quantity",
+      key: "quantity",
+      render: (val: number) => <span className="font-bold">{val}</span>
+    },
+    {
+      title: "Thành tiền",
+      dataIndex: "subtotal",
+      key: "subtotal",
+      render: (val: number) => <span className="font-semibold text-indigo-600">{formatPrice(val)}</span>
+    },
+    {
+      title: "",
+      key: "action",
+      render: (_: any, record: any) => (
+        <Popconfirm
+          title="Xóa khỏi giỏ hàng?"
+          description={`Bạn có chắc muốn xóa bánh này?`}
+          onConfirm={() => {
+            removeItem(record.id, {
+              onSuccess: () => message.success("Đã xóa"),
+              onError: () => message.error("Lỗi xóa sản phẩm"),
+            });
+          }}
+          okText="Xóa"
+          cancelText="Hủy"
+        >
+          <Button danger type="text" icon={<DeleteOutlined />} loading={isPending} />
+        </Popconfirm>
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 md:p-6 overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table 
+            dataSource={cartLocal.items} 
+            columns={columns} 
+            rowKey="id" 
+            pagination={false}
+          />
+        </div>
+        
+        <div className="mt-8 flex flex-col md:flex-row justify-between items-end md:items-center bg-gray-50 p-6 rounded-xl border border-gray-100">
+          <div className="text-gray-500 mb-4 md:mb-0 text-lg">
+            Sản phẩm: <span className="font-bold text-gray-800">{cartLocal.items.length}</span>
+          </div>
+          <div className="flex items-center gap-6 flex-wrap justify-end">
+            <div className="text-xl text-gray-600">
+              Tổng cộng: <span className="text-3xl font-black text-indigo-600 drop-shadow-sm ml-2">{formatPrice(cartLocal.total)}</span>
+            </div>
+            <Button 
+              type="primary" 
+              size="large" 
+              className="h-12 px-8 bg-black hover:bg-gray-800 font-bold text-[16px] rounded-xl shadow-lg w-full md:w-auto"
+              onClick={() => setModalOpen(true)}
+            >
+              Tiến hành Đặt hàng
+            </Button>
+          </div>
+        </div>
+      </div>
+      <CheckoutModal open={modalOpen} onCancel={() => setModalOpen(false)} />
+    </>
+  );
+};

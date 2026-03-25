@@ -85,13 +85,13 @@ created_at: 2026-03-24
 ## Phase 6 — 🖥️ Frontend: User App (`web-client/user`)
 > **Spec:** task files Frontend trong các epic
 
-- [ ] Setup: `lib/http.ts` (LocalStorage token), `lib/providers.tsx`, `lib/antd-theme.ts`
-- [ ] `epic_1_auth` → `1_register` FE + `2_login` FE (Form, hooks, api, pages)
-- [ ] `epic_2_cakes` → `3_cake_list_page` (Module + `/cakes` + `/cakes/[id]`)
-- [ ] `epic_3_cart` → `2_cart_page` (Module + `/cart`, `AddToCartBtn`)
-- [ ] `epic_4_orders` → `2_order_list` (Module + `/orders`, `CheckoutModal`)
+- [x] Setup: `lib/http.ts` (LocalStorage token), `lib/providers.tsx`, `lib/antd-theme.ts`
+- [x] `epic_1_auth` → `1_register` FE + `2_login` FE (Form, hooks, api, pages)
+- [x] `epic_2_cakes` → `3_cake_list_page` (Module + `/cakes` + `/cakes/[id]`)
+- [x] `epic_3_cart` → `2_cart_page` (Module + `/cart`, `AddToCartBtn`)
+- [x] `epic_4_orders` → `2_order_list` (Module + `/orders`, `CheckoutModal`)
 
-**Status: 🔲 TODO**
+**Status: ✅ DONE**
 
 ---
 
@@ -129,6 +129,6 @@ created_at: 2026-03-24
 | 3 | Backend Cakes | ✅ DONE |
 | 4 | Backend Cart | ✅ DONE |
 | 5 | Backend Orders | ✅ DONE |
-| 6 | Frontend User | 🔲 TODO |
+| 6 | Frontend User | ✅ DONE |
 | 7 | Frontend Admin | 🔲 TODO |
 | 8 | Integration & Test | 🔲 TODO |
