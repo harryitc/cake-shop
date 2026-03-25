@@ -3,7 +3,7 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Modal, Form, Input, InputNumber, message } from "antd";
+import { Modal, Form, Input, InputNumber, App } from "antd";
 import { useCreateCakeMutation, useUpdateCakeMutation } from "../hooks";
 import { ICake } from "../types";
 import { useEffect } from "react";
@@ -24,6 +24,7 @@ interface CakeFormModalProps {
 }
 
 export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProps) => {
+  const { message } = App.useApp();
   const isEditing = !!initialData;
   const { mutate: createCake, isPending: isCreating } = useCreateCakeMutation();
   const { mutate: updateCake, isPending: isUpdating } = useUpdateCakeMutation();
