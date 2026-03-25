@@ -36,7 +36,7 @@ User có thể **tạo đơn hàng** từ giỏ hàng hiện tại (kèm địa 
 ## 📦 Phạm vi (Scope)
 
 ### Trong phạm vi (In Scope):
-- [x] Schema `Order` + `OrderItem`
+- [x] Schema `Order` (với array items `OrderItem` schema embedded)
 - [x] API POST tạo đơn (dùng Mongoose Transaction)
 - [x] API GET đơn hàng (user: đơn mình | admin: tất cả)
 - [x] API PATCH cập nhật trạng thái đơn (chỉ admin, không quay ngược)
@@ -62,9 +62,9 @@ User có thể **tạo đơn hàng** từ giỏ hàng hiện tại (kèm địa 
 
 - [ ] `POST /api/v1/orders` tạo đơn thành công, giỏ hàng bị xóa, trả `201`
 - [ ] Nếu giỏ rỗng: trả `400 "Giỏ hàng trống"`
-- [ ] Giá bánh trong `order_items` được snapshot tại thời điểm đặt hàng
+- [ ] Giá bánh trong `order.items` được snapshot tại thời điểm đặt hàng
 - [ ] `GET /api/v1/orders` — user chỉ thấy đơn của mình
-- [ ] `PATCH /api/v1/orders/:id` — chỉ admin, transition hợp lệ (Pending→Confirmed, Confirmed→Done/Rejected)
+- [ ] `PATCH /api/v1/orders/:id` — chỉ admin, transition hợp lệ (PENDING→CONFIRMED, CONFIRMED→DONE/REJECTED)
 - [ ] Trang `/orders` User hiển thị lịch sử + trạng thái đơn
 - [ ] Trang `/admin/orders` Admin có thể đổi trạng thái qua dropdown/select
 

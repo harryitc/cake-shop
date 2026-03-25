@@ -48,7 +48,7 @@ GET /api/v1/orders/:id     → Chi tiết 1 đơn (require auth + ownership chec
     "items": [
       {
         "id": "...",
-        "status": "pending",
+        "status": "PENDING",
         "total_price": 390000,
         "address": "...",
         "created_at": "2026-03-24T...",
@@ -82,7 +82,7 @@ GET /api/v1/orders/:id     → Chi tiết 1 đơn (require auth + ownership chec
 
 - [ ] `GET /api/v1/orders` — user chỉ thấy đơn của mình
 - [ ] `GET /api/v1/orders/:id` — user lấy đơn người khác → `404`
-- [ ] `/orders` hiển thị danh sách đơn, trạng thái dạng badge màu (pending=vàng, confirmed=xanh, done=xanh đậm, rejected=đỏ)
+- [ ] `/orders` hiển thị danh sách đơn, trạng thái dạng badge màu (PENDING=vàng, CONFIRMED=xanh, DONE=xanh đậm, REJECTED=đỏ)
 - [ ] Đơn rỗng → Empty state + link về `/cakes`
 
 ---

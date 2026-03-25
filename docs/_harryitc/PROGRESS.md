@@ -74,11 +74,11 @@ created_at: 2026-03-24
 ## Phase 5 — 📦 Backend: Orders Module
 > **Spec:** [`epic_4_orders/`](./_harryitc/4_epic_and_stories/epic_4_orders/OVERVIEW.md)
 
-- [ ] `1_create_order` — Schema Order + OrderItem + Service (Transaction) + Controller + Route
-- [ ] `2_order_list` — Service getOrders/getById + Controller + Route
-- [ ] `3_update_order_status` — Service updateStatus (state machine) + Controller + Route
+- [x] `1_create_order` — Schema Order (embedded OrderItem) + Service (Transaction) + Controller + Route
+- [x] `2_order_list` — Service getOrders/getById + Controller + Route
+- [x] `3_update_order_status` — Service updateStatus (state machine) + Controller + Route
 
-**Status: 🔲 TODO**
+**Status: ✅ DONE**
 
 ---
 
@@ -128,7 +128,7 @@ created_at: 2026-03-24
 | 2 | Backend Auth | ✅ DONE |
 | 3 | Backend Cakes | ✅ DONE |
 | 4 | Backend Cart | ✅ DONE |
-| 5 | Backend Orders | 🔲 TODO |
+| 5 | Backend Orders | ✅ DONE |
 | 6 | Frontend User | 🔲 TODO |
 | 7 | Frontend Admin | 🔲 TODO |
 | 8 | Integration & Test | 🔲 TODO |

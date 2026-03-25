@@ -42,15 +42,15 @@ PATCH /api/v1/orders/:id    → Admin only
 
 **Request body:**
 ```json
-{ "status": "confirmed" }
+{ "status": "CONFIRMED" }
 ```
 
 **Quy tắc chuyển trạng thái (State Machine):**
 ```
-pending    → confirmed | rejected
-confirmed  → done
-done       → [KHÔNG được phép chuyển]
-rejected   → [KHÔNG được phép chuyển]
+PENDING    → CONFIRMED | REJECTED
+CONFIRMED  → DONE
+DONE       → [KHÔNG được phép chuyển]
+REJECTED   → [KHÔNG được phép chuyển]
 ```
 
 **Validation logic trong Service:**
@@ -61,7 +61,7 @@ rejected   → [KHÔNG được phép chuyển]
 **Các lỗi cần xử lý:**
 | Mã lỗi | Trường hợp |
 |--------|-----------|
-| 400 | Chuyển trạng thái không hợp lệ (VD: done → pending) |
+| 400 | Chuyển trạng thái không hợp lệ (VD: DONE → PENDING) |
 | 403 | Role user gọi PATCH |
 | 404 | Order không tồn tại |
 
@@ -84,8 +84,8 @@ rejected   → [KHÔNG được phép chuyển]
 ## ✅ Acceptance Criteria
 
 - [ ] `PATCH /api/v1/orders/:id` với role user → `403`
-- [ ] Chuyển từ `done` sang bất kỳ → `400`
-- [ ] Chuyển từ `pending` → `confirmed` → `200`, trạng thái cập nhật đúng
+- [ ] Chuyển từ `DONE` sang bất kỳ → `400`
+- [ ] Chuyển từ `PENDING` → `CONFIRMED` → `200`, trạng thái cập nhật đúng
 - [ ] Trang `/admin/orders` hiển thị tất cả đơn với dropdown chọn trạng thái
 - [ ] Sau cập nhật trạng thái: bảng tự refresh (invalidate)
 
@@ -96,10 +96,10 @@ rejected   → [KHÔNG được phép chuyển]
 - State machine định nghĩa là object constant ở service:
   ```js
   const VALID_TRANSITIONS = {
-    pending: ['confirmed', 'rejected'],
-    confirmed: ['done'],
-    done: [],
-    rejected: []
+    PENDING: ['CONFIRMED', 'REJECTED'],
+    CONFIRMED: ['DONE'],
+    DONE: [],
+    REJECTED: []
   };
   ```
 - Admin FE: disable các option không hợp lệ trong dropdown theo trạng thái hiện tại

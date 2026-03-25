@@ -51,7 +51,7 @@ POST /api/v1/orders
   "data": {
     "order": {
       "id": "...",
-      "status": "pending",
+      "status": "PENDING",
       "total_price": 390000,
       "address": "123 Đường ABC...",
       "items": [...]
@@ -81,8 +81,8 @@ POST /api/v1/orders
 | 401 | Chưa đăng nhập |
 
 **Files cần tạo / sửa:**
-- [ ] `schemas/Order.schema.js` — fields: user_id, total_price, status (default: `pending`), address, timestamps
-- [ ] `schemas/OrderItem.schema.js` — fields: order_id, cake_id, quantity, price (snapshot)
+- [ ] `schemas/Order.schema.js` — fields: user_id, total_price, status (default: `PENDING`), address, items (embedded schema), timestamps
+- [ ] `schemas/OrderItem.schema.js` — KHÔNG CẦN TẠO FILE TÁCH RỜI, embedded thẳng vào Order: cake_id, quantity, price_at_buy (snapshot)
 - [ ] `services/order.service.js` — hàm `createOrder(userId, address)` với Transaction
 - [ ] `controllers/order.controller.js` — handler `createOrder`: Joi validate, gọi service
 - [ ] `routes/order.routes.js` — `POST /` require auth
@@ -106,7 +106,7 @@ POST /api/v1/orders
 
 - [ ] `POST /api/v1/orders` với giỏ hàng hợp lệ → `201`, cart bị xóa
 - [ ] Giỏ rỗng → `400 "Giỏ hàng trống"`
-- [ ] `total_price` tính đúng, `price` trong order_items = giá bánh lúc đặt (không bị ảnh hưởng bởi thay đổi sau)
+- [ ] `total_price` tính đúng, `price_at_buy` trong order_items = giá bánh lúc đặt (không bị ảnh hưởng bởi thay đổi sau)
 - [ ] Nếu bất kỳ bước nào trong transaction lỗi → transaction rollback, không có dữ liệu rác
 - [ ] Sau tạo đơn thành công: redirect về `/orders`, giỏ hàng hiển thị rỗng
 
@@ -114,6 +114,6 @@ POST /api/v1/orders
 
 ## 📌 Notes
 
-- `price` trong `OrderItem` phải snapshot từ `cake.price` lúc tạo, KHÔNG reference sang Cake
+- `price_at_buy` trong `Order.items` phải snapshot từ `cake.price` lúc tạo, KHÔNG reference sang Cake
 - MongoDB Transaction yêu cầu Replica Set (dùng MongoDB Atlas free tier hoặc local replica set)
 - Tham khảo: `3_architecture/5_business_flows.md`
