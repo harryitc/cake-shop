@@ -95,15 +95,15 @@ created_at: 2026-03-24
 
 ---
 
-## Phase 7 — 🖥️ Frontend: Admin App (`web-client/admin`)
-> **Spec:** phần Admin trong các epic task files
+## Phase 7 — 🛠️ Frontend: Admin App (`web-client/admin`)
+> **Spec:** task files Frontend trong các epic
 
-- [ ] Setup: `lib/http.ts`, `lib/providers.tsx`
-- [ ] `epic_1_auth` → `2_login` FE Admin (`/admin/login`)
-- [ ] `epic_2_cakes` → `3_cake_list_page` Admin (`/admin/cakes` — CRUD Table)
-- [ ] `epic_4_orders` → `3_update_order_status` Admin (`/admin/orders` — Table + status update)
+- [x] Setup: `lib/http.ts`, `lib/providers.tsx` + Dashboard Layout (Sidebar/Header)
+- [x] `epic_1_auth` → `2_login` FE (mode admin, auth guard logic)
+- [x] `epic_2_cakes` → `3_cake_list_page` (Admin CRUD Table + Modal)
+- [x] `epic_4_orders` → `3_update_order_status` (Admin Order Table + State Machine Switcher)
 
-**Status: 🔲 TODO**
+**Status: ✅ DONE**
 
 ---
 
@@ -130,5 +130,5 @@ created_at: 2026-03-24
 | 4 | Backend Cart | ✅ DONE |
 | 5 | Backend Orders | ✅ DONE |
 | 6 | Frontend User | ✅ DONE |
-| 7 | Frontend Admin | 🔲 TODO |
+| 7 | Frontend Admin | ✅ DONE |
 | 8 | Integration & Test | 🔲 TODO |
