@@ -17,7 +17,11 @@ const app = express();
 app.use('/uploads', express.static('public/uploads'));
 
 // ─── Middlewares ──────────────────────────────────────────────────────────────
-app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
+const allowedOrigins = process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',') : '*';
+app.use(cors({ 
+  origin: allowedOrigins,
+  credentials: true 
+}));
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

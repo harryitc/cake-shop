@@ -29,14 +29,14 @@ npm run dev # Starts server with nodemon
 ```bash
 cd web-client/user
 npm install
-npm run dev # Starts Next.js development server
+npm run dev # Chạy tại http://localhost:3000
 ```
 
 **4. Admin Frontend (`web-client/admin/`)**
 ```bash
 cd web-client/admin
 npm install
-npm run dev # Starts Next.js development server
+npm run dev # Chạy tại http://localhost:3001
 ```
 
 ## Development Conventions
