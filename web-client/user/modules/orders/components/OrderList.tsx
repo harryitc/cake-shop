@@ -47,7 +47,7 @@ export const OrderList = () => {
                 <div className="mb-2 space-y-1 mt-3">
                   <span className="text-gray-600 text-[15px] block">Thời gian đặt: {order.formattedDate}</span>
                   <span className="text-gray-600 text-[15px] block max-w-lg truncate" title={order.address}>Giao đến: <span className="font-medium text-gray-800">{order.address}</span></span>
-                  <span className="text-gray-600 text-[15px] block pt-1">Tổng số: <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">{order.items_count}</span> sản phẩm</span>
+                  <span className="text-gray-600 text-[15px] block pt-1">Tổng số: <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">{order.itemsCount}</span> sản phẩm</span>
                 </div>
               </div>
               <div className="flex flex-col items-start md:items-end w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-gray-50">

@@ -1,9 +1,10 @@
 import { CakeDetail } from "@/modules/cakes/components/CakeDetail";
 
-export default function CakeDetailPage({ params }: { params: { id: string } }) {
+export default async function CakeDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   return (
     <div className="min-h-screen bg-gray-50">
-      <CakeDetail id={params.id} />
+      <CakeDetail id={id} />
     </div>
   );
 }

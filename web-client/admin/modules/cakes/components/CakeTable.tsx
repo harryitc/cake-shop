@@ -56,6 +56,16 @@ export const CakeTable = () => {
       className: "font-semibold text-indigo-600 text-[15px]",
     },
     {
+      title: "Tồn Kho",
+      dataIndex: "stock",
+      key: "stock",
+      render: (val: number) => (
+        <span className={`font-bold ${val === 0 ? "text-red-500" : "text-green-600"}`}>
+          {val === 0 ? "Hết hàng" : val}
+        </span>
+      ),
+    },
+    {
       title: "Ngày Đăng",
       dataIndex: "formattedDate",
       key: "createdAt",

@@ -23,6 +23,9 @@ const createBodySchema = Joi.object({
     'number.min': 'Giá tiền không được nhỏ hơn 0',
     'any.required': 'Vui lòng nhập giá tiền',
   }),
+  stock: Joi.number().min(0).default(0).messages({
+    'number.min': 'Số lượng tồn kho không được nhỏ hơn 0',
+  }),
   description: Joi.string().allow('').optional(),
   image_url: Joi.string().allow('').optional(),
 });
@@ -30,6 +33,7 @@ const createBodySchema = Joi.object({
 const updateBodySchema = Joi.object({
   name: Joi.string().trim().optional(),
   price: Joi.number().min(0).optional(),
+  stock: Joi.number().min(0).optional(),
   description: Joi.string().allow('').optional(),
   image_url: Joi.string().allow('').optional(),
 }).min(1).messages({

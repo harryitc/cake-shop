@@ -4,6 +4,7 @@ export interface ICakeDTO {
   description?: string;
   info?: { slug: string };
   price: number;
+  stock?: number;
   image_url?: string;
   createdAt: string;
   updatedAt: string;
@@ -15,6 +16,7 @@ export interface ICake {
   description?: string;
   slug?: string;
   price: number;
+  stock: number;
   formattedPrice: string;
   imageUrl: string;
   createdAt: string;
@@ -25,6 +27,7 @@ export interface ICreateCakePayload {
   name: string;
   description?: string;
   price: number;
+  stock?: number;
   image_url?: string;
 }
 

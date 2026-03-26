@@ -1,6 +1,10 @@
+"use client";
+
 import { Layout } from "antd";
 import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import { AdminHeader } from "@/components/layout/AdminHeader";
+
+const { Content } = Layout;
 
 export default function DashboardLayout({
   children,
@@ -12,9 +16,9 @@ export default function DashboardLayout({
       <AdminSidebar />
       <Layout className="md:ml-[260px] transition-all bg-gray-50 flex-grow">
         <AdminHeader />
-        <Layout.Content className="p-8">
+        <Content className="p-8">
           {children}
-        </Layout.Content>
+        </Content>
       </Layout>
     </Layout>
   );

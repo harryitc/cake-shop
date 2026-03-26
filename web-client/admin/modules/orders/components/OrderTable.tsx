@@ -67,7 +67,7 @@ export const OrderTable = () => {
       className: "text-gray-500 whitespace-nowrap",
     },
     {
-      title: "Chuyển Trạng Thái",
+      title: "Trạng Thái",
       key: "status",
       render: (_: any, record: IOrder) => (
         <Select
@@ -84,10 +84,12 @@ export const OrderTable = () => {
   ];
 
   return (
-    <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 p-8">
-      <div className="mb-10">
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight">Quản Lý Đơn Hàng</h1>
-        <p className="text-gray-500 font-medium mt-1">Theo dõi, duyệt và điều phối yêu cầu giao bánh (áp dụng State Machine Rule chặn chuyển ngược).</p>
+    <div className="bg-white rounded-[24px] shadow-[0_1px_3px_rgba(0,0,0,0.05)] border border-gray-100 p-8">
+      <div className="mb-10 flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-black text-gray-900 tracking-tight">Quản Lý Đơn Hàng</h1>
+          <p className="text-gray-400 font-medium mt-1">Lịch sử đơn hàng toàn hệ thống.</p>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -96,9 +98,20 @@ export const OrderTable = () => {
           columns={columns} 
           rowKey="id" 
           pagination={{ pageSize: 15 }}
-          className="border-t border-gray-100 pt-2"
+          className="custom-admin-table"
         />
       </div>
+      <style jsx global>{`
+        .custom-admin-table .ant-table-thead > tr > th {
+          background-color: #fafafa;
+          color: #999;
+          font-size: 12px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          border-bottom: 1px solid #f0f0f0;
+        }
+      `}</style>
     </div>
   );
 };

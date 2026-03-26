@@ -7,6 +7,7 @@ export const mapCakeToModel = (dto: ICakeDTO): ICake => {
     description: dto.description,
     slug: dto.info?.slug,
     price: dto.price,
+    stock: dto.stock || 0,
     formattedPrice: new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",

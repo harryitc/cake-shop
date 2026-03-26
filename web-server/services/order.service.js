@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Order = require('../schemas/Order.schema');
 const CartItem = require('../schemas/CartItem.schema');
+const Cake = require('../schemas/Cake.schema');
 const { createError } = require('../utils/response.utils');
 
 const VALID_TRANSITIONS = {
@@ -24,10 +25,18 @@ const createOrder = async (userId, address) => {
     }
 
     let total_price = 0;
-    const items = cartItems.map((item) => {
+    
+    // Kiểm tra tồn kho trước khi tính toán
+    for (const item of cartItems) {
       if (!item.cake_id) {
         throw createError('Một sản phẩm trong giỏ hàng không còn tồn tại', 400, 'BAD_REQUEST');
       }
+      if (item.cake_id.stock < item.quantity) {
+        throw createError(`Sản phẩm "${item.cake_id.name}" không đủ số lượng trong kho (còn lại: ${item.cake_id.stock})`, 400, 'BAD_REQUEST');
+      }
+    }
+
+    const items = cartItems.map((item) => {
       const price_at_buy = item.cake_id.price;
       total_price += price_at_buy * item.quantity;
       return {
@@ -36,6 +45,11 @@ const createOrder = async (userId, address) => {
         price_at_buy: price_at_buy,
       };
     });
+    
+    // Trừ tồn kho
+    for (const item of items) {
+       await Cake.findByIdAndUpdate(item.cake_id, { $inc: { stock: -item.quantity } }, { session });
+    }
 
     const newOrders = await Order.create(
       [
@@ -97,20 +111,38 @@ const getOrderById = async (orderId, userId, role) => {
 };
 
 const updateStatus = async (orderId, newStatus) => {
-  const order = await Order.findById(orderId);
-  if (!order) {
-    throw createError('Đơn hàng không tồn tại', 404, 'NOT_FOUND');
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const order = await Order.findById(orderId).session(session);
+    if (!order) {
+      throw createError('Đơn hàng không tồn tại', 404, 'NOT_FOUND');
+    }
+
+    const allowedTransitions = VALID_TRANSITIONS[order.status];
+    if (!allowedTransitions || !allowedTransitions.includes(newStatus)) {
+      throw createError(`Không thể chuyển trạng thái từ ${order.status} sang ${newStatus}`, 400, 'BAD_REQUEST');
+    }
+
+    // Hoàn kho nếu hủy đơn
+    if (newStatus === 'REJECTED' && (order.status === 'PENDING' || order.status === 'CONFIRMED')) {
+      for (const item of order.items) {
+        await Cake.findByIdAndUpdate(item.cake_id, { $inc: { stock: item.quantity } }, { session });
+      }
+    }
+
+    order.status = newStatus;
+    await order.save({ session });
+    
+    await session.commitTransaction();
+    return order;
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
   }
-
-  const allowedTransitions = VALID_TRANSITIONS[order.status];
-  if (!allowedTransitions || !allowedTransitions.includes(newStatus)) {
-    throw createError(`Không thể chuyển trạng thái từ ${order.status} sang ${newStatus}`, 400, 'BAD_REQUEST');
-  }
-
-  order.status = newStatus;
-  await order.save();
-
-  return order;
 };
 
 module.exports = {
