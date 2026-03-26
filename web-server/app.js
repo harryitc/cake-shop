@@ -17,7 +17,8 @@ const app = express();
 app.use('/uploads', express.static('public/uploads'));
 
 // ─── Middlewares ──────────────────────────────────────────────────────────────
-const allowedOrigins = process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',') : '*';
+const allowedOrigins = '*';
+// const allowedOrigins = process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',') : '*';
 app.use(cors({
   origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -31,7 +32,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use('/api/v1/auth', require('./routes/auth.routes'));
 app.use('/api/v1/cakes', require('./routes/cake.routes'));
 app.use('/api/v1/cart', require('./routes/cart.routes'));
-app.use('/api/v1/orders',  require('./routes/order.routes'));
+app.use('/api/v1/orders', require('./routes/order.routes'));
 app.use('/api/v1/uploads', require('./routes/upload.routes'));
 app.use('/api/v1/analytics', require('./routes/analytics.routes'));
 
