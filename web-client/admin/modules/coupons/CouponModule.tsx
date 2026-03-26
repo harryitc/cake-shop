@@ -237,6 +237,8 @@ const CouponModule = () => {
                 min={0} 
                 style={{ width: '100%' }} 
                 addonAfter={couponType === 'PERCENT' ? '%' : 'đ'}
+                formatter={couponType === 'FIXED' ? (value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : undefined}
+                parser={couponType === 'FIXED' ? (value) => value!.replace(/\$\s?|(,*)/g, "") as any : undefined}
               />
             </Form.Item>
             <Form.Item
@@ -244,7 +246,13 @@ const CouponModule = () => {
               label="Giá trị đơn hàng tối thiểu"
               initialValue={0}
             >
-              <InputNumber min={0} style={{ width: '100%' }} addonAfter="đ" />
+              <InputNumber 
+                min={0} 
+                style={{ width: '100%' }} 
+                addonAfter="đ" 
+                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                parser={(value) => value!.replace(/\$\s?|(,*)/g, "") as any}
+              />
             </Form.Item>
           </div>
 
@@ -253,7 +261,13 @@ const CouponModule = () => {
               name="max_discount_value"
               label="Giảm tối đa (Tùy chọn)"
             >
-              <InputNumber min={0} style={{ width: '100%' }} addonAfter="đ" />
+              <InputNumber 
+                min={0} 
+                style={{ width: '100%' }} 
+                addonAfter="đ" 
+                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                parser={(value) => value!.replace(/\$\s?|(,*)/g, "") as any}
+              />
             </Form.Item>
           )}
 

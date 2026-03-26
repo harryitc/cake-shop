@@ -181,7 +181,16 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
               name="price"
               control={control}
               render={({ field }) => (
-                <InputNumber {...field} className="w-full rounded-lg" size="large" min={0} step={1000} placeholder="Ví dụ: 150000" />
+                <InputNumber 
+                  {...field} 
+                  className="w-full rounded-lg" 
+                  size="large" 
+                  min={0} 
+                  step={1000} 
+                  placeholder="Ví dụ: 150,000" 
+                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                  parser={(value) => value!.replace(/\$\s?|(,*)/g, "") as any}
+                />
               )}
             />
           </Form.Item>

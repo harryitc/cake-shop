@@ -1,61 +1,72 @@
 const reviewService = require('../services/review.service');
-const { sendSuccess, sendError } = require('../utils/response.utils');
+const { sendSuccess, createError } = require('../utils/response.utils');
 const Joi = require('joi');
 
 class ReviewController {
-  async create(req, res) {
+  async create(req, res, next) {
     try {
       const schema = Joi.object({
-        cake_id: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
-        order_id: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
-        rating: Joi.number().min(1).max(5).required(),
+        cake_id: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
+          'string.pattern.base': 'ID Bánh không hợp lệ',
+          'any.required': 'Vui lòng cung cấp ID Bánh',
+        }),
+        order_id: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
+          'string.pattern.base': 'ID Đơn hàng không hợp lệ',
+          'any.required': 'Vui lòng cung cấp ID Đơn hàng',
+        }),
+        rating: Joi.number().min(1).max(5).required().messages({
+          'number.min': 'Số sao tối thiểu là 1',
+          'number.max': 'Số sao tối đa là 5',
+          'any.required': 'Vui lòng chọn số sao đánh giá',
+        }),
         comment: Joi.string().allow('').optional(),
       });
 
       const { error, value } = schema.validate(req.body);
-      if (error) return sendError(res, error.details[0].message, 400);
+      if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
 
       const review = await reviewService.createReview(req.user.userId, value);
-      sendSuccess(res, review, 'Gửi đánh giá thành công', 201);
+      return sendSuccess(res, review, 'Gửi đánh giá thành công', 201);
     } catch (err) {
-      sendError(res, err.message, err.status || 500);
+      next(err);
     }
   }
 
-  async getCakeReviews(req, res) {
+  async getCakeReviews(req, res, next) {
     try {
       const { cakeId } = req.params;
-      const { page, limit } = req.query;
+      const { page = 1, limit = 10 } = req.query;
+      
       const data = await reviewService.getCakeReviews(cakeId, { page, limit });
-      sendSuccess(res, data);
+      return sendSuccess(res, data, 'Lấy danh sách đánh giá thành công');
     } catch (err) {
-      sendError(res, err.message);
+      next(err);
     }
   }
 
-  async getAllAdmin(req, res) {
+  async getAllAdmin(req, res, next) {
     try {
-      const { page, limit } = req.query;
+      const { page = 1, limit = 20 } = req.query;
       const data = await reviewService.getAllReviewsAdmin({ page, limit });
-      sendSuccess(res, data);
+      return sendSuccess(res, data, 'Lấy danh sách đánh giá cho Admin thành công');
     } catch (err) {
-      sendError(res, err.message);
+      next(err);
     }
   }
 
-  async updateStatus(req, res) {
+  async updateStatus(req, res, next) {
     try {
       const { reviewId } = req.params;
       const { is_approved } = req.body;
       
       if (typeof is_approved !== 'boolean') {
-        return sendError(res, 'Trạng thái is_approved phải là boolean', 400);
+        throw createError('Trạng thái is_approved phải là boolean', 400, 'BAD_REQUEST');
       }
 
       const review = await reviewService.updateReviewStatus(reviewId, is_approved);
-      sendSuccess(res, review, 'Cập nhật trạng thái đánh giá thành công');
+      return sendSuccess(res, review, 'Cập nhật trạng thái đánh giá thành công');
     } catch (err) {
-      sendError(res, err.message);
+      next(err);
     }
   }
 }

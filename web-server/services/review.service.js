@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Review = require('../schemas/Review.schema');
 const Cake = require('../schemas/Cake.schema');
 const Order = require('../schemas/Order.schema');
@@ -39,7 +40,7 @@ class ReviewService {
       comment,
     });
 
-    // 5. Cập nhật average_rating và review_count trong Cake (Trigger thủ công thay vì Mongoose hook để kiểm soát session nếu cần)
+    // 5. Cập nhật average_rating và review_count trong Cake
     await this.recalculateCakeRating(cake_id);
 
     return review;
@@ -51,7 +52,7 @@ class ReviewService {
    */
   async recalculateCakeRating(cakeId) {
     const stats = await Review.aggregate([
-      { $match: { cake: new require('mongoose').Types.ObjectId(cakeId), is_approved: true } },
+      { $match: { cake: new mongoose.Types.ObjectId(cakeId), is_approved: true } },
       {
         $group: {
           _id: '$cake',
@@ -80,7 +81,7 @@ class ReviewService {
    * @param {Object} options - { page, limit }
    */
   async getCakeReviews(cakeId, { page = 1, limit = 10 }) {
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * Number(limit);
 
     const [items, total] = await Promise.all([
       Review.find({ cake: cakeId, is_approved: true })
@@ -98,7 +99,7 @@ class ReviewService {
    * Lấy tất cả đánh giá (dành cho Admin quản lý)
    */
   async getAllReviewsAdmin({ page = 1, limit = 20 }) {
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * Number(limit);
 
     const [items, total] = await Promise.all([
       Review.find()
