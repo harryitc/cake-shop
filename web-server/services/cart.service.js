@@ -72,8 +72,30 @@ const removeItem = async (userId, itemId) => {
   return true;
 };
 
+/**
+ * Cập nhật số lượng của một sản phẩm trong giỏ hàng
+ * @param {string} userId
+ * @param {string} itemId
+ * @param {number} quantity
+ * @returns {Object}
+ */
+const updateItemQuantity = async (userId, itemId, quantity) => {
+  const item = await CartItem.findOneAndUpdate(
+    { _id: itemId, user_id: userId },
+    { quantity },
+    { new: true }
+  );
+
+  if (!item) {
+    throw createError('Không tìm thấy sản phẩm trong giỏ hàng', 404, 'NOT_FOUND');
+  }
+
+  return item;
+};
+
 module.exports = {
   getCart,
   addItem,
   removeItem,
+  updateItemQuantity,
 };

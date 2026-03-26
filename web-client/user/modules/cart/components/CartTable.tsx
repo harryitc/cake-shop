@@ -1,8 +1,8 @@
 "use client";
 
-import { Table, Button, Skeleton, Empty, Popconfirm, message } from "antd";
+import { Table, Button, Skeleton, Empty, Popconfirm, message, InputNumber } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
-import { useCartQuery, useRemoveCartItemMutation } from "../hooks";
+import { useCartQuery, useRemoveCartItemMutation, useUpdateCartItemQuantityMutation } from "../hooks";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -15,6 +15,7 @@ export const CartTable = () => {
   const router = useRouter();
   const { data: rawCart, isLoading, isError } = useCartQuery();
   const { mutate: removeItem, isPending } = useRemoveCartItemMutation();
+  const { mutate: updateQuantity } = useUpdateCartItemQuantityMutation();
   const [modalOpen, setModalOpen] = useState(false);
 
   if (isLoading) return <div className="p-8"><Skeleton active paragraph={{ rows: 6 }} /></div>;
@@ -56,7 +57,20 @@ export const CartTable = () => {
       title: "Số lượng",
       dataIndex: "quantity",
       key: "quantity",
-      render: (val: number) => <span className="font-bold">{val}</span>
+      render: (val: number, record: any) => (
+        <InputNumber 
+          min={1} 
+          max={record.cake?.stock || 1}
+          value={val} 
+          onChange={(value) => {
+            if (value && value >= 1) {
+              updateQuantity({ id: record.id, quantity: value }, {
+                onError: () => message.error("Lỗi cập nhật số lượng"),
+              });
+            }
+          }}
+        />
+      )
     },
     {
       title: "Thành tiền",

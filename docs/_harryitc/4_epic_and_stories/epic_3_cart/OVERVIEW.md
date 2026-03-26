@@ -37,12 +37,12 @@ User đã đăng nhập có thể **quản lý giỏ hàng** của mình: thêm 
 - [x] Schema `CartItem` (user_id, cake_id, quantity)
 - [x] API GET giỏ hàng của user hiện tại
 - [x] API POST thêm item vào giỏ (hoặc tăng quantity nếu đã có)
+- [x] API PUT cập nhật số lượng trực tiếp (inline quantity update)
 - [x] API DELETE xóa item khỏi giỏ
-- [x] Trang `/cart` — hiển thị giỏ hàng, nút xóa, nút đặt hàng
+- [x] Trang `/cart` — hiển thị giỏ hàng, nút xóa, điều chỉnh số lượng, nút đặt hàng
 - [x] Nút "Thêm vào giỏ" trên trang chi tiết bánh
 
 ### Ngoài phạm vi (Out of Scope):
-- Cập nhật số lượng inline (chỉ xóa + thêm lại)
 - Giỏ hàng cho khách chưa đăng nhập (guest cart)
 - Coupon / discount
 
@@ -50,19 +50,20 @@ User đã đăng nhập có thể **quản lý giỏ hàng** của mình: thêm 
 
 ## 🗂️ Danh sách Task Files (Checklist)
 
-- [ ] [`1_cart_api.md`](./1_cart_api.md) — Schema + API Backend giỏ hàng
-- [ ] [`2_cart_page.md`](./2_cart_page.md) — Module cart + Trang `/cart` Frontend
+- [x] [`1_cart_api.md`](./1_cart_api.md) — Schema + API Backend giỏ hàng
+- [x] [`2_cart_page.md`](./2_cart_page.md) — Module cart + Trang `/cart` Frontend
 
 ---
 
 ## ✅ Acceptance Criteria
 
-- [ ] `GET /api/v1/cart` trả danh sách items của user hiện tại (join thông tin bánh)
-- [ ] `POST /api/v1/cart/items` thêm item, tự tăng quantity nếu đã có cùng cake_id
-- [ ] `DELETE /api/v1/cart/items/:id` xóa item, trả `404` nếu không tìm thấy
-- [ ] Tất cả API yêu cầu token, trả `401` nếu chưa đăng nhập
-- [ ] Trang `/cart` hiển thị danh sách items, tổng tiền, nút "Đặt hàng"
-- [ ] Nút "Thêm vào giỏ" ở `/cakes/[id]` hoạt động, hiển thị Toast thành công
+- [x] `GET /api/v1/cart` trả danh sách items của user hiện tại (join thông tin bánh)
+- [x] `POST /api/v1/cart/items` thêm item, tự tăng quantity nếu đã có cùng cake_id
+- [x] `PUT /api/v1/cart/items/:id` cập nhật trực tiếp số lượng
+- [x] `DELETE /api/v1/cart/items/:id` xóa item, trả `404` nếu không tìm thấy
+- [x] Tất cả API yêu cầu token, trả `401` nếu chưa đăng nhập
+- [x] Trang `/cart` hiển thị danh sách items, tổng tiền, nút "Đặt hàng" và input chỉnh số lượng
+- [x] Nút "Thêm vào giỏ" ở `/cakes/[id]` hoạt động, hiển thị Toast thành công
 
 ---
 

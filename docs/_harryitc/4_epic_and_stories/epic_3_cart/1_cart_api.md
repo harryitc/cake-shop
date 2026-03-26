@@ -38,12 +38,18 @@ Xây dựng Schema và toàn bộ API backend cho giỏ hàng. Mỗi user có gi
 ```
 GET    /api/v1/cart              → Lấy giỏ hàng current user (require auth)
 POST   /api/v1/cart/items        → Thêm item vào giỏ (require auth)
+PUT    /api/v1/cart/items/:id    → Cập nhật số lượng item trong giỏ (require auth)
 DELETE /api/v1/cart/items/:id    → Xóa item khỏi giỏ (require auth)
 ```
 
 **POST /cart/items Request body:**
 ```json
 { "cake_id": "<objectId>", "quantity": 2 }
+```
+
+**PUT /cart/items/:id Request body:**
+```json
+{ "quantity": 3 }
 ```
 
 **GET /cart Response (`200`):**

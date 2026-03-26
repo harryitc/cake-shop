@@ -18,6 +18,13 @@ const itemIdParamSchema = Joi.object({
   })
 });
 
+const updateQuantitySchema = Joi.object({
+  quantity: Joi.number().min(1).required().messages({
+    'number.min': 'Số lượng tối thiểu là 1',
+    'any.required': 'Vui lòng cung cấp số lượng',
+  })
+});
+
 // --- Handlers ---
 const getCart = async (req, res, next) => {
   try {
@@ -53,8 +60,24 @@ const removeItem = async (req, res, next) => {
   }
 };
 
+const updateItemQuantity = async (req, res, next) => {
+  try {
+    const { error: paramError, value: paramValue } = itemIdParamSchema.validate(req.params);
+    if (paramError) throw createError(paramError.details[0].message, 400, 'VALIDATION_ERROR');
+
+    const { error: bodyError, value: bodyValue } = updateQuantitySchema.validate(req.body);
+    if (bodyError) throw createError(bodyError.details[0].message, 400, 'VALIDATION_ERROR');
+
+    const data = await cartService.updateItemQuantity(req.user.userId, paramValue.id, bodyValue.quantity);
+    return sendSuccess(res, data, 'Cập nhật số lượng thành công', 200);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getCart,
   addItem,
   removeItem,
+  updateItemQuantity,
 };
