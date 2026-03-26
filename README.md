@@ -16,8 +16,12 @@ You can run all three services concurrently using the provided bash script.
 docker-compose up -d
 
 # 2. Run the start-up script
-chmod +x dev.sh
+
+# Option A: Start EVERYTHING (Server + User + Admin)
 ./dev.sh
+
+# Option B: Start FRONTENDS ONLY (User + Admin)
+./web.sh
 ```
 
 ## 🏗 Project Structure

@@ -30,7 +30,10 @@ export const ProfileContent = () => {
   }, [user, form]);
 
   const onUpdateProfile = (values: any) => {
-    updateProfile(values, {
+    // Loại bỏ email vì backend không cho phép update email qua api này
+    const { email, ...updateData } = values;
+    
+    updateProfile(updateData, {
       onSuccess: () => message.success("Cập nhật thông tin thành công"),
       onError: (err) => message.error(err.message || "Lỗi cập nhật"),
     });
