@@ -3,17 +3,18 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Modal, Form, Input, InputNumber, App } from "antd";
-import { useCreateCakeMutation, useUpdateCakeMutation } from "../hooks";
+import { Modal, Form, Input, InputNumber, App, Upload, Button } from "antd";
+import { PlusOutlined, UploadOutlined, LoadingOutlined } from "@ant-design/icons";
+import { useCreateCakeMutation, useUpdateCakeMutation, useUploadImageMutation } from "../hooks";
 import { ICake } from "../types";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const cakeSchema = z.object({
   name: z.string().min(2, "Tên bánh phải có ít nhất 2 ký tự"),
   description: z.string().optional(),
   price: z.number().min(1000, "Giá bánh phải lớn hơn 1000đ"),
   stock: z.number().min(0, "Số lượng không được âm").default(0),
-  image_url: z.string().url("URL ảnh không hợp lệ").optional().or(z.literal("")),
+  image_url: z.string().optional(),
 });
 
 type CakeFormValues = {
@@ -30,17 +31,22 @@ interface CakeFormModalProps {
   initialData?: ICake | null;
 }
 
+const API_DOMAIN = process.env.NEXT_PUBLIC_API_DOMAIN || "http://localhost:5000";
+
 export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProps) => {
   const { message } = App.useApp();
   const isEditing = !!initialData;
   const { mutate: createCake, isPending: isCreating } = useCreateCakeMutation();
   const { mutate: updateCake, isPending: isUpdating } = useUpdateCakeMutation();
+  const { mutate: uploadImage, isPending: isUploading } = useUploadImageMutation();
   const isPending = isCreating || isUpdating;
 
-  const { control, handleSubmit, formState: { errors }, reset, setValue } = useForm<CakeFormValues>({
+  const { control, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<CakeFormValues>({
     resolver: zodResolver(cakeSchema) as any,
     defaultValues: { name: "", description: "", price: 0, stock: 0, image_url: "" },
   });
+
+  const currentImageUrl = watch("image_url");
 
   useEffect(() => {
     if (open) {
@@ -49,12 +55,27 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
         setValue("description", initialData.description || "");
         setValue("price", initialData.price);
         setValue("stock", initialData.stock || 0);
-        setValue("image_url", initialData.imageUrl === "https://placehold.co/100x100?text=No+Image" ? "" : initialData.imageUrl);
+        // Lưu path gốc (không có domain) vào form state
+        const path = initialData.imageUrl.startsWith("http") && !initialData.imageUrl.includes(API_DOMAIN)
+          ? initialData.imageUrl 
+          : initialData.imageUrl.replace(API_DOMAIN, "");
+        setValue("image_url", path === "https://placehold.co/100x100?text=No+Image" ? "" : path);
       } else {
         reset();
       }
     }
   }, [open, initialData, setValue, reset]);
+
+  const handleUpload = (file: File) => {
+    uploadImage(file, {
+      onSuccess: (data) => {
+        setValue("image_url", data.path);
+        message.success("Upload ảnh thành công");
+      },
+      onError: (err) => message.error(err.message || "Upload ảnh thất bại"),
+    });
+    return false; // Chặn antd tự upload
+  };
 
   const onSubmit = (values: CakeFormValues) => {
     const payload = { ...values, image_url: values.image_url || undefined };
@@ -140,15 +161,48 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
         </div>
 
         <Form.Item
-          label={<span className="font-semibold text-gray-700">Hình Ảnh (Full URL)</span>}
+          label={<span className="font-semibold text-gray-700">Hình Ảnh Sản Phẩm</span>}
           validateStatus={errors.image_url ? "error" : ""}
           help={errors.image_url?.message}
         >
-          <Controller
-            name="image_url"
-            control={control}
-            render={({ field }) => <Input {...field} placeholder="https://domain.com/image.jpg" size="large" className="rounded-lg" />}
-          />
+          <div className="flex flex-col gap-4">
+            <Upload
+              name="image"
+              listType="picture-card"
+              showUploadList={false}
+              beforeUpload={handleUpload}
+              className="cake-upload"
+            >
+              {currentImageUrl ? (
+                <img 
+                  src={currentImageUrl.startsWith("http") ? currentImageUrl : `${API_DOMAIN}${currentImageUrl}`} 
+                  alt="cake" 
+                  style={{ width: '100%', height: '100%', objectCover: 'cover', borderRadius: '8px' }} 
+                />
+              ) : (
+                <div className="flex flex-col items-center">
+                  {isUploading ? <LoadingOutlined /> : <PlusOutlined />}
+                  <div className="mt-2 text-gray-500 font-medium">Tải ảnh lên</div>
+                </div>
+              )}
+            </Upload>
+            
+            <div className="text-gray-400 text-xs italic">
+              * Hệ thống ưu tiên lưu trữ ảnh nội bộ. Bạn cũng có thể dán link trực tiếp nếu cần.
+            </div>
+            <Controller
+              name="image_url"
+              control={control}
+              render={({ field }) => (
+                <Input 
+                  {...field} 
+                  placeholder="Đường dẫn ảnh (tự động điền khi upload)" 
+                  className="rounded-lg" 
+                  prefix={<UploadOutlined className="text-gray-400" />}
+                />
+              )}
+            />
+          </div>
         </Form.Item>
 
         <Form.Item

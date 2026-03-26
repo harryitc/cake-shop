@@ -35,3 +35,9 @@ export const useDeleteCakeMutation = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cakes"] }),
   });
 };
+
+export const useUploadImageMutation = () => {
+  return useMutation({
+    mutationFn: cakeApi.uploadImage,
+  });
+};

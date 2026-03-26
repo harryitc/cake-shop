@@ -13,4 +13,12 @@ export const cakeApi = {
     httpClient(`/cakes/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
   delete: (id: string) => 
     httpClient(`/cakes/${id}`, { method: "DELETE" }),
+  uploadImage: (file: File) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    return httpClient<{ path: string }>("/uploads", {
+      method: "POST",
+      body: formData,
+    });
+  },
 };

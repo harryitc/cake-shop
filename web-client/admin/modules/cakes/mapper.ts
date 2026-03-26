@@ -1,6 +1,12 @@
 import { ICake, ICakeDTO } from "./types";
 
+const API_DOMAIN = process.env.NEXT_PUBLIC_API_DOMAIN || "http://localhost:5000";
+
 export const mapCakeToModel = (dto: ICakeDTO): ICake => {
+  const imageUrl = dto.image_url 
+    ? (dto.image_url.startsWith('http') ? dto.image_url : `${API_DOMAIN}${dto.image_url}`)
+    : "https://placehold.co/100x100?text=No+Image";
+
   return {
     id: dto._id,
     name: dto.name,
@@ -12,7 +18,7 @@ export const mapCakeToModel = (dto: ICakeDTO): ICake => {
       style: "currency",
       currency: "VND",
     }).format(dto.price),
-    imageUrl: dto.image_url || "https://placehold.co/100x100?text=No+Image",
+    imageUrl,
     createdAt: dto.createdAt,
     formattedDate: new Date(dto.createdAt).toLocaleDateString("vi-VN", {
       day: '2-digit', month: '2-digit', year: 'numeric'

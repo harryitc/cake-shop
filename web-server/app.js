@@ -13,6 +13,9 @@ connectDB();
 
 const app = express();
 
+// ─── Static Files ─────────────────────────────────────────────────────────────
+app.use('/uploads', express.static('public/uploads'));
+
 // ─── Middlewares ──────────────────────────────────────────────────────────────
 app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
 app.use(logger('dev'));
@@ -20,10 +23,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
-app.use('/api/v1/auth',   require('./routes/auth.routes'));
-app.use('/api/v1/cakes',  require('./routes/cake.routes'));
-app.use('/api/v1/cart',   require('./routes/cart.routes'));
-app.use('/api/v1/orders', require('./routes/order.routes'));
+app.use('/api/v1/auth',    require('./routes/auth.routes'));
+app.use('/api/v1/cakes',   require('./routes/cake.routes'));
+app.use('/api/v1/cart',    require('./routes/cart.routes'));
+app.use('/api/v1/orders',  require('./routes/order.routes'));
+app.use('/api/v1/uploads', require('./routes/upload.routes'));
 
 // ─── 404 Handler ──────────────────────────────────────────────────────────────
 app.use((req, res, next) => {
