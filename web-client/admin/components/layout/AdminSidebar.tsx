@@ -1,7 +1,7 @@
 "use client";
 
 import { Layout, Menu } from "antd";
-import { ShopOutlined, HistoryOutlined, UserOutlined, DashboardOutlined, TagsOutlined } from "@ant-design/icons";
+import { ShopOutlined, HistoryOutlined, UserOutlined, DashboardOutlined, TagsOutlined, StarOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -23,6 +23,11 @@ export const AdminSidebar = () => {
       key: "/admin/categories",
       icon: <TagsOutlined />,
       label: <Link href="/admin/categories">Quản lý Danh mục</Link>,
+    },
+    {
+      key: "/admin/reviews",
+      icon: <StarOutlined />,
+      label: <Link href="/admin/reviews">Quản lý Đánh giá</Link>,
     },
     {
       key: "/admin/orders",

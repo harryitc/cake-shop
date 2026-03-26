@@ -1,121 +1,74 @@
 ---
-title: V1 Project Progress Tracker
+title: Project Progress Tracker
 project: Cake Shop
-version: 1.0
+version: 2.0 (V3 Expansion)
 created_at: 2026-03-24
+updated_at: 2026-03-26
 ---
 
-# 🚀 Cake Shop V1 — Progress Tracker
+# 🚀 Cake Shop — Progress Tracker
 
 > Cập nhật status của task khi bắt đầu `[/]` và hoàn thành `[x]`.
 
 ---
 
 ## Phase 0 — 📋 Docs: Epic & Stories
-> Tạo cấu trúc tài liệu Epic & Stories
-
-- [x] `epic_1_auth/` — OVERVIEW + 3 task files
-- [x] `epic_2_cakes/` — OVERVIEW + 3 task files
-- [x] `epic_3_cart/` — OVERVIEW + 2 task files
-- [x] `epic_4_orders/` — OVERVIEW + 3 task files
-- [x] `_templates/` — OVERVIEW_template + epic_task_template
-
+- [x] `epic_1_auth/`
+- [x] `epic_2_cakes/`
+- [x] `epic_3_cart/`
+- [x] `epic_4_orders/`
 **Status: ✅ DONE**
 
 ---
 
-## Phase 1 — ⚙️ Backend: Setup & Infrastructure
-> Refactor `web-server/` sang 3-layer architecture
-
-**Spec:** không có epic riêng (cơ sở hạ tầng)
-
-- [x] Cài dependencies: `mongoose`, `jsonwebtoken`, `bcryptjs`, `cors`, `dotenv`, `joi`
-- [x] Tạo cấu trúc thư mục: `config/`, `routes/`, `controllers/`, `services/`, `schemas/`, `middlewares/`, `utils/`
-- [x] `config/db.config.js` — kết nối MongoDB
-- [x] `app.js` — cấu hình lại CORS, json, mount routes, error-handler
-- [x] `utils/response.utils.js` — `sendSuccess()` + `sendError()`
-- [x] `middlewares/error-handler.js` — global catch-all
-- [x] `.env` + `.env.example`
-
+## Phase 1-5 — ⚙️ Backend Core Modules
+- [x] Setup & Infrastructure
+- [x] Auth Module
+- [x] Cakes Module
+- [x] Cart Module
+- [x] Orders Module
 **Status: ✅ DONE**
 
 ---
 
-## Phase 2 — 🔐 Backend: Auth Module
-> **Spec:** [`epic_1_auth/`](./_harryitc/4_epic_and_stories/epic_1_auth/OVERVIEW.md)
-
-- [x] `1_register` — Schema User + Service register + Controller + Route
-- [x] `2_login` — Service login + Controller + Route
-- [x] `3_auth_middleware` — `auth.middleware.js` + `role.middleware.js`
-
-**Status: ✅ DONE**
-
----
-
-## Phase 3 — 🎂 Backend: Cakes Module
-> **Spec:** [`epic_2_cakes/`](./_harryitc/4_epic_and_stories/epic_2_cakes/OVERVIEW.md)
-
-- [x] `1_cake_schema` — Schema Cake + Service getAll/getById
-- [x] `2_cake_crud_api` — Service create/update/delete + Controller + Route (with auth guard)
-
-**Status: ✅ DONE**
-
----
-
-## Phase 4 — 🛒 Backend: Cart Module
-> **Spec:** [`epic_3_cart/`](./_harryitc/4_epic_and_stories/epic_3_cart/OVERVIEW.md)
-
-- [x] `1_cart_api` — Schema CartItem + Service + Controller + Route
-
-**Status: ✅ DONE**
-
----
-
-## Phase 5 — 📦 Backend: Orders Module
-> **Spec:** [`epic_4_orders/`](./_harryitc/4_epic_and_stories/epic_4_orders/OVERVIEW.md)
-
-- [x] `1_create_order` — Schema Order (embedded OrderItem) + Service (Transaction) + Controller + Route
-- [x] `2_order_list` — Service getOrders/getById + Controller + Route
-- [x] `3_update_order_status` — Service updateStatus (state machine) + Controller + Route
-
-**Status: ✅ DONE**
-
----
-
-## Phase 6 — 🖥️ Frontend: User App (`web-client/user`)
-> **Spec:** task files Frontend trong các epic
-
-- [x] Setup: `lib/http.ts` (LocalStorage token), `lib/providers.tsx`, `lib/antd-theme.ts`
-- [x] `epic_1_auth` → `1_register` FE + `2_login` FE (Form, hooks, api, pages)
-- [x] `epic_2_cakes` → `3_cake_list_page` (Module + `/cakes` + `/cakes/[id]`)
-- [x] `epic_3_cart` → `2_cart_page` (Module + `/cart`, `AddToCartBtn`)
-- [x] `epic_4_orders` → `2_order_list` (Module + `/orders`, `CheckoutModal`)
-
-**Status: ✅ DONE**
-
----
-
-## Phase 7 — 🛠️ Frontend: Admin App (`web-client/admin`)
-> **Spec:** task files Frontend trong các epic
-
-- [x] Setup: `lib/http.ts`, `lib/providers.tsx` + Dashboard Layout (Sidebar/Header)
-- [x] `epic_1_auth` → `2_login` FE (mode admin, auth guard logic)
-- [x] `epic_2_cakes` → `3_cake_list_page` (Admin CRUD Table + Modal)
-- [x] `epic_4_orders` → `3_update_order_status` (Admin Order Table + State Machine Switcher)
-
+## Phase 6-7 — 🖥️ Frontend Applications
+- [x] User App (Storefront)
+- [x] Admin App (Dashboard)
 **Status: ✅ DONE**
 
 ---
 
 ## Phase 8 — ✅ Integration & Testing
+- [x] Test full User flow
+- [x] Test full Admin flow
+- [x] CORS & Env config
+**Status: ✅ DONE**
 
-- [ ] Test full User flow: Register → Login → Cakes → Cart → Order → History
-- [ ] Test full Admin flow: Login → CRUD Cake → Update Order Status
-- [ ] Test error cases: 401, 403, 404, 400 validation
-- [ ] CORS config cho cả 2 FE origins
-- [ ] `.env` đầy đủ cho 3 projects
+---
 
-**Status: 🔲 TODO**
+## Phase 9 — 🚀 V3 Expansion (Phase 3)
+> **Spec:** [`epic_8_v3_expansion/`](./4_epic_and_stories/epic_8_v3_expansion/OVERVIEW.md)
+
+- [x] **[V3-1] Hệ thống Danh mục & Phân loại sản phẩm**
+    - [x] Backend: Schema Category, Service, Controller, Routes
+    - [x] Admin: Category CRUD, Cake Form integration
+    - [x] User: Category filter UI, Card display
+- [x] **[V3-2] Đánh giá & Phản hồi (Reviews & Ratings)**
+    - [x] Backend: Review Schema, Rating calculation logic
+    - [x] User: Display reviews, post review form (Order DONE only)
+    - [x] Admin: Manage/Approve reviews
+- [ ] **[V3-3] Hệ thống Mã giảm giá (Coupon)**
+    - [ ] Backend: Coupon Schema, Validation logic
+    - [ ] User: Apply coupon at checkout
+    - [ ] Admin: CRUD coupons
+- [ ] **[V3-4] Thông báo Email tự động**
+    - [ ] Setup SMTP & Templates
+    - [ ] Order status change triggers
+- [ ] **[V3-5] Danh sách yêu thích (Wishlist)**
+    - [ ] Backend: Wishlist Schema
+    - [ ] User: Toggle favorite, Wishlist page
+
+**Status: [/] IN PROGRESS**
 
 ---
 
@@ -123,12 +76,7 @@ created_at: 2026-03-24
 
 | Phase | Mô tả | Status |
 |-------|-------|--------|
-| 0 | Docs — Epic & Stories | ✅ DONE |
-| 1 | Backend Setup | ✅ DONE |
-| 2 | Backend Auth | ✅ DONE |
-| 3 | Backend Cakes | ✅ DONE |
-| 4 | Backend Cart | ✅ DONE |
-| 5 | Backend Orders | ✅ DONE |
-| 6 | Frontend User | ✅ DONE |
-| 7 | Frontend Admin | ✅ DONE |
-| 8 | Integration & Test | 🔲 TODO |
+| 0-5 | Backend Core | ✅ DONE |
+| 6-7 | Frontend Apps | ✅ DONE |
+| 8 | Integration | ✅ DONE |
+| 9 | V3 Expansion | [/] IN PROGRESS |

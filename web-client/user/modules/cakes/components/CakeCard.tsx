@@ -1,4 +1,4 @@
-import { Card } from "antd";
+import { Card, Rate } from "antd";
 import Link from "next/link";
 import { ICake } from "../types";
 
@@ -35,6 +35,12 @@ export const CakeCard = ({ cake }: { cake: ICake }) => {
                 </span>
               )}
             </div>
+            {cake.reviewCount > 0 && (
+              <div className="flex items-center gap-2 mt-1">
+                <Rate disabled defaultValue={cake.averageRating} allowHalf className="text-xs" />
+                <span className="text-[10px] text-gray-400">({cake.reviewCount})</span>
+              </div>
+            )}
             <p className="text-sm text-gray-500 line-clamp-2 mt-1">{cake.description}</p>
           </div>
           <div className="mt-2 text-xl font-bold text-indigo-600 flex justify-between items-center">

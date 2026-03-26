@@ -12,6 +12,7 @@ export const mapOrderToModel = (dto: IOrderDTO): IOrder => ({
   formattedTotal: formatPrice(dto.total_price),
   address: dto.address,
   itemsCount: dto.items_count || dto.items?.length || 0,
+  items: dto.items || [],
   createdAt: dto.createdAt,
   formattedDate: new Date(dto.createdAt).toLocaleDateString("vi-VN", { 
     hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" 

@@ -20,6 +20,8 @@ export const mapCakeToModel = (dto: ICakeDTO): ICake => {
       currency: "VND",
     }).format(dto.price),
     imageUrl,
+    averageRating: dto.average_rating || 0,
+    reviewCount: dto.review_count || 0,
     createdAt: dto.createdAt,
   };
 };

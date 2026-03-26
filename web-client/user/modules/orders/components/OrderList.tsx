@@ -1,13 +1,18 @@
 "use client";
 
 import { useOrdersQuery } from "../hooks";
-import { List, Tag, Empty, Skeleton, Button } from "antd";
+import { List, Tag, Empty, Skeleton, Button, Space, Divider } from "antd";
 import { useRouter } from "next/navigation";
 import { IOrder } from "../types";
+import { useState } from "react";
+import { ReviewModal } from "../../cakes/components/ReviewModal";
+import { StarOutlined } from "@ant-design/icons";
 
 export const OrderList = () => {
   const router = useRouter();
   const { data: orders, isLoading, isError } = useOrdersQuery();
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selectedItemForReview, setSelectedItemForReview] = useState<{cakeId: string, orderId: string, cakeName: string} | null>(null);
 
   if (isLoading) return <div className="p-8 max-w-4xl mx-auto"><Skeleton active paragraph={{ rows: 8 }} /></div>;
   if (isError) return <div className="p-8 text-center text-red-500">Không thể tải danh sách đơn hàng.</div>;
@@ -30,6 +35,11 @@ export const OrderList = () => {
     }
   };
 
+  const handleReviewClick = (cakeId: string, orderId: string, cakeName: string) => {
+    setSelectedItemForReview({ cakeId, orderId, cakeName });
+    setReviewModalOpen(true);
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-extrabold text-gray-800 mb-8">Lịch sử Đơn Hàng</h1>
@@ -38,26 +48,65 @@ export const OrderList = () => {
         dataSource={orders}
         renderItem={(order: IOrder) => (
           <List.Item>
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-all hover:shadow-md">
-              <div className="flex-grow">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-sm text-gray-400 font-mono">#{order.id.slice(-6).toUpperCase()}</span>
-                  {getStatusTag(order.status)}
-                </div>
-                <div className="mb-2 space-y-1 mt-3">
-                  <span className="text-gray-600 text-[15px] block">Thời gian đặt: {order.formattedDate}</span>
-                  <span className="text-gray-600 text-[15px] block max-w-lg truncate" title={order.address}>Giao đến: <span className="font-medium text-gray-800">{order.address}</span></span>
-                  <span className="text-gray-600 text-[15px] block pt-1">Tổng số: <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">{order.itemsCount}</span> sản phẩm</span>
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4 transition-all hover:shadow-md">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex-grow">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-sm text-gray-400 font-mono">#{order.id.slice(-6).toUpperCase()}</span>
+                    {getStatusTag(order.status)}
+                  </div>
+                  <div className="mb-2 space-y-1 mt-3">
+                    <span className="text-gray-600 text-[15px] block">Thời gian đặt: {order.formattedDate}</span>
+                    <span className="text-gray-600 text-[15px] block max-w-lg truncate" title={order.address}>Giao đến: <span className="font-medium text-gray-800">{order.address}</span></span>
+                    <span className="text-gray-600 text-[15px] block pt-1">Tổng tiền: <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">{order.formattedTotal}</span></span>
+                  </div>
                 </div>
               </div>
-              <div className="flex flex-col items-start md:items-end w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-gray-50">
-                <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold mb-1">Thành Tiền</span>
-                <span className="text-2xl font-black text-indigo-600">{order.formattedTotal}</span>
+
+              <Divider className="my-2" />
+
+              <div className="space-y-4">
+                {order.items.map((item: any, idx: number) => (
+                  <div key={idx} className="flex justify-between items-center bg-gray-50/50 p-3 rounded-xl border border-gray-50">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-white rounded-lg border border-gray-100 overflow-hidden">
+                        <img 
+                          src={item.cake_id.image_url ? (item.cake_id.image_url.startsWith('http') ? item.cake_id.image_url : `http://localhost:5000${item.cake_id.image_url}`) : "https://placehold.co/100x100?text=Cake"} 
+                          alt="cake" 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <div className="font-bold text-gray-800">{item.cake_id.name}</div>
+                        <div className="text-xs text-gray-400">Số lượng: {item.quantity} | Giá: {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(item.price_at_buy)}</div>
+                      </div>
+                    </div>
+                    {order.status === 'DONE' && (
+                      <Button 
+                        icon={<StarOutlined />} 
+                        onClick={() => handleReviewClick(item.cake_id._id || item.cake_id, order.id, item.cake_id.name)}
+                        className="rounded-lg font-semibold hover:border-indigo-400 hover:text-indigo-600"
+                      >
+                        Đánh giá
+                      </Button>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           </List.Item>
         )}
       />
+
+      {selectedItemForReview && (
+        <ReviewModal
+          open={reviewModalOpen}
+          onCancel={() => setReviewModalOpen(false)}
+          cakeId={selectedItemForReview.cakeId}
+          orderId={selectedItemForReview.orderId}
+          cakeName={selectedItemForReview.cakeName}
+        />
+      )}
     </div>
   );
 };

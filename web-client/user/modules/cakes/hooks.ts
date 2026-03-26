@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { cakeApi } from "./api";
 import { mapCakeToModel } from "./mapper";
+import { httpClient } from "@/lib/http";
 
 export const useCakesQuery = (search?: string, category?: string) => {
   return useQuery({
@@ -20,6 +21,17 @@ export const useCakeQuery = (id: string) => {
       return mapCakeToModel(cake);
     },
     enabled: !!id,
+  });
+};
+
+export const useCakeReviewsQuery = (cakeId: string, page: number = 1) => {
+  return useQuery({
+    queryKey: ["cake-reviews", cakeId, page],
+    queryFn: async () => {
+      const res = await httpClient<{ items: any[]; total: number }>(`/reviews/cake/${cakeId}?page=${page}`, { method: "GET" });
+      return res;
+    },
+    enabled: !!cakeId,
   });
 };
 

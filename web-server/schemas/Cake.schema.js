@@ -35,6 +35,17 @@ const cakeSchema = new mongoose.Schema(
       ref: 'Category',
       required: true, // Ép buộc chọn danh mục để quản lý dữ liệu chặt chẽ
     },
+    average_rating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    review_count: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   {
     timestamps: true,

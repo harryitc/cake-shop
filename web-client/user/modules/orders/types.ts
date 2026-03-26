@@ -14,6 +14,12 @@ export interface IOrderDTO {
   updatedAt: string;
 }
 
+export interface IOrderItem {
+  cake_id: string | any;
+  quantity: number;
+  price_at_buy: number;
+}
+
 export interface IOrder {
   id: string;
   status: string;
@@ -21,6 +27,7 @@ export interface IOrder {
   formattedTotal: string;
   address: string;
   itemsCount: number;
+  items: IOrderItem[];
   createdAt: string;
   formattedDate: string;
 }

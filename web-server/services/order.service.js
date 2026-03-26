@@ -84,7 +84,9 @@ const getOrders = async (userId, role) => {
     query.user_id = userId;
   }
 
-  const orders = await Order.find(query).sort({ createdAt: -1 });
+  const orders = await Order.find(query)
+    .populate('items.cake_id', 'name price image_url slug')
+    .sort({ createdAt: -1 });
   
   const formattedOrders = orders.map((order) => {
     const orderObj = order.toObject();
