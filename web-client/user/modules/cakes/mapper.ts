@@ -10,8 +10,9 @@ export const mapCakeToModel = (dto: ICakeDTO): ICake => {
   return {
     id: dto._id,
     name: dto.name,
+    category: dto.category,
     description: dto.description,
-    slug: dto.info?.slug,
+    slug: dto.slug,
     price: dto.price,
     stock: dto.stock || 0,
     formattedPrice: new Intl.NumberFormat("vi-VN", {

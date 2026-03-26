@@ -50,6 +50,15 @@ export const CakeTable = () => {
       className: "font-bold text-gray-800 text-[15px]",
     },
     {
+      title: "Danh mục",
+      key: "category",
+      render: (_: any, record: ICake) => (
+        <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-xs font-semibold">
+          {(record as any).category?.name || "Chưa phân loại"}
+        </span>
+      ),
+    },
+    {
       title: "Đơn Giá",
       dataIndex: "formattedPrice",
       key: "price",

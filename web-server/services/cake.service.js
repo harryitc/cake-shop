@@ -3,10 +3,10 @@ const { createError } = require('../utils/response.utils');
 
 /**
  * Láy danh sách bánh (có phân trang và tìm kiếm theo tên)
- * @param {Object} params - { page, limit, search }
+ * @param {Object} params - { page, limit, search, category }
  * @returns {Object} { items, total, page, limit }
  */
-const getAll = async ({ page = 1, limit = 10, search = '' }) => {
+const getAll = async ({ page = 1, limit = 10, search = '', category = '' }) => {
   const query = {};
 
   if (search) {
@@ -14,10 +14,18 @@ const getAll = async ({ page = 1, limit = 10, search = '' }) => {
     query.name = { $regex: search, $options: 'i' };
   }
 
+  if (category) {
+    query.category = category;
+  }
+
   const skip = (page - 1) * limit;
 
   const [items, total] = await Promise.all([
-    Cake.find(query).skip(skip).limit(Number(limit)).sort({ createdAt: -1 }),
+    Cake.find(query)
+      .populate('category', 'name slug')
+      .skip(skip)
+      .limit(Number(limit))
+      .sort({ createdAt: -1 }),
     Cake.countDocuments(query),
   ]);
 
@@ -35,7 +43,7 @@ const getAll = async ({ page = 1, limit = 10, search = '' }) => {
  * @returns {Object} item
  */
 const getById = async (id) => {
-  const cake = await Cake.findById(id);
+  const cake = await Cake.findById(id).populate('category', 'name slug');
   if (!cake) {
     throw createError('Không tìm thấy sản phẩm bánh này', 404, 'NOT_FOUND');
   }

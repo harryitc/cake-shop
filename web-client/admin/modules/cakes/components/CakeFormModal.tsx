@@ -3,14 +3,16 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Modal, Form, Input, InputNumber, App, Upload, Button } from "antd";
+import { Modal, Form, Input, InputNumber, App, Upload, Button, Select } from "antd";
 import { PlusOutlined, UploadOutlined, LoadingOutlined } from "@ant-design/icons";
 import { useCreateCakeMutation, useUpdateCakeMutation, useUploadImageMutation } from "../hooks";
 import { ICake } from "../types";
 import { useEffect, useState } from "react";
+import { httpClient } from "@/lib/http";
 
 const cakeSchema = z.object({
   name: z.string().min(2, "Tên bánh phải có ít nhất 2 ký tự"),
+  category: z.string().min(1, "Vui lòng chọn danh mục"),
   description: z.string().optional(),
   price: z.number().min(1000, "Giá bánh phải lớn hơn 1000đ"),
   stock: z.number().min(0, "Số lượng không được âm").default(0),
@@ -19,11 +21,17 @@ const cakeSchema = z.object({
 
 type CakeFormValues = {
   name: string;
+  category: string;
   description?: string;
   price: number;
   stock: number;
   image_url?: string;
 };
+
+interface Category {
+  _id: string;
+  name: string;
+}
 
 interface CakeFormModalProps {
   open: boolean;
@@ -39,19 +47,33 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
   const { mutate: createCake, isPending: isCreating } = useCreateCakeMutation();
   const { mutate: updateCake, isPending: isUpdating } = useUpdateCakeMutation();
   const { mutate: uploadImage, isPending: isUploading } = useUploadImageMutation();
+  const [categories, setCategories] = useState<Category[]>([]);
   const isPending = isCreating || isUpdating;
 
   const { control, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<CakeFormValues>({
     resolver: zodResolver(cakeSchema) as any,
-    defaultValues: { name: "", description: "", price: 0, stock: 0, image_url: "" },
+    defaultValues: { name: "", category: "", description: "", price: 0, stock: 0, image_url: "" },
   });
 
   const currentImageUrl = watch("image_url");
 
   useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await httpClient<Category[]>('/categories');
+        setCategories(data);
+      } catch (err) {
+        console.error('Lỗi khi tải danh mục:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
     if (open) {
       if (initialData) {
         setValue("name", initialData.name);
+        setValue("category", (initialData as any).category?._id || (initialData as any).category || "");
         setValue("description", initialData.description || "");
         setValue("price", initialData.price);
         setValue("stock", initialData.stock || 0);
@@ -123,6 +145,27 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
             name="name"
             control={control}
             render={({ field }) => <Input {...field} placeholder="Ví dụ: Bánh Mousse Trà Xanh" size="large" className="rounded-lg" />}
+          />
+        </Form.Item>
+
+        <Form.Item
+          label={<span className="font-semibold text-gray-700">Danh Mục Sản Phẩm</span>}
+          validateStatus={errors.category ? "error" : ""}
+          help={errors.category?.message}
+          required
+        >
+          <Controller
+            name="category"
+            control={control}
+            render={({ field }) => (
+              <Select
+                {...field}
+                placeholder="Chọn danh mục"
+                size="large"
+                className="rounded-lg w-full"
+                options={categories.map(c => ({ label: c.name, value: c._id }))}
+              />
+            )}
           />
         </Form.Item>
 

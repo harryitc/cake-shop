@@ -7,6 +7,9 @@ const getAllQuerySchema = Joi.object({
   page: Joi.number().min(1).default(1),
   limit: Joi.number().min(1).max(100).default(10),
   search: Joi.string().allow('').optional(),
+  category: Joi.string().regex(/^[0-9a-fA-F]{24}$/).optional().messages({
+    'string.pattern.base': 'Category ID không hợp lệ',
+  }),
 });
 
 const idParamSchema = Joi.object({
@@ -18,6 +21,10 @@ const idParamSchema = Joi.object({
 const createBodySchema = Joi.object({
   name: Joi.string().trim().required().messages({
     'any.required': 'Vui lòng nhập tên bánh',
+  }),
+  category: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
+    'string.pattern.base': 'Category ID không hợp lệ',
+    'any.required': 'Vui lòng chọn danh mục',
   }),
   price: Joi.number().min(0).required().messages({
     'number.min': 'Giá tiền không được nhỏ hơn 0',
@@ -32,6 +39,9 @@ const createBodySchema = Joi.object({
 
 const updateBodySchema = Joi.object({
   name: Joi.string().trim().optional(),
+  category: Joi.string().regex(/^[0-9a-fA-F]{24}$/).optional().messages({
+    'string.pattern.base': 'Category ID không hợp lệ',
+  }),
   price: Joi.number().min(0).optional(),
   stock: Joi.number().min(0).optional(),
   description: Joi.string().allow('').optional(),

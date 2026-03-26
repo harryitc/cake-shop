@@ -1,8 +1,15 @@
+export interface ICategoryDTO {
+  _id: string;
+  name: string;
+  slug: string;
+}
+
 export interface ICakeDTO {
   _id: string;
   name: string;
   description?: string;
-  info?: { slug: string };
+  category?: ICategoryDTO | string;
+  slug?: string;
   price: number;
   stock?: number;
   image_url?: string;
@@ -14,6 +21,7 @@ export interface ICake {
   id: string;
   name: string;
   description?: string;
+  category?: ICategoryDTO;
   slug?: string;
   price: number;
   stock: number;
@@ -25,6 +33,7 @@ export interface ICake {
 
 export interface ICreateCakePayload {
   name: string;
+  category: string;
   description?: string;
   price: number;
   stock?: number;

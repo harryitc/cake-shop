@@ -27,7 +27,14 @@ export const CakeCard = ({ cake }: { cake: ICake }) => {
       >
         <div className="flex flex-col gap-2 h-full justify-between">
           <div>
-            <h3 className="text-lg font-bold text-gray-800 line-clamp-1">{cake.name}</h3>
+            <div className="flex justify-between items-start gap-2">
+              <h3 className="text-lg font-bold text-gray-800 line-clamp-1 flex-1">{cake.name}</h3>
+              {cake.category && (
+                <span className="px-2 py-0.5 bg-indigo-50 text-indigo-500 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
+                  {cake.category.name}
+                </span>
+              )}
+            </div>
             <p className="text-sm text-gray-500 line-clamp-2 mt-1">{cake.description}</p>
           </div>
           <div className="mt-2 text-xl font-bold text-indigo-600 flex justify-between items-center">

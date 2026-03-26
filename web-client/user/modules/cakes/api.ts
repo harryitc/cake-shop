@@ -2,9 +2,10 @@ import { httpClient } from "@/lib/http";
 import { ICakeDTO } from "./types";
 
 export const cakeApi = {
-  getAll: (search?: string) => {
-    let url = "/cakes";
-    if (search) url += `?search=${encodeURIComponent(search)}`;
+  getAll: (search?: string, category?: string) => {
+    let url = "/cakes?limit=100"; // Tăng limit để hiển thị nhiều hơn hoặc phân trang sau
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (category) url += `&category=${encodeURIComponent(category)}`;
     return httpClient<{ items: ICakeDTO[]; total: number }>(url, { method: "GET" });
   },
   getById: (id: string): Promise<ICakeDTO> => {
