@@ -1,6 +1,6 @@
 ---
 epic_id: epic_5_uploads
-title: "Uploads — Quản lý Hình ảnh"
+title: "FileSystem — Quản lý Hình ảnh"
 version: 1.0
 status: todo
 related_prd: ../../2_prd/prd_v2.md
@@ -8,7 +8,7 @@ related_architecture: ../../3_architecture/7_comprehensive_v2_design.md
 created_at: 2026-03-26
 ---
 
-# 🖼️ Epic 5: Uploads — Quản lý Hình ảnh
+# 🖼️ Epic 5: FileSystem — Quản lý Hình ảnh
 
 > Cho phép Admin upload ảnh trực tiếp lên server để quản lý sản phẩm chuyên nghiệp hơn.
 

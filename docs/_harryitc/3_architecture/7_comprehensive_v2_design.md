@@ -8,8 +8,8 @@ Tài liệu này mô tả chi tiết các thay đổi về mặt kỹ thuật ch
 
 ### 1.1 Backend Storage & Tracking
 - **Công nghệ:** Sử dụng `multer` middleware cho Express.
-- **Database Tracking:** Toàn bộ file tải lên được lưu vết trong Table `Upload`.
-- **Schema `Upload`:**
+- **Database Tracking:** Toàn bộ file tải lên được lưu vết trong Table `file_system`.
+- **Schema `FileSystem`:**
     - `filename_client`: Tên file gốc người dùng tải lên.
     - `filename_server`: Tên file duy nhất được server generate.
     - `ext`: Định dạng file.
@@ -19,7 +19,7 @@ Tài liệu này mô tả chi tiết các thay đổi về mặt kỹ thuật ch
 - **Quy trình:**
     1. Client gửi `multipart/form-data` chứa file ảnh.
     2. Multer xử lý lưu file vật lý vào `web-server/public/uploads/`.
-    3. Controller tạo bản ghi trong Table `Upload`.
+    3. Controller tạo bản ghi trong Table `file_system`.
     4. Server trả về đường dẫn `path`.
 - **Static Files:** Cấu hình Express phục vụ file tĩnh từ thư mục `public`.
 

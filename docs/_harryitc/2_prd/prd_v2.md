@@ -74,7 +74,7 @@ Xây dựng một website bán bánh kem chuyên nghiệp, hỗ trợ quản lý
 ## 5.1 Local Image Upload
 * Admin có thể chọn file từ máy tính khi tạo/sửa bánh.
 * Hệ thống lưu trữ file vật lý tại thư mục `/public/uploads` trên server.
-* **Mới:** Lưu trữ thông tin metadata (tên gốc, tên server, kích thước, đường dẫn) vào bảng `Upload` trong Database để quản lý.
+* **Mới:** Lưu trữ thông tin metadata (tên gốc, tên server, kích thước, đường dẫn) vào bảng `file_system` trong Database để quản lý.
 * API trả về đường dẫn `path` (relative), Frontend tự ghép với Domain để hiển thị.
 
 ## 5.2 User/Admin Profile

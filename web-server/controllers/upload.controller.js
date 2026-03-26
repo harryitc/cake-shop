@@ -1,4 +1,4 @@
-const Upload = require('../schemas/Upload.schema');
+const FileSystem = require('../schemas/FileSystem.schema');
 const { sendSuccess, createError } = require('../utils/response.utils');
 const path = require('path');
 
@@ -18,11 +18,11 @@ const uploadImage = async (req, res, next) => {
     };
 
     // Lưu thông tin vào database
-    const newUpload = await Upload.create(fileInfo);
+    const newFile = await FileSystem.create(fileInfo);
 
     return sendSuccess(
       res,
-      { path: newUpload.path },
+      { path: newFile.path },
       'Tải lên hình ảnh thành công',
       201
     );

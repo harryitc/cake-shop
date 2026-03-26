@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const uploadSchema = new mongoose.Schema(
+const fileSystemSchema = new mongoose.Schema(
   {
     filename_client: {
       type: String,
@@ -30,7 +30,8 @@ const uploadSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    collection: 'file_system', // Đặt tên table là file_system như yêu cầu
   }
 );
 
-module.exports = mongoose.model('Upload', uploadSchema);
+module.exports = mongoose.model('FileSystem', fileSystemSchema);
