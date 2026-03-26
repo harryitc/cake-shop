@@ -22,7 +22,8 @@ docker-compose up -d
 ```bash
 cd web-server
 npm install
-npm run dev # Starts server with nodemon
+# Cấu hình file .env (đặc biệt là các biến SMTP_*)
+npm run dev # Chạy tại http://localhost:5000
 ```
 
 **3. User Frontend (`web-client/user/`)**

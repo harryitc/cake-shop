@@ -40,13 +40,15 @@ Tài liệu này mô tả chi tiết các thay đổi về mặt kỹ thuật ch
     3. Lưu `path` trả về vào trường `avatar_url` của User.
 
 ### 2.2 Quên mật khẩu (Forgot Password)
-- **Cơ chế:** Token-based.
+- **Cơ chế:** Token-based kết hợp gửi Email thực tế.
+- **Công nghệ:** `nodemailer`.
 - **Quy trình:**
     1. User gửi Email qua `POST /auth/forgot-password`.
     2. Server tạo `reset_password_token` (chuỗi ngẫu nhiên) và `reset_password_expires` (thời hạn 1h).
-    3. Trả về token (hoặc log link nếu chưa có mail server).
-    4. User gửi mật khẩu mới qua `POST /auth/reset-password/:token`.
-    5. Server verify token hợp lệ -> Cập nhật password (hash) -> Xóa token.
+    3. Server gửi Email tự động chứa Link khôi phục (sử dụng HTML template) đến địa chỉ người dùng.
+    4. User nhấn Link -> Điều hướng về trang Reset Password trên Frontend kèm token.
+    5. User gửi mật khẩu mới qua `POST /auth/reset-password/:token`.
+    6. Server verify token hợp lệ -> Cập nhật password (hash) -> Xóa token.
 
 ### 2.3 Rate Limiting (Chống Spam)
 - **Middleware:** `express-rate-limit`.
