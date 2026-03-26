@@ -2,6 +2,9 @@ export interface IOrderDTO {
   _id: string;
   status: string;
   total_price: number;
+  coupon_code?: string;
+  discount_amount?: number;
+  final_price?: number;
   address: string;
   createdAt: string;
   user_id?: { email: string };
@@ -19,6 +22,9 @@ export interface IOrder {
   formattedDate: string;
   userEmail: string;
   itemsCount: number;
+  couponCode?: string;
+  discountAmount?: number;
+  finalPrice?: number;
 }
 
 export interface IUpdateStatusPayload {

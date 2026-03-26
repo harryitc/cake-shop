@@ -2,6 +2,9 @@ export interface IOrderDTO {
   _id: string;
   user_id: string | { email: string };
   total_price: number;
+  coupon_code?: string;
+  discount_amount?: number;
+  final_price?: number;
   status: 'PENDING' | 'CONFIRMED' | 'DONE' | 'REJECTED';
   address: string;
   items: Array<{
@@ -30,8 +33,12 @@ export interface IOrder {
   items: IOrderItem[];
   createdAt: string;
   formattedDate: string;
+  coupon_code?: string;
+  discount_amount?: number;
+  final_price?: number;
 }
 
 export interface ICreateOrderPayload {
   address: string;
+  coupon_code?: string;
 }

@@ -7,6 +7,7 @@ import { Form, Input, Button, App } from "antd";
 import { useRegisterMutation } from "../hooks";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useSyncCartMutation } from "../../cart/hooks";
 
 const registerSchema = z.object({
   email: z.string().min(1, "Vui lòng nhập email").email("Email không đúng định dạng"),
@@ -19,6 +20,7 @@ export const RegisterForm = () => {
   const { message } = App.useApp();
   const router = useRouter();
   const { mutate: register, isPending } = useRegisterMutation();
+  const { mutate: syncCart } = useSyncCartMutation();
 
   const { control, handleSubmit, formState: { errors } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -30,6 +32,10 @@ export const RegisterForm = () => {
       onSuccess: (res) => {
         localStorage.setItem("access_token", res.token);
         message.success("Đăng ký thành công!");
+        
+        // Sync giỏ hàng local lên server
+        syncCart();
+
         router.push("/cakes");
       },
       onError: (err) => {

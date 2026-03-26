@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Order = require('../schemas/Order.schema');
 const CartItem = require('../schemas/CartItem.schema');
 const Cake = require('../schemas/Cake.schema');
+const CouponService = require('./coupon.service');
 const { createError } = require('../utils/response.utils');
 
 const VALID_TRANSITIONS = {
@@ -11,7 +12,7 @@ const VALID_TRANSITIONS = {
   REJECTED: [],
 };
 
-const createOrder = async (userId, address) => {
+const createOrder = async (userId, address, couponCode = null) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -51,11 +52,29 @@ const createOrder = async (userId, address) => {
        await Cake.findByIdAndUpdate(item.cake_id, { $inc: { stock: -item.quantity } }, { session });
     }
 
+    // Xử lý Coupon
+    let discount_amount = 0;
+    let final_price = total_price;
+    let validatedCoupon = null;
+
+    if (couponCode) {
+      const couponResult = await CouponService.validateCoupon(couponCode, total_price);
+      validatedCoupon = couponResult.coupon;
+      discount_amount = couponResult.discountAmount;
+      final_price = couponResult.finalPrice;
+      
+      // Tăng số lần sử dụng mã
+      await CouponService.incrementUsedCount(couponCode, session);
+    }
+
     const newOrders = await Order.create(
       [
         {
           user_id: userId,
           total_price,
+          coupon_code: couponCode || '',
+          discount_amount,
+          final_price,
           status: 'PENDING',
           address,
           items,

@@ -56,9 +56,17 @@ export const OrderTable = () => {
     },
     {
       title: "Tổng Tiền",
-      dataIndex: "formattedTotal",
       key: "total",
-      className: "font-black text-indigo-600 text-[15px]",
+      render: (_: any, record: IOrder) => (
+        <div className="flex flex-col">
+          <span className="font-black text-indigo-600 text-[15px]">{record.formattedTotal}</span>
+          {record.discountAmount && record.discountAmount > 0 && (
+            <span className="text-[10px] text-green-500 font-bold">
+               Giảm: {new Intl.NumberFormat("vi-VN").format(record.discountAmount)}đ ({record.couponCode})
+            </span>
+          )}
+        </div>
+      ),
     },
     {
       title: "Lúc Đặt",

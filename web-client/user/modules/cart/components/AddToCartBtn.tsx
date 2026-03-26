@@ -3,21 +3,16 @@
 import { Button, App } from "antd";
 import { ShoppingCartOutlined } from "@ant-design/icons";
 import { useAddToCartMutation } from "../hooks";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export const AddToCartBtn = ({ cakeId, quantity = 1 }: { cakeId: string; quantity?: number }) => {
   const { message } = App.useApp();
   const router = useRouter();
+  const pathname = usePathname();
   const { mutate, isPending } = useAddToCartMutation();
 
   const handleAdd = () => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-    if (!token) {
-      message.warning("Vui lòng đăng nhập để mua hàng");
-      router.push("/login");
-      return;
-    }
-
+    // Không cần check token ở đây nữa, vì hook useAddToCartMutation đã xử lý việc switch giữa local và api
     mutate(
       { cake_id: cakeId, quantity },
       {

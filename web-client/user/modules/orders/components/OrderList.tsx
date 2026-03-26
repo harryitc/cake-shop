@@ -12,7 +12,7 @@ export const OrderList = () => {
   const router = useRouter();
   const { data: orders, isLoading, isError } = useOrdersQuery();
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
-  const [selectedItemForReview, setSelectedItemForReview] = useState<{cakeId: string, orderId: string, cakeName: string} | null>(null);
+  const [selectedItemForReview, setSelectedItemForReview] = useState<{ cakeId: string, orderId: string, cakeName: string } | null>(null);
 
   if (isLoading) return <div className="p-8 max-w-4xl mx-auto"><Skeleton active paragraph={{ rows: 8 }} /></div>;
   if (isError) return <div className="p-8 text-center text-red-500">Không thể tải danh sách đơn hàng.</div>;
@@ -26,7 +26,7 @@ export const OrderList = () => {
   );
 
   const getStatusTag = (status: string) => {
-    switch(status) {
+    switch (status) {
       case "PENDING": return <Tag color="gold" className="px-3 py-1 font-semibold rounded-md border-amber-300">Chờ xác nhận</Tag>;
       case "CONFIRMED": return <Tag color="green" className="px-3 py-1 font-semibold rounded-md border-green-300">Đã xác nhận</Tag>;
       case "DONE": return <Tag color="success" className="px-3 py-1 font-semibold rounded-md border-blue-400">Hoàn thành</Tag>;
@@ -58,7 +58,18 @@ export const OrderList = () => {
                   <div className="mb-2 space-y-1 mt-3">
                     <span className="text-gray-600 text-[15px] block">Thời gian đặt: {order.formattedDate}</span>
                     <span className="text-gray-600 text-[15px] block max-w-lg truncate" title={order.address}>Giao đến: <span className="font-medium text-gray-800">{order.address}</span></span>
-                    <span className="text-gray-600 text-[15px] block pt-1">Tổng tiền: <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">{order.formattedTotal}</span></span>
+                    <span className="text-gray-600 text-[15px] block pt-1">
+                      Tổng tiền: 
+                      {order.discount_amount && order.discount_amount > 0 ? (
+                        <span className="ml-2">
+                          <span className="line-through text-gray-400 mr-2">{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(order.totalPrice)}</span>
+                          <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">{order.formattedTotal}</span>
+                          <Tag color="green" className="ml-2 border-none bg-green-50 text-green-600 text-xs">Mã: {order.coupon_code}</Tag>
+                        </span>
+                      ) : (
+                        <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md ml-2">{order.formattedTotal}</span>
+                      )}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -70,21 +81,21 @@ export const OrderList = () => {
                   <div key={idx} className="flex justify-between items-center bg-gray-50/50 p-3 rounded-xl border border-gray-50">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-white rounded-lg border border-gray-100 overflow-hidden">
-                        <img 
-                          src={item.cake_id.image_url ? (item.cake_id.image_url.startsWith('http') ? item.cake_id.image_url : `http://localhost:5000${item.cake_id.image_url}`) : "https://placehold.co/100x100?text=Cake"} 
-                          alt="cake" 
+                        <img
+                          src={item?.cake_id?.image_url ? (item?.cake_id?.image_url.startsWith('http') ? item?.cake_id?.image_url : `http://localhost:5000${item?.cake_id.image_url}`) : "https://placehold.co/100x100?text=Cake"}
+                          alt="cake"
                           className="w-full h-full object-cover"
                         />
                       </div>
                       <div>
-                        <div className="font-bold text-gray-800">{item.cake_id.name}</div>
+                        <div className="font-bold text-gray-800">{item?.cake_id?.name}</div>
                         <div className="text-xs text-gray-400">Số lượng: {item.quantity} | Giá: {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(item.price_at_buy)}</div>
                       </div>
                     </div>
                     {order.status === 'DONE' && (
-                      <Button 
-                        icon={<StarOutlined />} 
-                        onClick={() => handleReviewClick(item.cake_id._id || item.cake_id, order.id, item.cake_id.name)}
+                      <Button
+                        icon={<StarOutlined />}
+                        onClick={() => handleReviewClick(item?.cake_id?._id || item?.cake_id, order.id, item?.cake_id?.name)}
                         className="rounded-lg font-semibold hover:border-indigo-400 hover:text-indigo-600"
                       >
                         Đánh giá

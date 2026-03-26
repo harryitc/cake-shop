@@ -195,14 +195,22 @@ export const CartTable = () => {
               type="primary" 
               size="large" 
               className="h-12 px-8 bg-black hover:bg-gray-800 font-bold text-[16px] rounded-xl shadow-lg w-full md:w-auto"
-              onClick={() => setModalOpen(true)}
+              onClick={() => {
+                const token = localStorage.getItem("access_token");
+                if (!token) {
+                  message.warning("Vui lòng đăng nhập để tiến hành đặt hàng");
+                  router.push("/login?redirect=/cart");
+                  return;
+                }
+                setModalOpen(true);
+              }}
             >
               Tiến hành Đặt hàng
             </Button>
           </div>
         </div>
       </div>
-      <CheckoutModal open={modalOpen} onCancel={() => setModalOpen(false)} />
+      <CheckoutModal open={modalOpen} onCancel={() => setModalOpen(false)} totalPrice={cartLocal.total} />
     </>
   );
 };

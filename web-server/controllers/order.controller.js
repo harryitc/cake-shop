@@ -7,6 +7,7 @@ const createOrderSchema = Joi.object({
     'string.empty': 'Vui lòng cung cấp địa chỉ giao hàng',
     'any.required': 'Vui lòng cung cấp địa chỉ giao hàng',
   }),
+  coupon_code: Joi.string().trim().uppercase().allow('').optional(),
 });
 
 const idParamSchema = Joi.object({
@@ -28,7 +29,7 @@ const createOrder = async (req, res, next) => {
     const { error, value } = createOrderSchema.validate(req.body);
     if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
 
-    const order = await orderService.createOrder(req.user.userId, value.address);
+    const order = await orderService.createOrder(req.user.userId, value.address, value.coupon_code);
     return sendSuccess(res, { order }, 'Đặt hàng thành công', 201);
   } catch (err) {
     next(err);

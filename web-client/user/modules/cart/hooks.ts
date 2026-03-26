@@ -1,15 +1,25 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { cartApi } from "./api";
+import { getLocalCart, addToLocalCart, removeFromLocalCart, updateLocalCartItemQuantity, clearLocalCart } from "./local-cart";
 
-// Chúng ta tính toán mapping trực tiếp trong UI để đơn giản hóa, 
-// hoặc có thể mapping tại đây. 
+const isUserLoggedIn = () => {
+  if (typeof window === "undefined") return false;
+  return !!localStorage.getItem("access_token");
+};
 
 export const useCartQuery = () => {
   return useQuery({
     queryKey: ["cart"],
     queryFn: async () => {
-      const data = await cartApi.getCart();
-      return data; // Model raw để qua UI mapping cho tiện import
+      if (isUserLoggedIn()) {
+        try {
+          return await cartApi.getCart();
+        } catch (err) {
+          // Nếu lỗi 401 hoặc token hết hạn, fallback về local hoặc rỗng
+          return { items: [], total: 0 };
+        }
+      }
+      return getLocalCart();
     },
   });
 };
@@ -17,7 +27,12 @@ export const useCartQuery = () => {
 export const useAddToCartMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: cartApi.addItem,
+    mutationFn: async ({ cake_id, quantity }: { cake_id: string; quantity?: number }) => {
+      if (isUserLoggedIn()) {
+        return cartApi.addItem({ cake_id, quantity });
+      }
+      return addToLocalCart(cake_id, quantity);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
     },
@@ -27,7 +42,12 @@ export const useAddToCartMutation = () => {
 export const useRemoveCartItemMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: cartApi.removeItem,
+    mutationFn: async (id: string) => {
+      if (isUserLoggedIn()) {
+        return cartApi.removeItem(id);
+      }
+      return removeFromLocalCart(id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
     },
@@ -37,7 +57,33 @@ export const useRemoveCartItemMutation = () => {
 export const useUpdateCartItemQuantityMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, quantity }: { id: string; quantity: number }) => cartApi.updateItemQuantity(id, quantity),
+    mutationFn: async ({ id, quantity }: { id: string; quantity: number }) => {
+      if (isUserLoggedIn()) {
+        return cartApi.updateItemQuantity(id, quantity);
+      }
+      return updateLocalCartItemQuantity(id, quantity);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+    },
+  });
+};
+
+export const useSyncCartMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      if (!isUserLoggedIn()) return;
+      const localCart = getLocalCart();
+      if (localCart.items.length === 0) return;
+
+      // Sync từng item lên server
+      for (const item of localCart.items) {
+        await cartApi.addItem({ cake_id: item.cake._id, quantity: item.quantity });
+      }
+      
+      clearLocalCart();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
     },

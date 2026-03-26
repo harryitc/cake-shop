@@ -57,10 +57,10 @@ updated_at: 2026-03-26
     - [x] Backend: Review Schema, Rating calculation logic
     - [x] User: Display reviews, post review form (Order DONE only)
     - [x] Admin: Manage/Approve reviews
-- [ ] **[V3-3] Hệ thống Mã giảm giá (Coupon)**
-    - [ ] Backend: Coupon Schema, Validation logic
-    - [ ] User: Apply coupon at checkout
-    - [ ] Admin: CRUD coupons
+- [x] **[V3-3] Hệ thống Mã giảm giá (Coupon)**
+    - [x] Backend: Coupon Schema, Validation logic
+    - [x] User: Apply coupon at checkout
+    - [x] Admin: CRUD coupons
 - [ ] **[V3-4] Thông báo Email tự động**
     - [ ] Setup SMTP & Templates
     - [ ] Order status change triggers

@@ -5,8 +5,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, Input, Button, App } from "antd";
 import { useLoginMutation } from "../hooks";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useSyncCartMutation } from "../../cart/hooks";
+import { Suspense } from "react";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Vui lòng nhập email").email("Email không đúng định dạng"),
@@ -15,10 +17,14 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-export const LoginForm = ({ mode = "user" }: { mode?: "user" | "admin" }) => {
+const LoginFormContent = ({ mode = "user" }: { mode?: "user" | "admin" }) => {
   const { message } = App.useApp();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
+
   const { mutate: login, isPending } = useLoginMutation();
+  const { mutate: syncCart } = useSyncCartMutation();
 
   const { control, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -30,6 +36,12 @@ export const LoginForm = ({ mode = "user" }: { mode?: "user" | "admin" }) => {
       onSuccess: (res) => {
         localStorage.setItem("access_token", res.token);
         message.success("Đăng nhập thành công");
+
+        // Sync giỏ hàng local lên server nếu là user
+        if (res.user.role === "user") {
+          syncCart();
+        }
+
         // Kiểm tra quyền đối với trang admin
         if (mode === "admin" && res.user.role === "admin") {
           router.push("/admin/cakes");
@@ -37,8 +49,12 @@ export const LoginForm = ({ mode = "user" }: { mode?: "user" | "admin" }) => {
           message.error("Tài khoản của bạn không có quyền Admin!");
           localStorage.removeItem("access_token");
         } else {
-          // Trang user
-          router.push("/cakes");
+          // Trang user - Ưu tiên quay lại trang trước đó nếu có redirect param
+          if (redirect) {
+            router.push(decodeURIComponent(redirect));
+          } else {
+            router.push("/cakes");
+          }
         }
       },
       onError: (err) => {
@@ -109,3 +125,9 @@ export const LoginForm = ({ mode = "user" }: { mode?: "user" | "admin" }) => {
     </div>
   );
 };
+
+export const LoginForm = (props: { mode?: "user" | "admin" }) => (
+  <Suspense fallback={<div>Đang tải...</div>}>
+    <LoginFormContent {...props} />
+  </Suspense>
+);

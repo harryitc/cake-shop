@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { orderApi } from "./api";
-import { IOrder, IOrderDTO } from "./types";
+import { IOrder, IOrderDTO, ICreateOrderPayload } from "./types";
 
 const formatPrice = (price: number) => 
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
@@ -9,7 +9,7 @@ export const mapOrderToModel = (dto: IOrderDTO): IOrder => ({
   id: dto._id,
   status: dto.status,
   totalPrice: dto.total_price,
-  formattedTotal: formatPrice(dto.total_price),
+  formattedTotal: formatPrice(dto.final_price || dto.total_price),
   address: dto.address,
   itemsCount: dto.items_count || dto.items?.length || 0,
   items: dto.items || [],
@@ -17,6 +17,9 @@ export const mapOrderToModel = (dto: IOrderDTO): IOrder => ({
   formattedDate: new Date(dto.createdAt).toLocaleDateString("vi-VN", { 
     hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" 
   }),
+  coupon_code: dto.coupon_code,
+  discount_amount: dto.discount_amount,
+  final_price: dto.final_price,
 });
 
 export const useOrdersQuery = () => {
@@ -33,7 +36,7 @@ export const useOrdersQuery = () => {
 export const useCreateOrderMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { address: string }) => orderApi.create(payload),
+    mutationFn: (payload: ICreateOrderPayload) => orderApi.create(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["orders"] });

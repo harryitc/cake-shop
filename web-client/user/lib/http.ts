@@ -22,8 +22,7 @@ export async function httpClient<T>(
   if (!response.ok) {
     if (response.status === 401 && typeof window !== "undefined") {
       localStorage.removeItem("access_token");
-      // Redirect
-      window.location.href = "/login";
+      // Không tự động redirect ở đây để cho phép Guest xem nội dung public
     }
     throw new Error(payload?.error?.message || "Đã xảy ra lỗi hệ thống API");
   }
