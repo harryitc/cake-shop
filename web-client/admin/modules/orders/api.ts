@@ -3,6 +3,6 @@ import { IOrderDTO, IUpdateStatusPayload } from "./types";
 
 export const orderApi = {
   getAll: () => httpClient<{ items: IOrderDTO[]; total: number }>("/orders", { method: "GET" }),
-  updateStatus: ({ id, payload }: { id: string; payload: IUpdateStatusPayload }) => 
-    httpClient(`/orders/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  updateStatus: ({ id, payload }: { id: string; payload: IUpdateStatusPayload }) =>
+    httpClient(`/orders/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
 };

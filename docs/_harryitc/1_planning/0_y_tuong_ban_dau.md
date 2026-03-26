@@ -98,7 +98,7 @@ DELETE /api/v1/cart/items/:id
 POST   /api/v1/orders
 GET    /api/v1/orders        (user: own orders)
 GET    /api/v1/orders/:id
-PATCH  /api/v1/orders/:id    (admin: update status)
+PUT  /api/v1/orders/:id    (admin: update status)
 ```
 
 ---

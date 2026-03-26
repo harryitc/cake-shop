@@ -39,7 +39,7 @@ User có thể **tạo đơn hàng** từ giỏ hàng hiện tại (kèm địa 
 - [x] Schema `Order` (với array items `OrderItem` schema embedded)
 - [x] API POST tạo đơn (dùng Mongoose Transaction)
 - [x] API GET đơn hàng (user: đơn mình | admin: tất cả)
-- [x] API PATCH cập nhật trạng thái đơn (chỉ admin, không quay ngược)
+- [x] API PUT cập nhật trạng thái đơn (chỉ admin, không quay ngược)
 - [x] Trang `/orders` — lịch sử đơn User
 - [x] Trang `/admin/orders` — bảng tất cả đơn + cập nhật trạng thái
 
@@ -54,7 +54,7 @@ User có thể **tạo đơn hàng** từ giỏ hàng hiện tại (kèm địa 
 
 - [ ] [`1_create_order.md`](./1_create_order.md) — API tạo đơn với Transaction + nhập địa chỉ
 - [ ] [`2_order_list.md`](./2_order_list.md) — API GET đơn + Trang lịch sử đơn User
-- [ ] [`3_update_order_status.md`](./3_update_order_status.md) — API PATCH + Trang admin quản lý đơn
+- [ ] [`3_update_order_status.md`](./3_update_order_status.md) — API PUT + Trang admin quản lý đơn
 
 ---
 
@@ -64,7 +64,7 @@ User có thể **tạo đơn hàng** từ giỏ hàng hiện tại (kèm địa 
 - [ ] Nếu giỏ rỗng: trả `400 "Giỏ hàng trống"`
 - [ ] Giá bánh trong `order.items` được snapshot tại thời điểm đặt hàng
 - [ ] `GET /api/v1/orders` — user chỉ thấy đơn của mình
-- [ ] `PATCH /api/v1/orders/:id` — chỉ admin, transition hợp lệ (PENDING→CONFIRMED, CONFIRMED→DONE/REJECTED)
+- [ ] `PUT /api/v1/orders/:id` — chỉ admin, transition hợp lệ (PENDING→CONFIRMED, CONFIRMED→DONE/REJECTED)
 - [ ] Trang `/orders` User hiển thị lịch sử + trạng thái đơn
 - [ ] Trang `/admin/orders` Admin có thể đổi trạng thái qua dropdown/select
 

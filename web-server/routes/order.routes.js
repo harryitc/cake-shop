@@ -10,6 +10,6 @@ router.use(authenticate);
 router.post('/', orderLimiter, orderController.createOrder);
 router.get('/', orderController.getOrders);
 router.get('/:id', orderController.getOrderById);
-router.patch('/:id', requireRole('admin'), orderController.updateStatus);
+router.put('/:id', requireRole('admin'), orderController.updateStatus);
 
 module.exports = router;

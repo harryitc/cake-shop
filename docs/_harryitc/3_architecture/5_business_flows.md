@@ -85,6 +85,6 @@ sequenceDiagram
 Toàn bộ Vòng đời sống (Lifecycle) của một Đơn hàng được mô tả thực tế dựa theo PRD:
 
 1. **Trạng thái PENDING:** Mặc định của Đơn hàng khi User vừa đặt xong (`Flow số 2`). Đơn hàng chưa được quản trị viên đụng tới.
-2. **Trạng thái CONFIRMED:** Admin đăng nhập trang Dashboard `web-client/admin`. Admin click chọn nút "Xác nhận Đơn". Hàm gọi API `PATCH /api/orders/:id/status` với body `{ status: 'CONFIRMED' }`. 
+2. **Trạng thái CONFIRMED:** Admin đăng nhập trang Dashboard `web-client/admin`. Admin click chọn nút "Xác nhận Đơn". Hàm gọi API `PUT /api/orders/:id/status` với body `{ status: 'CONFIRMED' }`. 
 3. **Trạng thái DONE:** Shipper (tùy định nghĩa) giao hàng thành công, Admin thao tác cập nhật Status cuối cùng là `DONE`. Vòng đời hoá đơn kết thúc.
 4. **Trạng thái REJECTED:** Hệ thống sụp tiệm / khách bom hàng / khách gọi điện nhờ xoá. Admin có quyền thủ công huỷ đơn đưa về `REJECTED`. Bản ghi không bao giờ bị lệnh `DELETE` cứng xoá khỏi cơ sở dữ liệu.

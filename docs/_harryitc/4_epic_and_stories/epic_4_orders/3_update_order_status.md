@@ -37,7 +37,7 @@ Xây dựng API cập nhật trạng thái đơn hàng (chỉ Admin) và trang q
 
 **API Endpoint:**
 ```
-PATCH /api/v1/orders/:id    → Admin only
+PUT /api/v1/orders/:id    → Admin only
 ```
 
 **Request body:**
@@ -62,13 +62,13 @@ REJECTED   → [KHÔNG được phép chuyển]
 | Mã lỗi | Trường hợp |
 |--------|-----------|
 | 400 | Chuyển trạng thái không hợp lệ (VD: DONE → PENDING) |
-| 403 | Role user gọi PATCH |
+| 403 | Role user gọi PUT |
 | 404 | Order không tồn tại |
 
 **Files cần tạo / sửa:**
 - [ ] `services/order.service.js` — hàm `updateStatus(orderId, newStatus)` với state machine check
 - [ ] `controllers/order.controller.js` — handler `updateStatus`
-- [ ] `routes/order.routes.js` — `PATCH /:id` require `authenticate + requireRole('admin')`
+- [ ] `routes/order.routes.js` — `PUT /:id` require `authenticate + requireRole('admin')`
 
 ---
 
@@ -83,7 +83,7 @@ REJECTED   → [KHÔNG được phép chuyển]
 
 ## ✅ Acceptance Criteria
 
-- [ ] `PATCH /api/v1/orders/:id` với role user → `403`
+- [ ] `PUT /api/v1/orders/:id` với role user → `403`
 - [ ] Chuyển từ `DONE` sang bất kỳ → `400`
 - [ ] Chuyển từ `PENDING` → `CONFIRMED` → `200`, trạng thái cập nhật đúng
 - [ ] Trang `/admin/orders` hiển thị tất cả đơn với dropdown chọn trạng thái
