@@ -4,7 +4,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Modal, Form, Input, InputNumber, App, Upload, Button, Select, Tabs, Space, Divider, Tag } from "antd";
-import { PlusOutlined, UploadOutlined, LoadingOutlined, MinusCircleOutlined, MagicWandOutlined, ThunderboltOutlined } from "@ant-design/icons";
+import { PlusOutlined, UploadOutlined, LoadingOutlined, MinusCircleOutlined, BulbOutlined, ThunderboltOutlined } from "@ant-design/icons";
 // ... (rest of imports)
 
 const CAKE_PRESETS = {
@@ -114,7 +114,7 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
 
   const { control, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<CakeFormValues>({
     resolver: zodResolver(cakeSchema) as any,
-    defaultValues: { 
+    defaultValues: {
       name: "", category: "", categories: [], description: "", price: 0, stock: 0, image_url: "",
       variants: [], tags: [], ingredients: [], specifications: { weight: "", servings: "" }
     },
@@ -166,13 +166,13 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
           weight: initialData.specifications?.weight || "",
           servings: initialData.specifications?.servings || ""
         });
-        
+
         const path = initialData.imageUrl.startsWith("http") && !initialData.imageUrl.includes(API_DOMAIN)
-          ? initialData.imageUrl 
+          ? initialData.imageUrl
           : initialData.imageUrl.replace(API_DOMAIN, "");
         setValue("image_url", path === "https://placehold.co/100x100?text=No+Image" ? "" : path);
       } else {
-        reset({ 
+        reset({
           name: "", category: "", categories: [], description: "", price: 0, stock: 0, image_url: "",
           variants: [], tags: [], ingredients: [], specifications: { weight: "", servings: "" }
         });
@@ -215,6 +215,40 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
 
   const renderBasicInfo = () => (
     <div className="space-y-4">
+      {!isEditing && (
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-2xl border border-indigo-100/50 mb-2">
+          <p className="text-[11px] font-black text-indigo-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <BulbOutlined /> Trợ lý nhập liệu nhanh
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="small"
+              icon={<ThunderboltOutlined />}
+              onClick={() => applyPreset('MOUSSE')}
+              className="rounded-lg font-bold border-indigo-200 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all"
+            >
+              🍰 Mousse Cake
+            </Button>
+            <Button
+              size="small"
+              icon={<ThunderboltOutlined />}
+              onClick={() => applyPreset('BIRTHDAY')}
+              className="rounded-lg font-bold border-purple-200 text-purple-600 hover:bg-purple-600 hover:text-white transition-all"
+            >
+              🎂 Birthday Cake
+            </Button>
+            <Button
+              size="small"
+              icon={<ThunderboltOutlined />}
+              onClick={() => applyPreset('HEALTHY')}
+              className="rounded-lg font-bold border-green-200 text-green-600 hover:bg-green-600 hover:text-white transition-all"
+            >
+              🌿 Healthy/Keto
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Form.Item label={<span className="font-semibold text-gray-700">Tên Bánh</span>} validateStatus={errors.name ? "error" : ""} help={errors.name?.message} required>
         <Controller name="name" control={control} render={({ field }) => <Input {...field} placeholder="Ví dụ: Bánh Mousse Trà Xanh" size="large" className="rounded-xl h-[45px]" />} />
       </Form.Item>
@@ -244,6 +278,17 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
       </div>
 
       <Form.Item label={<span className="font-semibold text-gray-700">Mô Tả Sản Phẩm</span>}>
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {QUICK_PHRASES.map((phrase, idx) => (
+            <Tag
+              key={idx}
+              className="cursor-pointer hover:bg-indigo-50 hover:text-indigo-600 transition-colors border-gray-200 rounded-md text-[11px]"
+              onClick={() => appendDescription(phrase)}
+            >
+              + {phrase}
+            </Tag>
+          ))}
+        </div>
         <Controller name="description" control={control} render={({ field }) => <Input.TextArea {...field} rows={4} placeholder="Nhập cấu tạo, thành phần..." className="rounded-xl" />} />
       </Form.Item>
     </div>
@@ -257,7 +302,7 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
           Thêm các tùy chọn như <b>Kích thước (Size)</b> khác nhau. Nếu không có biến thể, hệ thống sẽ sử dụng <b>Đơn Giá Mặc Định</b> ở tab Thông tin cơ bản.
         </div>
       </div>
-      
+
       <Form.List name="variants">
         {(fields, { add, remove }) => (
           <div className="space-y-4">
@@ -301,7 +346,7 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
 
       <Divider className="my-2" />
       <h4 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest mb-4">Thông số kỹ thuật</h4>
-      
+
       <div className="grid grid-cols-2 gap-6">
         <Form.Item label={<span className="font-semibold text-gray-700">Trọng Lượng (vd: 500g)</span>}>
           <Controller name="specifications.weight" control={control} render={({ field }) => <Input {...field} placeholder="Cân nặng ước tính" size="large" className="rounded-xl" />} />
