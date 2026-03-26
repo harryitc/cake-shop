@@ -74,35 +74,51 @@ export const OrderList = () => {
                 </div>
               </div>
 
-              <Divider className="my-2" />
+              <Divider className="my-2 opacity-50" />
 
-              <div className="space-y-4">
-                {order.items.map((item: any, idx: number) => (
-                  <div key={idx} className="flex justify-between items-center bg-gray-50/50 p-3 rounded-xl border border-gray-50">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-white rounded-lg border border-gray-100 overflow-hidden">
-                        <img
-                          src={item?.cake_id?.image_url ? (item?.cake_id?.image_url.startsWith('http') ? item?.cake_id?.image_url : `http://localhost:5000${item?.cake_id.image_url}`) : "https://placehold.co/100x100?text=Cake"}
-                          alt="cake"
-                          className="w-full h-full object-cover"
-                        />
+              <div className="mt-2">
+                <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  Chi tiết sản phẩm
+                  <div className="h-px bg-gray-100 flex-grow"></div>
+                </h4>
+                <div className="space-y-2">
+                  {order.items.map((item: any, idx: number) => (
+                    <div key={idx} className="flex justify-between items-center bg-gray-50/50 p-3 rounded-xl border border-gray-50 hover:bg-white hover:shadow-sm transition-all group">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-white rounded-lg border border-gray-100 overflow-hidden shadow-sm group-hover:scale-105 transition-transform">
+                          <img
+                            src={item?.cake_id?.image_url ? (item?.cake_id?.image_url.startsWith('http') ? item?.cake_id?.image_url : `http://localhost:5000${item?.cake_id.image_url}`) : "https://placehold.co/100x100?text=Cake"}
+                            alt="cake"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <div className="font-bold text-gray-800 text-[15px] group-hover:text-indigo-600 transition-colors">{item?.cake_id?.name || "Sản phẩm không khả dụng"}</div>
+                          <div className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
+                            <span className="bg-gray-200/50 px-1.5 py-0.5 rounded text-gray-600 font-medium">x{item.quantity}</span>
+                            <span className="text-gray-300">•</span>
+                            <span>{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(item.price_at_buy)}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-bold text-gray-800">{item?.cake_id?.name}</div>
-                        <div className="text-xs text-gray-400">Số lượng: {item.quantity} | Giá: {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(item.price_at_buy)}</div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right hidden sm:block">
+                           <div className="font-bold text-gray-700 text-[14px]">{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(item.price_at_buy * item.quantity)}</div>
+                        </div>
+                        {order.status === 'DONE' && (
+                          <Button
+                            icon={<StarOutlined />}
+                            size="small"
+                            onClick={() => handleReviewClick(item?.cake_id?._id || item?.cake_id, order.id, item?.cake_id?.name)}
+                            className="rounded-lg font-semibold border-indigo-100 text-indigo-50 hover:bg-indigo-100 transition-colors"
+                          >
+                            Đánh giá
+                          </Button>
+                        )}
                       </div>
                     </div>
-                    {order.status === 'DONE' && (
-                      <Button
-                        icon={<StarOutlined />}
-                        onClick={() => handleReviewClick(item?.cake_id?._id || item?.cake_id, order.id, item?.cake_id?.name)}
-                        className="rounded-lg font-semibold hover:border-indigo-400 hover:text-indigo-600"
-                      >
-                        Đánh giá
-                      </Button>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </List.Item>

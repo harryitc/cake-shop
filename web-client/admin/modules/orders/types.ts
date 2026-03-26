@@ -1,3 +1,15 @@
+export interface IOrderItem {
+  cake_id: {
+    _id: string;
+    name: string;
+    price: number;
+    image_url: string;
+    slug: string;
+  } | string | any;
+  quantity: number;
+  price_at_buy: number;
+}
+
 export interface IOrderDTO {
   _id: string;
   status: string;
@@ -7,8 +19,14 @@ export interface IOrderDTO {
   final_price?: number;
   address: string;
   createdAt: string;
-  user_id?: { email: string };
-  items?: any[];
+  user_id?: { 
+    _id: string;
+    email: string;
+    full_name?: string;
+    phone?: string;
+    avatar_url?: string;
+  };
+  items?: IOrderItem[];
   items_count?: number;
 }
 
@@ -20,8 +38,12 @@ export interface IOrder {
   address: string;
   createdAt: string;
   formattedDate: string;
+  userName: string;
   userEmail: string;
+  userPhone: string;
+  userAvatar?: string;
   itemsCount: number;
+  items: IOrderItem[];
   couponCode?: string;
   discountAmount?: number;
   finalPrice?: number;

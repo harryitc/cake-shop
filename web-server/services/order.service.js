@@ -104,6 +104,7 @@ const getOrders = async (userId, role) => {
   }
 
   const orders = await Order.find(query)
+    .populate('user_id', 'email full_name phone avatar_url')
     .populate('items.cake_id', 'name price image_url slug')
     .sort({ createdAt: -1 });
   
@@ -119,12 +120,14 @@ const getOrders = async (userId, role) => {
 };
 
 const getOrderById = async (orderId, userId, role) => {
-  const order = await Order.findById(orderId).populate('items.cake_id', 'name price image_url slug');
+  const order = await Order.findById(orderId)
+    .populate('user_id', 'email full_name phone avatar_url')
+    .populate('items.cake_id', 'name price image_url slug');
   if (!order) {
     throw createError('Đơn hàng không tồn tại', 404, 'NOT_FOUND');
   }
 
-  if (role !== 'admin' && order.user_id.toString() !== userId) {
+  if (role !== 'admin' && order.user_id._id.toString() !== userId) {
     throw createError('Đơn hàng không tồn tại', 404, 'NOT_FOUND');
   }
 
