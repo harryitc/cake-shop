@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../schemas/User.schema');
 const { createError } = require('../utils/response.utils');
+const { sendResetPasswordEmail } = require('../utils/email.utils');
 
 /**
  * Đăng ký tài khoản mới
@@ -166,7 +167,9 @@ const forgotPassword = async (email) => {
 
   await user.save();
 
-  // Trong thực tế sẽ gửi resetToken qua email. Hiện tại trả về để test/log.
+  // Gửi email đặt lại mật khẩu
+  await sendResetPasswordEmail(user.email, resetToken);
+
   return resetToken;
 };
 
