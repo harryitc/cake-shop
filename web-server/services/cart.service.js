@@ -9,7 +9,7 @@ const { createError } = require('../utils/response.utils');
  */
 const getCart = async (userId) => {
   const items = await CartItem.find({ user_id: userId })
-    .populate('cake_id', 'name price image_url slug')
+    .populate('cake_id', 'name price image_url slug stock')
     .sort({ createdAt: -1 });
 
   // Tính subtotal cho mỗi items và tổng total

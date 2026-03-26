@@ -1,15 +1,88 @@
 "use client";
 
 import { Table, Button, Skeleton, Empty, Popconfirm, App, InputNumber } from "antd";
-import { DeleteOutlined } from "@ant-design/icons";
+import { DeleteOutlined, MinusOutlined, PlusOutlined } from "@ant-design/icons";
 import { useCartQuery, useRemoveCartItemMutation, useUpdateCartItemQuantityMutation } from "../hooks";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CheckoutModal } from "../../orders/components/CheckoutModal";
 
 const formatPrice = (price: number) => 
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
+
+const QuantityControl = ({ 
+  value, 
+  max, 
+  onUpdate 
+}: { 
+  value: number; 
+  max: number; 
+  onUpdate: (num: number) => void 
+}) => {
+  const [localValue, setLocalValue] = useState(value);
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  const handleChange = (newValue: number | null) => {
+    if (newValue === null) return;
+    setLocalValue(newValue);
+  };
+
+  const syncUpdate = (v: number) => {
+    if (v >= 1 && v <= max) {
+      if (v !== value) onUpdate(v);
+    } else {
+      setLocalValue(value);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1 bg-gray-50 rounded-lg p-1 w-fit border border-gray-100 shadow-sm">
+      <Button 
+        type="text"
+        size="small"
+        className="flex items-center justify-center hover:!bg-white hover:!text-indigo-600 transition-all rounded-md h-8 w-8"
+        icon={<MinusOutlined className="text-[12px]" />} 
+        onClick={() => {
+          if (localValue > 1) {
+            const next = localValue - 1;
+            setLocalValue(next);
+            onUpdate(next);
+          }
+        }}
+        disabled={localValue <= 1}
+      />
+      <InputNumber
+        min={1}
+        max={max}
+        value={localValue}
+        controls={false}
+        variant="borderless"
+        className="w-10 text-center font-bold text-gray-700"
+        onChange={handleChange}
+        onBlur={() => syncUpdate(localValue)}
+        onPressEnter={() => syncUpdate(localValue)}
+      />
+      <Button 
+        type="text"
+        size="small"
+        className="flex items-center justify-center hover:!bg-white hover:!text-indigo-600 transition-all rounded-md h-8 w-8"
+        icon={<PlusOutlined className="text-[12px]" />} 
+        onClick={() => {
+          if (localValue < max) {
+            const next = localValue + 1;
+            setLocalValue(next);
+            onUpdate(next);
+          }
+        }}
+        disabled={localValue >= max}
+      />
+    </div>
+  );
+};
 
 export const CartTable = () => {
   const { message } = App.useApp();
@@ -59,16 +132,13 @@ export const CartTable = () => {
       dataIndex: "quantity",
       key: "quantity",
       render: (val: number, record: any) => (
-        <InputNumber 
-          min={1} 
-          max={record.cake?.stock || 1}
-          value={val} 
-          onChange={(value) => {
-            if (value && value >= 1) {
-              updateQuantity({ id: record.id, quantity: value }, {
-                onError: () => message.error("Lỗi cập nhật số lượng"),
-              });
-            }
+        <QuantityControl 
+          value={val}
+          max={record.cake?.stock ?? 99}
+          onUpdate={(quantity) => {
+            updateQuantity({ id: record.id, quantity }, {
+              onError: () => message.error("Lỗi cập nhật số lượng"),
+            });
           }}
         />
       )
