@@ -38,6 +38,10 @@ const changePasswordSchema = Joi.object({
     'string.min': 'Mật khẩu mới phải từ 6 ký tự',
     'any.required': 'Vui lòng nhập mật khẩu mới',
   }),
+  confirmPassword: Joi.string().valid(Joi.ref('newPassword')).required().messages({
+    'any.only': 'Mật khẩu xác nhận không khớp',
+    'any.required': 'Vui lòng xác nhận mật khẩu mới',
+  }),
 });
 
 const forgotPasswordSchema = Joi.object({
@@ -121,7 +125,7 @@ const forgotPassword = async (req, res, next) => {
     if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
 
     const token = await authService.forgotPassword(value.email);
-    
+
     // In real app, don't return token in response. Log it for now.
     console.log(`Reset Token for ${value.email}: ${token}`);
 
