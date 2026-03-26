@@ -3,7 +3,7 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Form, Input, Button, message } from "antd";
+import { Form, Input, Button, App } from "antd";
 import { useRegisterMutation } from "../hooks";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -16,6 +16,7 @@ const registerSchema = z.object({
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export const RegisterForm = () => {
+  const { message } = App.useApp();
   const router = useRouter();
   const { mutate: register, isPending } = useRegisterMutation();
 

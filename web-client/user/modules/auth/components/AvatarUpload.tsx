@@ -1,6 +1,6 @@
 "use client";
 
-import { Upload, message, App } from "antd";
+import { Upload, App } from "antd";
 import ImgCrop from "antd-img-crop";
 import { UserOutlined, LoadingOutlined, CameraOutlined } from "@ant-design/icons";
 import { useState } from "react";

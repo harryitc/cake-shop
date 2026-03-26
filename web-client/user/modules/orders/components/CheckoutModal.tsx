@@ -3,7 +3,7 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Modal, Form, Input, message } from "antd";
+import { Modal, Form, Input, App } from "antd";
 import { useCreateOrderMutation } from "../hooks";
 import { useRouter } from "next/navigation";
 
@@ -19,6 +19,7 @@ interface CheckoutModalProps {
 }
 
 export const CheckoutModal = ({ open, onCancel }: CheckoutModalProps) => {
+  const { message } = App.useApp();
   const router = useRouter();
   const { mutate, isPending } = useCreateOrderMutation();
 

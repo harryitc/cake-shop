@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
-import { ConfigProvider } from "antd";
+import { ConfigProvider, App } from "antd";
 import { useState } from "react";
 // Đăng ký theme antd ở đây để đồng bộ với website-design-system-token
 import { antdTheme } from "./antd-theme";
@@ -26,7 +26,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <AntdRegistry>
         <ConfigProvider theme={antdTheme}>
-          {children}
+          <App>
+            {children}
+          </App>
         </ConfigProvider>
       </AntdRegistry>
       <ReactQueryDevtools initialIsOpen={false} />

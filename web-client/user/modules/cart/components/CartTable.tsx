@@ -1,6 +1,6 @@
 "use client";
 
-import { Table, Button, Skeleton, Empty, Popconfirm, message, InputNumber } from "antd";
+import { Table, Button, Skeleton, Empty, Popconfirm, App, InputNumber } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import { useCartQuery, useRemoveCartItemMutation, useUpdateCartItemQuantityMutation } from "../hooks";
 import Link from "next/link";
@@ -12,6 +12,7 @@ const formatPrice = (price: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
 
 export const CartTable = () => {
+  const { message } = App.useApp();
   const router = useRouter();
   const { data: rawCart, isLoading, isError } = useCartQuery();
   const { mutate: removeItem, isPending } = useRemoveCartItemMutation();

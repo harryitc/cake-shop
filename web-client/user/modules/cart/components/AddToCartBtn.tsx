@@ -1,11 +1,12 @@
 "use client";
 
-import { Button, message } from "antd";
+import { Button, App } from "antd";
 import { ShoppingCartOutlined } from "@ant-design/icons";
 import { useAddToCartMutation } from "../hooks";
 import { useRouter } from "next/navigation";
 
 export const AddToCartBtn = ({ cakeId, quantity = 1 }: { cakeId: string; quantity?: number }) => {
+  const { message } = App.useApp();
   const router = useRouter();
   const { mutate, isPending } = useAddToCartMutation();
 
