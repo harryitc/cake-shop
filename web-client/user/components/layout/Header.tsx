@@ -20,7 +20,7 @@ export const Header = () => {
   const handleLogout = () => {
     localStorage.removeItem("access_token");
     setToken(null);
-    router.push("/login");
+    window.location.href = "/login";
   };
 
   const userMenuItems = [

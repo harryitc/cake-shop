@@ -124,12 +124,9 @@ const forgotPassword = async (req, res, next) => {
     const { error, value } = forgotPasswordSchema.validate(req.body);
     if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
 
-    const token = await authService.forgotPassword(value.email);
+    await authService.forgotPassword(value.email);
 
-    // In real app, don't return token in response. Log it for now.
-    console.log(`Reset Token for ${value.email}: ${token}`);
-
-    return sendSuccess(res, { token }, 'Hướng dẫn đặt lại mật khẩu đã được gửi (test mode)');
+    return sendSuccess(res, null, 'Hướng dẫn đặt lại mật khẩu đã được gửi tới email của bạn');
   } catch (err) {
     next(err);
   }

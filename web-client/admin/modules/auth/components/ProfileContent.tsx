@@ -47,7 +47,7 @@ export const ProfileContent = () => {
         passForm.resetFields();
         // Logout
         localStorage.removeItem("access_token");
-        router.push("/admin/login");
+        window.location.href = "/admin/login";
       },
       onError: (err) => message.error(err.message || "Lỗi đổi mật khẩu"),
     });

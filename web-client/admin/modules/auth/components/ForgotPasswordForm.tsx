@@ -13,11 +13,9 @@ export const ForgotPasswordForm = () => {
 
   const onFinish = (values: { email: string }) => {
     forgotPassword(values.email, {
-      onSuccess: (data: any) => {
+      onSuccess: () => {
         setIsSent(true);
         message.success("Yêu cầu đã được gửi. Vui lòng kiểm tra email của bạn.");
-        // Lưu ý: data.token được trả về ở test mode, trong thực tế sẽ lấy từ email.
-        console.log("Mô phỏng token từ email:", data?.token);
       },
       onError: (err) => message.error(err.message || "Lỗi hệ thống"),
     });
@@ -31,9 +29,8 @@ export const ForgotPasswordForm = () => {
           <h2 className="text-2xl font-black text-gray-800 mb-2">Kiểm tra Email</h2>
           <p className="text-gray-500 mb-8">
             Chúng tôi đã gửi hướng dẫn đặt lại mật khẩu đến email của bạn. 
-            (Trong bản demo này, hãy kiểm tra **Console Log** của trình duyệt để lấy Token).
-          </p>
-          <Link href="/admin/login">
+            Vui lòng kiểm tra hộp thư đến (hoặc thư rác) để tiếp tục.
+          </p>          <Link href="/admin/login">
             <Button type="primary" size="large" className="bg-indigo-600 font-bold rounded-lg px-10">
               Quay lại Đăng nhập
             </Button>

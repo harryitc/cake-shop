@@ -41,8 +41,8 @@ const sendEmail = async ({ to, subject, html }) => {
  * Template email đặt lại mật khẩu
  */
 const sendResetPasswordEmail = async (email, token) => {
-  const resetUrl = `${process.env.CLIENT_URL.split(',')[0]}/reset-password?token=${token}`;
-  
+  const resetUrl = `${process.env.DOMAIN_SEND_EMAIL}/reset-password?token=${token}`;
+
   const html = `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
       <h2 style="color: #533afd; text-align: center;">Khôi phục mật khẩu</h2>

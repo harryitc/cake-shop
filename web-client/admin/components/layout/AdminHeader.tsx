@@ -9,7 +9,7 @@ export const AdminHeader = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
-    router.push("/admin/login");
+    window.location.href = "/admin/login";
   };
 
   const userMenuItems = [
