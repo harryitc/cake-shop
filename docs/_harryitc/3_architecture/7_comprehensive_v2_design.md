@@ -32,16 +32,26 @@ Tài liệu này mô tả chi tiết các thay đổi về mặt kỹ thuật ch
 
 ## 2. Profile & Security (Tài khoản & Bảo mật)
 
-### 2.1 User Profile
-- **API mới:**
-    - `GET /api/v1/auth/me`: Trả về thông tin user hiện tại từ token.
-    - `PUT /api/v1/auth/profile`: Cập nhật thông tin cơ bản.
-    - `PUT /api/v1/auth/change-password`: Kiểm tra mật khẩu cũ, hash và lưu mật khẩu mới.
+### 2.1 User Profile & Avatar
+- **Database (`User` schema):** Bổ sung `full_name`, `phone`, `address`, `avatar_url`.
+- **Avatar Flow:**
+    1. Frontend sử dụng `antd-img-crop` để xử lý ảnh phía Client (Resize/Crop 1:1).
+    2. Upload file đã crop thông qua API `/uploads`.
+    3. Lưu `path` trả về vào trường `avatar_url` của User.
 
-### 2.2 Rate Limiting (Chống Spam)
+### 2.2 Quên mật khẩu (Forgot Password)
+- **Cơ chế:** Token-based.
+- **Quy trình:**
+    1. User gửi Email qua `POST /auth/forgot-password`.
+    2. Server tạo `reset_password_token` (chuỗi ngẫu nhiên) và `reset_password_expires` (thời hạn 1h).
+    3. Trả về token (hoặc log link nếu chưa có mail server).
+    4. User gửi mật khẩu mới qua `POST /auth/reset-password/:token`.
+    5. Server verify token hợp lệ -> Cập nhật password (hash) -> Xóa token.
+
+### 2.3 Rate Limiting (Chống Spam)
 - **Middleware:** `express-rate-limit`.
-- **Áp dụng:** Riêng cho API `POST /api/v1/orders`.
-- **Cấu hình:** 5 requests / 60 minutes trên mỗi IP/User ID.
+- **Áp dụng:** Endpoint `POST /api/v1/orders`.
+- **Cấu hình:** 5 requests / 60 minutes.
 
 ---
 

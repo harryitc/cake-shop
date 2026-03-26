@@ -77,10 +77,12 @@ Xây dựng một website bán bánh kem chuyên nghiệp, hỗ trợ quản lý
 * **Mới:** Lưu trữ thông tin metadata (tên gốc, tên server, kích thước, đường dẫn) vào bảng `file_system` trong Database để quản lý.
 * API trả về đường dẫn `path` (relative), Frontend tự ghép với Domain để hiển thị.
 
-## 5.2 User/Admin Profile
+## 5.2 User/Admin Profile & Security
 * Xem thông tin Email, Vai trò.
-* Cập nhật thông tin cá nhân.
-* Chức năng Đổi mật khẩu bảo mật.
+* Cập nhật thông tin cá nhân: Họ tên, Số điện thoại, Địa chỉ.
+* **Avatar:** Hỗ trợ tải ảnh đại diện, tích hợp công cụ **Resize/Crop** khung vuông ngay trên giao diện trước khi upload.
+* **Mật khẩu:** Chức năng Đổi mật khẩu (trong Profile) và **Quên mật khẩu** (qua Email/Token).
+* **Bảo mật:** Áp dụng giới hạn tần suất (Rate Limit) cho hành động tạo đơn hàng.
 
 ## 5.3 Analytics Dashboard
 * Thống kê tổng doanh thu theo thời gian.
