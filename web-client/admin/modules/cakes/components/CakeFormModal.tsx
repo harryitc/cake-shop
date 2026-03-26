@@ -144,7 +144,7 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
           <Controller
             name="name"
             control={control}
-            render={({ field }) => <Input {...field} placeholder="Ví dụ: Bánh Mousse Trà Xanh" size="large" className="rounded-lg" />}
+            render={({ field }) => <Input {...field} placeholder="Ví dụ: Bánh Mousse Trà Xanh" size="large" className="rounded-xl h-[45px]" />}
           />
         </Form.Item>
 
@@ -162,8 +162,9 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
                 {...field}
                 placeholder="Chọn danh mục"
                 size="large"
-                className="rounded-lg w-full"
+                className="rounded-xl w-full"
                 options={categories.map(c => ({ label: c.name, value: c._id }))}
+                style={{ height: '45px' }}
               />
             )}
           />
@@ -183,13 +184,14 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
               render={({ field }) => (
                 <InputNumber 
                   {...field} 
-                  className="w-full rounded-lg" 
+                  className="w-full rounded-xl border-gray-200" 
                   size="large" 
                   min={0} 
                   step={1000} 
                   placeholder="Ví dụ: 150,000" 
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                   parser={(value) => value!.replace(/\$\s?|(,*)/g, "") as any}
+                  style={{ width: '100%', height: '45px', display: 'flex', alignItems: 'center', fontSize: '18px', fontWeight: 'bold' }}
                 />
               )}
             />
@@ -206,7 +208,14 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
               name="stock"
               control={control}
               render={({ field }) => (
-                <InputNumber {...field} className="w-full rounded-lg" size="large" min={0} placeholder="Số lượng" />
+                <InputNumber 
+                  {...field} 
+                  className="w-full rounded-xl border-gray-200" 
+                  size="large" 
+                  min={0} 
+                  placeholder="Số lượng" 
+                  style={{ width: '100%', height: '45px', display: 'flex', alignItems: 'center' }}
+                />
               )}
             />
           </Form.Item>
