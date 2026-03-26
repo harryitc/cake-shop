@@ -41,6 +41,7 @@ npm run dev # Starts Next.js development server
 
 ## Development Conventions
 
+- **Git & Workflow**: Sau khi thực hiện xong một tính năng hoặc một yêu cầu chỉnh sửa nào đó, BẮT BUỘC phải thực hiện commit lại những thay đổi tương ứng. Nếu là yêu cầu thêm tính năng hoặc thay đổi logic/kiến trúc, PHẢI cập nhật lại tài liệu trong thư mục `docs/` để phản ánh đúng hiện trạng.
 - **Documentation-Driven Development**: All major features and epics are extensively documented in the `docs/` folder before implementation. Changes to architecture or schemas should align with these specs.
 - **Backend Architecture**: The Express app enforces a strict separation of concerns:
   - `routes/`: Define API endpoints and attach middleware (auth, roles).
