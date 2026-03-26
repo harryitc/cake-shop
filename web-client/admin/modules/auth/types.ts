@@ -1,15 +1,27 @@
-export interface ILoginPayload {
-  email: string;
-  password?: string;
-}
-
-export interface IUserInfo {
+export interface IUser {
   id: string;
   email: string;
-  role: string;
+  role: 'user' | 'admin';
+  full_name?: string;
+  phone?: string;
+  address?: string;
+  avatar_url?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface IAuthResponse {
+export interface ILoginResponse {
   token: string;
-  user: IUserInfo;
+  user: {
+    id: string;
+    email: string;
+    role: string;
+  };
+}
+
+export interface IUpdateProfilePayload {
+  full_name?: string;
+  phone?: string;
+  address?: string;
+  avatar_url?: string;
 }

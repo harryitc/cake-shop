@@ -78,6 +78,11 @@ export const LoginForm = ({ mode = "user" }: { mode?: "user" | "admin" }) => {
               <Input.Password {...field} placeholder="••••••••" size="large" className="rounded-lg" />
             )}
           />
+          <div className="flex justify-end mt-1">
+            <Link href="/forgot-password" size="small" className="text-xs text-indigo-600 hover:text-indigo-800">
+              Quên mật khẩu?
+            </Link>
+          </div>
         </Form.Item>
 
         <Form.Item className="mt-8 mb-4">

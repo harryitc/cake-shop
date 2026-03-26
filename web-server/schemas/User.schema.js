@@ -18,6 +18,33 @@ const userSchema = new mongoose.Schema(
       enum: ['user', 'admin'],
       default: 'user',
     },
+    full_name: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    phone: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    address: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    avatar_url: {
+      type: String,
+      default: '',
+    },
+    reset_password_token: {
+      type: String,
+      default: null,
+    },
+    reset_password_expires: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

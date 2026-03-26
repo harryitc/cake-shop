@@ -1,15 +1,50 @@
-import { useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "./api";
-import { ILoginPayload, IRegisterPayload } from "./types";
-
-export const useRegisterMutation = () => {
-  return useMutation({
-    mutationFn: (payload: IRegisterPayload) => authApi.register(payload),
-  });
-};
 
 export const useLoginMutation = () => {
   return useMutation({
-    mutationFn: (payload: ILoginPayload) => authApi.login(payload),
+    mutationFn: authApi.login,
+  });
+};
+
+export const useRegisterMutation = () => {
+  return useMutation({
+    mutationFn: authApi.register,
+  });
+};
+
+export const useMeQuery = (options = {}) => {
+  return useQuery({
+    queryKey: ["me"],
+    queryFn: authApi.getMe,
+    retry: false,
+    ...options,
+  });
+};
+
+export const useUpdateProfileMutation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: authApi.updateProfile,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["me"] }),
+  });
+};
+
+export const useChangePasswordMutation = () => {
+  return useMutation({
+    mutationFn: authApi.changePassword,
+  });
+};
+
+export const useForgotPasswordMutation = () => {
+  return useMutation({
+    mutationFn: authApi.forgotPassword,
+  });
+};
+
+export const useResetPasswordMutation = () => {
+  return useMutation({
+    mutationFn: ({ token, password }: { token: string; password: string }) => 
+      authApi.resetPassword(token, password),
   });
 };

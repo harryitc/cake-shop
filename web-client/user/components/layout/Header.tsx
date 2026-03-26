@@ -25,6 +25,12 @@ export const Header = () => {
 
   const userMenuItems = [
     {
+      key: "profile",
+      label: <span className="font-medium text-gray-700">Hồ sơ của tôi</span>,
+      icon: <UserOutlined />,
+      onClick: () => router.push("/profile"),
+    },
+    {
       key: "orders",
       label: <span className="font-medium text-gray-700">Đơn hàng của tôi</span>,
       icon: <HistoryOutlined />,

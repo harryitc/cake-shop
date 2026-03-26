@@ -1,7 +1,7 @@
 "use client";
 
 import { Layout, Menu } from "antd";
-import { ShopOutlined, HistoryOutlined } from "@ant-design/icons";
+import { ShopOutlined, HistoryOutlined, UserOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -18,6 +18,11 @@ export const AdminSidebar = () => {
       key: "/admin/orders",
       icon: <HistoryOutlined />,
       label: <Link href="/admin/orders">Quản lý Đơn hàng</Link>,
+    },
+    {
+      key: "/admin/profile",
+      icon: <UserOutlined />,
+      label: <Link href="/admin/profile">Hồ sơ cá nhân</Link>,
     },
   ];
 

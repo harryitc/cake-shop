@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const User = require('../schemas/User.schema');
 const { createError } = require('../utils/response.utils');
 
@@ -79,7 +80,128 @@ const login = async ({ email, password }) => {
   };
 };
 
+/**
+ * Lấy thông tin cá nhân hiện tại
+ * @param {string} userId 
+ * @returns {Object} user profile
+ */
+const getProfile = async (userId) => {
+  const user = await User.findById(userId).select('-password_hash -reset_password_token -reset_password_expires');
+  if (!user) {
+    throw createError('Không tìm thấy người dùng', 404, 'NOT_FOUND');
+  }
+  return user;
+};
+
+/**
+ * Cập nhật thông tin cá nhân
+ * @param {string} userId 
+ * @param {Object} updateData 
+ * @returns {Object} updated user
+ */
+const updateProfile = async (userId, updateData) => {
+  const allowedFields = ['full_name', 'phone', 'address', 'avatar_url'];
+  const filteredData = {};
+  
+  allowedFields.forEach(field => {
+    if (updateData[field] !== undefined) {
+      filteredData[field] = updateData[field];
+    }
+  });
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { $set: filteredData },
+    { new: true, runValidators: true }
+  ).select('-password_hash');
+
+  if (!user) {
+    throw createError('Không tìm thấy người dùng', 404, 'NOT_FOUND');
+  }
+
+  return user;
+};
+
+/**
+ * Đổi mật khẩu
+ * @param {string} userId 
+ * @param {string} oldPassword 
+ * @param {string} newPassword 
+ */
+const changePassword = async (userId, oldPassword, newPassword) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw createError('Không tìm thấy người dùng', 404, 'NOT_FOUND');
+  }
+
+  const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
+  if (!isMatch) {
+    throw createError('Mật khẩu cũ không chính xác', 400, 'INVALID_PASSWORD');
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  user.password_hash = await bcrypt.hash(newPassword, salt);
+  await user.save();
+
+  return true;
+};
+
+/**
+ * Yêu cầu quên mật khẩu
+ * @param {string} email 
+ * @returns {string} token (In real app, send via email)
+ */
+const forgotPassword = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw createError('Không tìm thấy tài khoản với email này', 404, 'NOT_FOUND');
+  }
+
+  // Tạo token ngẫu nhiên
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  
+  // Lưu hash token và thời gian hết hạn (1 giờ)
+  user.reset_password_token = crypto.createHash('sha256').update(resetToken).digest('hex');
+  user.reset_password_expires = Date.now() + 3600000;
+
+  await user.save();
+
+  // Trong thực tế sẽ gửi resetToken qua email. Hiện tại trả về để test/log.
+  return resetToken;
+};
+
+/**
+ * Đặt lại mật khẩu mới
+ * @param {string} token 
+ * @param {string} newPassword 
+ */
+const resetPassword = async (token, newPassword) => {
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  const user = await User.findOne({
+    reset_password_token: hashedToken,
+    reset_password_expires: { $gt: Date.now() }
+  });
+
+  if (!user) {
+    throw createError('Token không hợp lệ hoặc đã hết hạn', 400, 'INVALID_TOKEN');
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  user.password_hash = await bcrypt.hash(newPassword, salt);
+  user.reset_password_token = null;
+  user.reset_password_expires = null;
+
+  await user.save();
+  return true;
+};
+
 module.exports = {
   register,
   login,
+  getProfile,
+  updateProfile,
+  changePassword,
+  forgotPassword,
+  resetPassword,
 };
