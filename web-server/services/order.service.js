@@ -4,6 +4,7 @@ const CartItem = require('../schemas/CartItem.schema');
 const Cake = require('../schemas/Cake.schema');
 const CouponService = require('./coupon.service');
 const { createError } = require('../utils/response.utils');
+const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../utils/email.utils');
 
 const VALID_TRANSITIONS = {
   PENDING: ['CONFIRMED', 'REJECTED'],
@@ -88,6 +89,17 @@ const createOrder = async (userId, address, couponCode = null) => {
     await CartItem.deleteMany({ user_id: userId }).session(session);
 
     await session.commitTransaction();
+
+    // Gửi email xác nhận (không chạy trong transaction để tránh làm chậm, 
+    // và gửi sau khi commit thành công)
+    const orderWithPopulatedData = await Order.findById(order._id)
+      .populate('user_id', 'email')
+      .populate('items.cake_id', 'name');
+    
+    if (orderWithPopulatedData && orderWithPopulatedData.user_id.email) {
+      sendOrderConfirmationEmail(orderWithPopulatedData.user_id.email, orderWithPopulatedData);
+    }
+
     return order;
   } catch (error) {
     await session.abortTransaction();
@@ -160,6 +172,13 @@ const updateStatus = async (orderId, newStatus) => {
     await order.save({ session });
     
     await session.commitTransaction();
+
+    // Gửi email cập nhật trạng thái
+    const orderWithUser = await Order.findById(orderId).populate('user_id', 'email');
+    if (orderWithUser && orderWithUser.user_id.email) {
+      sendOrderStatusUpdateEmail(orderWithUser.user_id.email, orderWithUser);
+    }
+
     return order;
   } catch (error) {
     await session.abortTransaction();

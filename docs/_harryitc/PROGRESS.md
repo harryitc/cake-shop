@@ -61,14 +61,14 @@ updated_at: 2026-03-26
     - [x] Backend: Coupon Schema, Validation logic
     - [x] User: Apply coupon at checkout
     - [x] Admin: CRUD coupons
-- [ ] **[V3-4] Thông báo Email tự động**
-    - [ ] Setup SMTP & Templates
-    - [ ] Order status change triggers
-- [ ] **[V3-5] Danh sách yêu thích (Wishlist)**
-    - [ ] Backend: Wishlist Schema
-    - [ ] User: Toggle favorite, Wishlist page
+- [x] **[V3-4] Thông báo Email tự động**
+    - [x] Setup SMTP & Templates
+    - [x] Order status change triggers
+- [x] **[V3-5] Danh sách yêu thích (Wishlist)**
+    - [x] Backend: Wishlist Schema
+    - [x] User: Toggle favorite, Wishlist page
 
-**Status: [/] IN PROGRESS**
+**Status: ✅ DONE**
 
 ---
 
@@ -79,4 +79,4 @@ updated_at: 2026-03-26
 | 0-5 | Backend Core | ✅ DONE |
 | 6-7 | Frontend Apps | ✅ DONE |
 | 8 | Integration | ✅ DONE |
-| 9 | V3 Expansion | [/] IN PROGRESS |
+| 9 | V3 Expansion | ✅ DONE |

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Badge, Button, Dropdown } from "antd";
-import { ShoppingCartOutlined, UserOutlined, ShopOutlined, HistoryOutlined, LogoutOutlined } from "@ant-design/icons";
+import { ShoppingCartOutlined, UserOutlined, ShopOutlined, HistoryOutlined, LogoutOutlined, HeartOutlined } from "@ant-design/icons";
 import { useCartQuery } from "@/modules/cart/hooks";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -69,6 +69,10 @@ export const Header = () => {
           </nav>
           
           <div className="flex items-center gap-4 border-l border-gray-200/80 pl-4 md:pl-6 ml-2 md:ml-4">
+            <Link href="/wishlist">
+              <Button type="text" shape="circle" size="large" icon={<HeartOutlined className="text-[20px] text-gray-700" />} className="bg-gray-50 hover:bg-gray-100 border border-gray-100/80 hover:text-red-500 transition-all" />
+            </Link>
+
             <Link href="/cart">
               <Badge count={totalItems} size="default" color="#533afd" className="hover:scale-110 transition-transform">
                 <Button type="text" shape="circle" size="large" icon={<ShoppingCartOutlined className="text-[20px] text-gray-700" />} className="bg-gray-50 hover:bg-gray-100 border border-gray-100/80" />

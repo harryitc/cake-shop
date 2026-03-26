@@ -1,23 +1,45 @@
 import { httpClient } from "@/lib/http";
 import { ICakeDTO } from "./types";
 
+export interface GetCakesParams {
+  search?: string;
+  categories?: string[];
+  min_price?: number;
+  max_price?: number;
+  sort?: string;
+  limit?: number;
+  page?: number;
+}
+
 export const cakeApi = {
-  getAll: (search?: string, category?: string) => {
-    let url = "/cakes?limit=100"; // Tăng limit để hiển thị nhiều hơn hoặc phân trang sau
+  getAll: (params: GetCakesParams = {}) => {
+    const { search, categories, min_price, max_price, sort, limit = 100, page = 1 } = params;
+    
+    let url = `/cakes?limit=${limit}&page=${page}`;
+    
     if (search) url += `&search=${encodeURIComponent(search)}`;
-    if (category) url += `&category=${encodeURIComponent(category)}`;
+    
+    if (categories && categories.length > 0) {
+      // Backend hỗ trợ categories=id1&categories=id2
+      categories.forEach(catId => {
+        url += `&categories=${encodeURIComponent(catId)}`;
+      });
+    }
+    
+    if (min_price !== undefined) url += `&min_price=${min_price}`;
+    if (max_price !== undefined) url += `&max_price=${max_price}`;
+    if (sort) url += `&sort=${sort}`;
+    
     return httpClient<{ items: ICakeDTO[]; total: number }>(url, { method: "GET" });
   },
+  
   getById: (id: string): Promise<ICakeDTO> => {
     return httpClient(`/cakes/${id}`, { method: "GET" });
   },
+  
   uploadImage: (file: File) => {
     const formData = new FormData();
     formData.append("image", file);
-    // User can upload avatar, though backend requireRole('admin') might need adjustment 
-    // or we use same endpoint for simplicity if roles allow.
-    // Actually, backend routes/upload.routes.js has requireRole('admin').
-    // Let me check if users should be able to upload avatar.
     return httpClient<{ path: string }>("/uploads", {
       method: "POST",
       body: formData,

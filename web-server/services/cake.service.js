@@ -3,29 +3,72 @@ const { createError } = require('../utils/response.utils');
 
 /**
  * Láy danh sách bánh (có phân trang và tìm kiếm theo tên)
- * @param {Object} params - { page, limit, search, category }
+ * @param {Object} params - { page, limit, search, category, categories, min_price, max_price, tags, sort }
  * @returns {Object} { items, total, page, limit }
  */
-const getAll = async ({ page = 1, limit = 10, search = '', category = '' }) => {
+const getAll = async ({ 
+  page = 1, 
+  limit = 10, 
+  search = '', 
+  category = '', 
+  categories = [], 
+  min_price = 0, 
+  max_price = Infinity,
+  tags = [],
+  sort = 'newest'
+}) => {
   const query = {};
 
+  // 1. Tìm kiếm theo tên
   if (search) {
-    // Case-insensitive search
     query.name = { $regex: search, $options: 'i' };
   }
 
+  // 2. Lọc theo danh mục (hỗ trợ cả đơn lẻ và mảng)
   if (category) {
-    query.category = category;
+    query.$or = [{ category: category }, { categories: category }];
+  } else if (categories && (Array.isArray(categories) ? categories.length > 0 : categories)) {
+    const categoryList = Array.isArray(categories) ? categories : [categories];
+    query.$or = [
+      { category: { $in: categoryList } },
+      { categories: { $in: categoryList } }
+    ];
   }
+
+  // 3. Lọc theo khoảng giá
+  const min = Number(min_price);
+  const max = Number(max_price);
+  if (!isNaN(min) || !isNaN(max)) {
+    query.price = {};
+    if (!isNaN(min)) query.price.$gte = min;
+    if (!isNaN(max) && max < Infinity) query.price.$lte = max;
+    
+    // Nếu query.price rỗng (cả hai đều NaN) thì xóa thuộc tính price
+    if (Object.keys(query.price).length === 0) delete query.price;
+  }
+
+  // 4. Lọc theo thẻ (tags)
+  if (tags && tags.length > 0) {
+    const tagList = Array.isArray(tags) ? tags : [tags];
+    query.tags = { $in: tagList };
+  }
+
+  // 5. Thiết lập sắp xếp
+  let sortOption = { createdAt: -1 };
+  if (sort === 'price_asc') sortOption = { price: 1 };
+  else if (sort === 'price_desc') sortOption = { price: -1 };
+  else if (sort === 'rating') sortOption = { average_rating: -1 };
+  else if (sort === 'oldest') sortOption = { createdAt: 1 };
 
   const skip = (page - 1) * limit;
 
   const [items, total] = await Promise.all([
     Cake.find(query)
       .populate('category', 'name slug')
+      .populate('categories', 'name slug')
       .skip(skip)
       .limit(Number(limit))
-      .sort({ createdAt: -1 }),
+      .sort(sortOption),
     Cake.countDocuments(query),
   ]);
 
@@ -43,7 +86,9 @@ const getAll = async ({ page = 1, limit = 10, search = '', category = '' }) => {
  * @returns {Object} item
  */
 const getById = async (id) => {
-  const cake = await Cake.findById(id).populate('category', 'name slug');
+  const cake = await Cake.findById(id)
+    .populate('category', 'name slug')
+    .populate('categories', 'name slug');
   if (!cake) {
     throw createError('Không tìm thấy sản phẩm bánh này', 404, 'NOT_FOUND');
   }

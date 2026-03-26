@@ -20,6 +20,20 @@ const categorySchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    parent_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      default: null,
+    },
+    type: {
+      type: String,
+      enum: ['OCCASION', 'FLAVOR', 'DIET', 'OTHER'],
+      default: 'OTHER',
+    },
+    is_featured: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

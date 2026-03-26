@@ -12,6 +12,9 @@ class CategoryController {
         }),
         description: Joi.string().allow('').optional(),
         image_url: Joi.string().allow('').optional(),
+        parent_id: Joi.string().regex(/^[0-9a-fA-F]{24}$/).allow(null).optional(),
+        type: Joi.string().valid('OCCASION', 'FLAVOR', 'DIET', 'OTHER').optional(),
+        is_featured: Joi.boolean().optional(),
       });
 
       const { error, value } = schema.validate(req.body);
@@ -27,7 +30,7 @@ class CategoryController {
 
   async getAll(req, res, next) {
     try {
-      const categories = await categoryService.getAllCategories();
+      const categories = await categoryService.getAllCategories(req.query);
       return sendSuccess(res, categories);
     } catch (err) {
       next(err);
@@ -50,6 +53,9 @@ class CategoryController {
         name: Joi.string().trim().optional(),
         description: Joi.string().allow('').optional(),
         image_url: Joi.string().allow('').optional(),
+        parent_id: Joi.string().regex(/^[0-9a-fA-F]{24}$/).allow(null).optional(),
+        type: Joi.string().valid('OCCASION', 'FLAVOR', 'DIET', 'OTHER').optional(),
+        is_featured: Joi.boolean().optional(),
       });
 
       const { error, value } = schema.validate(req.body);

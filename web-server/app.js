@@ -38,6 +38,7 @@ app.use('/api/v1/reviews', require('./routes/review.routes'));
 app.use('/api/v1/coupons', require('./routes/coupon.routes'));
 app.use('/api/v1/uploads', require('./routes/upload.routes'));
 app.use('/api/v1/analytics', require('./routes/analytics.routes'));
+app.use('/api/v1/wishlist', require('./routes/wishlist.routes'));
 
 // ─── 404 Handler ──────────────────────────────────────────────────────────────
 app.use((req, res, next) => {

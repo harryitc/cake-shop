@@ -6,8 +6,13 @@ class CategoryService {
     return await category.save();
   }
 
-  async getAllCategories() {
-    return await Category.find().sort({ name: 1 });
+  async getAllCategories(query = {}) {
+    const mongoQuery = {};
+    if (query.type) mongoQuery.type = query.type;
+    if (query.is_featured !== undefined) mongoQuery.is_featured = query.is_featured === 'true';
+    if (query.parent_id) mongoQuery.parent_id = query.parent_id;
+
+    return await Category.find(mongoQuery).sort({ name: 1 });
   }
 
   async getCategoryById(id) {

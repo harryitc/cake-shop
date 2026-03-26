@@ -33,7 +33,24 @@ const cakeSchema = new mongoose.Schema(
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Category',
-      required: true, // Ép buộc chọn danh mục để quản lý dữ liệu chặt chẽ
+      required: true,
+    },
+    categories: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+    }],
+    variants: [
+      {
+        size: { type: String, required: true },
+        price: { type: Number, required: true, min: 0 },
+        stock: { type: Number, default: 0, min: 0 },
+      }
+    ],
+    tags: [String], // vd: ['Best Seller', 'New Arrival', 'Low Sugar']
+    ingredients: [String],
+    specifications: {
+      weight: String,
+      servings: String,
     },
     average_rating: {
       type: Number,

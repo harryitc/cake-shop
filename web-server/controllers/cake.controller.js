@@ -7,15 +7,30 @@ const getAllQuerySchema = Joi.object({
   page: Joi.number().min(1).default(1),
   limit: Joi.number().min(1).max(100).default(10),
   search: Joi.string().allow('').optional(),
-  category: Joi.string().regex(/^[0-9a-fA-F]{24}$/).optional().messages({
-    'string.pattern.base': 'Category ID không hợp lệ',
-  }),
+  category: Joi.string().regex(/^[0-9a-fA-F]{24}$/).optional(),
+  categories: Joi.alternatives().try(
+    Joi.array().items(Joi.string().regex(/^[0-9a-fA-F]{24}$/)),
+    Joi.string().regex(/^[0-9a-fA-F]{24}$/)
+  ).optional(),
+  min_price: Joi.number().min(0).optional(),
+  max_price: Joi.number().min(0).optional(),
+  tags: Joi.alternatives().try(
+    Joi.array().items(Joi.string()),
+    Joi.string()
+  ).optional(),
+  sort: Joi.string().valid('newest', 'oldest', 'price_asc', 'price_desc', 'rating').default('newest'),
+});
+
+const variantSchema = Joi.object({
+  size: Joi.string().required(),
+  price: Joi.number().min(0).required(),
+  stock: Joi.number().min(0).default(0),
 });
 
 const idParamSchema = Joi.object({
   id: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
     'string.pattern.base': 'ID không hợp lệ',
-  })
+  }),
 });
 
 const createBodySchema = Joi.object({
@@ -24,8 +39,9 @@ const createBodySchema = Joi.object({
   }),
   category: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
     'string.pattern.base': 'Category ID không hợp lệ',
-    'any.required': 'Vui lòng chọn danh mục',
+    'any.required': 'Vui lòng chọn danh mục chính',
   }),
+  categories: Joi.array().items(Joi.string().regex(/^[0-9a-fA-F]{24}$/)).optional(),
   price: Joi.number().min(0).required().messages({
     'number.min': 'Giá tiền không được nhỏ hơn 0',
     'any.required': 'Vui lòng nhập giá tiền',
@@ -35,17 +51,30 @@ const createBodySchema = Joi.object({
   }),
   description: Joi.string().allow('').optional(),
   image_url: Joi.string().allow('').optional(),
+  variants: Joi.array().items(variantSchema).optional(),
+  tags: Joi.array().items(Joi.string()).optional(),
+  ingredients: Joi.array().items(Joi.string()).optional(),
+  specifications: Joi.object({
+    weight: Joi.string().allow('').optional(),
+    servings: Joi.string().allow('').optional(),
+  }).optional(),
 });
 
 const updateBodySchema = Joi.object({
   name: Joi.string().trim().optional(),
-  category: Joi.string().regex(/^[0-9a-fA-F]{24}$/).optional().messages({
-    'string.pattern.base': 'Category ID không hợp lệ',
-  }),
+  category: Joi.string().regex(/^[0-9a-fA-F]{24}$/).optional(),
+  categories: Joi.array().items(Joi.string().regex(/^[0-9a-fA-F]{24}$/)).optional(),
   price: Joi.number().min(0).optional(),
   stock: Joi.number().min(0).optional(),
   description: Joi.string().allow('').optional(),
   image_url: Joi.string().allow('').optional(),
+  variants: Joi.array().items(variantSchema).optional(),
+  tags: Joi.array().items(Joi.string()).optional(),
+  ingredients: Joi.array().items(Joi.string()).optional(),
+  specifications: Joi.object({
+    weight: Joi.string().allow('').optional(),
+    servings: Joi.string().allow('').optional(),
+  }).optional(),
 }).min(1).messages({
   'object.min': 'Phải truyền ít nhất một trường để cập nhật'
 });

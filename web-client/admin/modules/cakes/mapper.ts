@@ -12,6 +12,7 @@ export const mapCakeToModel = (dto: ICakeDTO): ICake => {
     name: dto.name,
     description: dto.description,
     category: typeof dto.category === 'object' ? dto.category : undefined,
+    categories: Array.isArray(dto.categories) ? dto.categories.filter(c => typeof c === 'object') as any : [],
     slug: dto.slug,
     price: dto.price,
     stock: dto.stock || 0,
@@ -20,6 +21,13 @@ export const mapCakeToModel = (dto: ICakeDTO): ICake => {
       currency: "VND",
     }).format(dto.price),
     imageUrl,
+    variants: dto.variants || [],
+    tags: dto.tags || [],
+    ingredients: dto.ingredients || [],
+    specifications: {
+      weight: dto.specifications?.weight || "Chưa rõ",
+      servings: dto.specifications?.servings || "Chưa rõ",
+    },
     createdAt: dto.createdAt,
     formattedDate: new Date(dto.createdAt).toLocaleDateString("vi-VN", {
       day: '2-digit', month: '2-digit', year: 'numeric'
