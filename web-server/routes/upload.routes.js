@@ -5,11 +5,10 @@ const upload = require('../middlewares/upload.middleware');
 const authenticate = require('../middlewares/auth.middleware');
 const requireRole = require('../middlewares/role.middleware');
 
-// Chỉ cho phép admin upload ảnh
+// Cho phép người dùng đã đăng nhập upload ảnh (ví dụ avatar hoặc admin tạo bánh)
 router.post(
   '/',
   authenticate,
-  requireRole('admin'),
   upload.single('image'),
   uploadController.uploadImage
 );

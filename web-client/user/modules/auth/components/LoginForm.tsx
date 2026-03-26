@@ -79,7 +79,7 @@ export const LoginForm = ({ mode = "user" }: { mode?: "user" | "admin" }) => {
             )}
           />
           <div className="flex justify-end mt-1">
-            <Link href="/forgot-password" size="small" className="text-xs text-indigo-600 hover:text-indigo-800">
+            <Link href="/forgot-password" className="text-xs text-indigo-600 hover:text-indigo-800">
               Quên mật khẩu?
             </Link>
           </div>

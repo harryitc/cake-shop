@@ -58,14 +58,12 @@ export const ProfileContent = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Cột trái: Avatar */}
-        <Card className="rounded-2xl shadow-sm border-gray-100 flex flex-col items-center justify-center p-6">
-          <Form.Item name="avatar_url" noStyle>
-            <AvatarUpload 
-              value={user?.avatar_url} 
-              onChange={(path) => updateProfile({ avatar_url: path })} 
-            />
-          </Form.Item>
-          <div className="mt-4 text-center">
+        <Card className="rounded-2xl shadow-sm border-gray-100 flex flex-col items-center justify-center p-6 text-center">
+          <AvatarUpload 
+            value={user?.avatar_url} 
+            onChange={(path) => updateProfile({ avatar_url: path })} 
+          />
+          <div className="mt-4">
             <div className="font-bold text-lg text-gray-800">{user?.full_name || "Chưa đặt tên"}</div>
             <div className="text-gray-500 text-sm">{user?.email}</div>
             <div className="mt-2 inline-block px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold uppercase tracking-wider">
@@ -81,9 +79,8 @@ export const ProfileContent = () => {
               form={form}
               layout="vertical"
               onFinish={onUpdateProfile}
-              initialValues={{ email: user?.email }}
             >
-              <Form.Item label="Email (Không thể thay đổi)" name="email">
+              <Form.Item label="Email (Không thể thay đổi)" name="email" initialValue={user?.email}>
                 <Input prefix={<MailOutlined className="text-gray-400" />} disabled className="rounded-lg bg-gray-50" />
               </Form.Item>
 
@@ -103,77 +100,78 @@ export const ProfileContent = () => {
               <Button type="primary" htmlType="submit" loading={isUpdating} className="bg-indigo-600 font-bold h-10 rounded-lg px-8">
                 Lưu Thay Đổi
               </Button>
-            </Card>
+            </Form>
+          </Card>
 
-            <Card className="rounded-2xl shadow-sm border-gray-100 mt-6" title={<span className="font-bold text-red-600">Bảo mật</span>}>
-              <p className="text-gray-500 mb-4">Bạn nên đổi mật khẩu định kỳ để bảo vệ tài khoản.</p>
-              <Button danger icon={<LockOutlined />} onClick={() => setIsPassModalOpen(true)} className="font-semibold rounded-lg h-10">
-                Đổi mật khẩu truy cập
-              </Button>
-            </Card>
-          </div>
+          <Card className="rounded-2xl shadow-sm border-gray-100 mt-6" title={<span className="font-bold text-red-600">Bảo mật</span>}>
+            <p className="text-gray-500 mb-4">Bạn nên đổi mật khẩu định kỳ để bảo vệ tài khoản.</p>
+            <Button danger icon={<LockOutlined />} onClick={() => setIsPassModalOpen(true)} className="font-semibold rounded-lg h-10">
+              Đổi mật khẩu truy cập
+            </Button>
+          </Card>
         </div>
+      </div>
 
-        {/* Modal Đổi mật khẩu */}
-        <Modal
-          title={<span className="font-black text-xl">Thiết lập Mật khẩu mới</span>}
-          open={isPassModalOpen}
-          onCancel={() => setIsPassModalOpen(false)}
-          footer={null}
-          destroyOnClose
+      {/* Modal Đổi mật khẩu */}
+      <Modal
+        title={<span className="font-black text-xl">Thiết lập Mật khẩu mới</span>}
+        open={isPassModalOpen}
+        onCancel={() => setIsPassModalOpen(false)}
+        footer={null}
+        destroyOnClose
+      >
+        <Form
+          form={passForm}
+          layout="vertical"
+          onFinish={onChangePassword}
+          className="mt-6"
         >
-          <Form
-            form={passForm}
-            layout="vertical"
-            onFinish={onChangePassword}
-            className="mt-6"
+          <Form.Item 
+            label="Mật khẩu hiện tại" 
+            name="oldPassword" 
+            rules={[{ required: true, message: "Vui lòng nhập mật khẩu cũ" }]}
           >
-            <Form.Item 
-              label="Mật khẩu hiện tại" 
-              name="oldPassword" 
-              rules={[{ required: true, message: "Vui lòng nhập mật khẩu cũ" }]}
-            >
-              <Input.Password prefix={<LockOutlined className="text-gray-400" />} className="rounded-lg" />
-            </Form.Item>
+            <Input.Password prefix={<LockOutlined className="text-gray-400" />} className="rounded-lg" />
+          </Form.Item>
 
-            <Form.Item 
-              label="Mật khẩu mới" 
-              name="newPassword" 
-              rules={[
-                { required: true, message: "Vui lòng nhập mật khẩu mới" },
-                { min: 6, message: "Mật khẩu phải từ 6 ký tự" }
-              ]}
-            >
-              <Input.Password prefix={<LockOutlined className="text-gray-400" />} className="rounded-lg" />
-            </Form.Item>
+          <Form.Item 
+            label="Mật khẩu mới" 
+            name="newPassword" 
+            rules={[
+              { required: true, message: "Vui lòng nhập mật khẩu mới" },
+              { min: 6, message: "Mật khẩu phải từ 6 ký tự" }
+            ]}
+          >
+            <Input.Password prefix={<LockOutlined className="text-gray-400" />} className="rounded-lg" />
+          </Form.Item>
 
-            <Form.Item 
-              label="Xác nhận mật khẩu mới" 
-              name="confirmPassword" 
-              dependencies={['newPassword']}
-              rules={[
-                { required: true, message: "Vui lòng xác nhận mật khẩu mới" },
-                ({ getFieldValue }) => ({
-                  validator(_, value) {
-                    if (!value || getFieldValue('newPassword') === value) {
-                      return Promise.resolve();
-                    }
-                    return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'));
-                  },
-                }),
-              ]}
-            >
-              <Input.Password prefix={<LockOutlined className="text-gray-400" />} className="rounded-lg" />
-            </Form.Item>
+          <Form.Item 
+            label="Xác nhận mật khẩu mới" 
+            name="confirmPassword" 
+            dependencies={['newPassword']}
+            rules={[
+              { required: true, message: "Vui lòng xác nhận mật khẩu mới" },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('newPassword') === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'));
+                },
+              }),
+            ]}
+          >
+            <Input.Password prefix={<LockOutlined className="text-gray-400" />} className="rounded-lg" />
+          </Form.Item>
 
-            <div className="flex gap-3 justify-end mt-8">
-              <Button onClick={() => setIsPassModalOpen(false)} className="rounded-lg h-10 px-6 font-semibold">Hủy Bỏ</Button>
-              <Button type="primary" htmlType="submit" loading={isChangingPass} className="bg-indigo-600 rounded-lg h-10 px-6 font-bold">
-                Cập nhật mật khẩu
-              </Button>
-            </div>
-          </Form>
-        </Modal>
+          <div className="flex gap-3 justify-end mt-8">
+            <Button onClick={() => setIsPassModalOpen(false)} className="rounded-lg h-10 px-6 font-semibold">Hủy Bỏ</Button>
+            <Button type="primary" htmlType="submit" loading={isChangingPass} className="bg-indigo-600 rounded-lg h-10 px-6 font-bold">
+              Cập nhật mật khẩu
+            </Button>
+          </div>
+        </Form>
+      </Modal>
     </div>
   );
 };

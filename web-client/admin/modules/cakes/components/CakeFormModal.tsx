@@ -177,7 +177,7 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
                 <img 
                   src={currentImageUrl.startsWith("http") ? currentImageUrl : `${API_DOMAIN}${currentImageUrl}`} 
                   alt="cake" 
-                  style={{ width: '100%', height: '100%', objectCover: 'cover', borderRadius: '8px' }} 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} 
                 />
               ) : (
                 <div className="flex flex-col items-center">

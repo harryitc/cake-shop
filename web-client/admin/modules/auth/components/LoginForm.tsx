@@ -6,6 +6,7 @@ import * as z from "zod";
 import { Form, Input, Button, message } from "antd";
 import { useLoginMutation } from "../hooks";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Vui lòng nhập email").email("Email không đúng định dạng"),
@@ -75,13 +76,18 @@ export const LoginForm = () => {
               <Input.Password {...field} placeholder="••••••••" size="large" className="rounded-xl h-14" />
             )}
           />
+          <div className="flex justify-end mt-1">
+            <Link href="/forgot-password" className="text-xs text-[#533afd] hover:text-[#3f2bcf]">
+              Quên mật khẩu?
+            </Link>
+          </div>
         </Form.Item>
 
         <Form.Item className="mt-10 mb-2">
           <Button
             type="primary"
             htmlType="submit"
-            className="w-full h-[56px] text-[17px] rounded-xl shadow-[0_8px_20px_-6px_rgba(83,58,253,0.5)] font-extrabold transition-all hover:scale-[1.02] bg-[#533afd] hover:bg-[#3f2bcf]"
+            className="w-full h-[56px] text-[17px] rounded-xl shadow-[0_8px_20px_-6px_rgba(83,58,253,0.3)] font-extrabold transition-all hover:scale-[1.02] bg-[#533afd] hover:bg-[#3f2bcf]"
             loading={isPending}
           >
             Vào Hệ Thống

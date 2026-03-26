@@ -1,7 +1,7 @@
 "use client";
 
 import { Layout, Menu } from "antd";
-import { ShopOutlined, HistoryOutlined, UserOutlined } from "@ant-design/icons";
+import { ShopOutlined, HistoryOutlined, UserOutlined, DashboardOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -9,6 +9,11 @@ export const AdminSidebar = () => {
   const pathname = usePathname();
 
   const menuItems = [
+    {
+      key: "/admin/dashboard",
+      icon: <DashboardOutlined />,
+      label: <Link href="/admin/dashboard">Bảng điều khiển</Link>,
+    },
     {
       key: "/admin/cakes",
       icon: <ShopOutlined />,

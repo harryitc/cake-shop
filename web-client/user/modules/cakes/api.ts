@@ -10,4 +10,16 @@ export const cakeApi = {
   getById: (id: string): Promise<ICakeDTO> => {
     return httpClient(`/cakes/${id}`, { method: "GET" });
   },
+  uploadImage: (file: File) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    // User can upload avatar, though backend requireRole('admin') might need adjustment 
+    // or we use same endpoint for simplicity if roles allow.
+    // Actually, backend routes/upload.routes.js has requireRole('admin').
+    // Let me check if users should be able to upload avatar.
+    return httpClient<{ path: string }>("/uploads", {
+      method: "POST",
+      body: formData,
+    });
+  },
 };

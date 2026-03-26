@@ -13,11 +13,11 @@ export const ForgotPasswordForm = () => {
 
   const onFinish = (values: { email: string }) => {
     forgotPassword(values.email, {
-      onSuccess: (data) => {
+      onSuccess: (data: any) => {
         setIsSent(true);
         message.success("Yêu cầu đã được gửi. Vui lòng kiểm tra email của bạn.");
         // Lưu ý: data.token được trả về ở test mode, trong thực tế sẽ lấy từ email.
-        console.log("Mô phỏng token từ email:", data.token);
+        console.log("Mô phỏng token từ email:", data?.token);
       },
       onError: (err) => message.error(err.message || "Lỗi hệ thống"),
     });

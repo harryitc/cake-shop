@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { cakeApi } from "./api";
 import { mapCakeToModel } from "./mapper";
 
@@ -20,5 +20,11 @@ export const useCakeQuery = (id: string) => {
       return mapCakeToModel(cake);
     },
     enabled: !!id,
+  });
+};
+
+export const useUploadImageMutation = () => {
+  return useMutation({
+    mutationFn: cakeApi.uploadImage,
   });
 };
