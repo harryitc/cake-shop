@@ -4,9 +4,10 @@ const nodemailer = require('nodemailer');
  * Tạo transporter để gửi email
  */
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  secure: process.env.SMTP_PORT == 465, // true cho port 465, false cho các port khác
+  // host: process.env.SMTP_HOST,
+  // port: process.env.SMTP_PORT,
+  service: process.env.SMTP_SERVICE,
+  // secure: process.env.SMTP_PORT == 465, // true cho port 465, false cho các port khác
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -71,7 +72,7 @@ const sendResetPasswordEmail = async (email, token) => {
  */
 const sendOrderConfirmationEmail = async (email, order) => {
   const orderUrl = `${process.env.DOMAIN_SEND_EMAIL}/profile/orders/${order._id}`;
-  
+
   const itemsHtml = order.items.map(item => `
     <tr>
       <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.cake_id.name}</td>
