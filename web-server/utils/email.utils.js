@@ -1,17 +1,17 @@
 const nodemailer = require('nodemailer');
 
-const { MailtrapTransport } = require('mailtrap');
-
 /**
  * Tạo transporter để gửi email thông qua Mailtrap
  */
-const transporter = nodemailer.createTransport(
-  MailtrapTransport({
-    token: process.env.SMTP_TOKEN,
-    sandbox: true,
-    testInboxId: 4492444,
-  })
-);
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: process.env.SMTP_PORT == 465, // true cho port 465, false cho các port khác
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
 /**
  * Gửi email chung
