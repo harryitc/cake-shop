@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { COUPON_TYPES } = require('../config/constants');
 
 const couponSchema = new mongoose.Schema(
   {
@@ -11,7 +12,7 @@ const couponSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['PERCENT', 'FIXED'],
+      enum: Object.values(COUPON_TYPES),
       required: true,
     },
     value: {

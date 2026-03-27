@@ -1,5 +1,6 @@
 const FileSystem = require('../schemas/FileSystem.schema');
 const { sendSuccess, createError } = require('../utils/response.utils');
+const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
 const path = require('path');
 const fs = require('fs');
 const sharp = require('sharp');
@@ -7,7 +8,7 @@ const sharp = require('sharp');
 const uploadImage = async (req, res, next) => {
   try {
     if (!req.file) {
-      throw createError('Vui lòng chọn file để tải lên', 400, 'BAD_REQUEST');
+      throw createError('Vui lòng chọn file để tải lên', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
     }
 
     // Tạo tên file mới với đuôi .webp
@@ -43,7 +44,7 @@ const uploadImage = async (req, res, next) => {
       res,
       { path: newFile.path },
       'Tải lên và tối ưu hóa hình ảnh (.webp) thành công',
-      201
+      HTTP_STATUS.CREATED
     );
   } catch (err) {
     next(err);

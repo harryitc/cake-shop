@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { createError } = require('../utils/response.utils');
+const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
 
 /**
  * Middleware xác thực JWT Token
@@ -7,7 +8,7 @@ const { createError } = require('../utils/response.utils');
 const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return next(createError('Không tìm thấy token. Vui lòng đăng nhập.', 401, 'UNAUTHORIZED'));
+    return next(createError('Không tìm thấy token. Vui lòng đăng nhập.', HTTP_STATUS.UNAUTHORIZED, ERROR_CODES.UNAUTHORIZED));
   }
 
   const token = authHeader.split(' ')[1];
@@ -21,7 +22,7 @@ const authenticate = (req, res, next) => {
     };
     next();
   } catch (err) {
-    return next(createError('Token không hợp lệ hoặc đã hết hạn', 401, 'INVALID_TOKEN'));
+    return next(createError('Token không hợp lệ hoặc đã hết hạn', HTTP_STATUS.UNAUTHORIZED, ERROR_CODES.INVALID_TOKEN));
   }
 };
 

@@ -1,5 +1,6 @@
 const ExcelJS = require('exceljs');
 const ImportHistory = require('../../schemas/ImportHistory.schema.js');
+const { IMPORT_MODES, IMPORT_STATUS } = require('../../config/constants');
 
 class ImportService {
   /**
@@ -9,14 +10,14 @@ class ImportService {
    * @param {String} mode - Chế độ import: UPSERT, INSERT_ONLY, UPDATE_ONLY
    * @param {String} userId - ID người thực hiện
    */
-  async execute(buffer, config, mode = 'UPSERT', userId) {
+  async execute(buffer, config, mode = IMPORT_MODES.UPSERT, userId) {
     const startTime = Date.now();
     const history = await ImportHistory.create({
       userId,
       entityType: config.entity,
       fileName: 'Import_' + config.entity + '_' + startTime,
       importMode: mode,
-      status: 'processing'
+      status: IMPORT_STATUS.PROCESSING
     });
 
     const stats = { total: 0, success: 0, failed: 0, skipped: 0 };
@@ -85,7 +86,7 @@ class ImportService {
       }
 
       // 4. Hoàn tất và cập nhật lịch sử
-      history.status = 'completed';
+      history.status = IMPORT_STATUS.COMPLETED;
       history.stats = stats;
       history.errors = errors;
       history.duration = Date.now() - startTime;
@@ -99,7 +100,7 @@ class ImportService {
       };
 
     } catch (error) {
-      history.status = 'failed';
+      history.status = IMPORT_STATUS.FAILED;
       history.errors.push({ row: 0, message: 'Lỗi hệ thống: ' + error.message });
       await history.save();
       throw error;
@@ -116,7 +117,7 @@ class ImportService {
       const filter = { [config.uniqueKey]: item[config.uniqueKey] };
       
       switch (mode) {
-        case 'UPSERT':
+        case IMPORT_MODES.UPSERT:
           operations.push({
             updateOne: {
               filter,
@@ -125,7 +126,7 @@ class ImportService {
             }
           });
           break;
-        case 'INSERT_ONLY':
+        case IMPORT_MODES.INSERT_ONLY:
           operations.push({
             updateOne: {
               filter,
@@ -134,7 +135,7 @@ class ImportService {
             }
           });
           break;
-        case 'UPDATE_ONLY':
+        case IMPORT_MODES.UPDATE_ONLY:
           operations.push({
             updateOne: {
               filter,
@@ -155,13 +156,13 @@ class ImportService {
       // Có thể cải tiến đếm chính xác dựa trên result.upsertedCount, result.modifiedCount...
       stats.success += (result.upsertedCount + result.modifiedCount + result.insertedCount || 0);
       
-      if (mode === 'INSERT_ONLY') {
+      if (mode === IMPORT_MODES.INSERT_ONLY) {
         // Trong chế độ INSERT_ONLY, những dòng trùng sẽ không được insert và result.matchedCount > 0
         // Chúng ta tính đó là 'skipped'
         stats.skipped += (result.matchedCount || 0);
       }
       
-      if (mode === 'UPDATE_ONLY') {
+      if (mode === IMPORT_MODES.UPDATE_ONLY) {
         // Trong chế độ UPDATE_ONLY, những dòng không tồn tại sẽ không được xử lý
         // Có thể tính là 'skipped' bằng cách lấy (tổng số - matchedCount)
         const skipped = operations.length - (result.matchedCount || 0);

@@ -1,5 +1,6 @@
 const ImportHistory = require('../schemas/ImportHistory.schema.js');
 const { createError, sendSuccess } = require('../utils/response.utils');
+const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
 const ExcelJS = require('exceljs');
 
 const downloadErrors = async (req, res, next) => {
@@ -8,11 +9,11 @@ const downloadErrors = async (req, res, next) => {
     
     const history = await ImportHistory.findById(historyId);
     if (!history) {
-      throw createError('Không tìm thấy lịch sử import', 404, 'NOT_FOUND');
+      throw createError('Không tìm thấy lịch sử import', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
     }
 
     if (!history.errors || history.errors.length === 0) {
-      throw createError('Không có dữ liệu lỗi để tải về', 400, 'BAD_REQUEST');
+      throw createError('Không có dữ liệu lỗi để tải về', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
     }
 
     const workbook = new ExcelJS.Workbook();

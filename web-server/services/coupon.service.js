@@ -1,5 +1,6 @@
 const Coupon = require('../schemas/Coupon.schema');
 const { createError } = require('../utils/response.utils');
+const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
 
 class CouponService {
   /**
@@ -7,7 +8,7 @@ class CouponService {
    */
   async createCoupon(data) {
     const existing = await Coupon.findOne({ code: data.code.toUpperCase() });
-    if (existing) throw createError('Mã giảm giá đã tồn tại', 400);
+    if (existing) throw createError('Mã giảm giá đã tồn tại', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.DUPLICATE_ERROR);
     
     return await Coupon.create(data);
   }
@@ -28,23 +29,23 @@ class CouponService {
     const coupon = await Coupon.findOne({ code: code.toUpperCase(), is_active: true });
     
     if (!coupon) {
-      throw createError('Mã giảm giá không tồn tại hoặc đã bị vô hiệu hóa', 404, 'COUPON_INVALID');
+      throw createError('Mã giảm giá không tồn tại hoặc đã bị vô hiệu hóa', HTTP_STATUS.NOT_FOUND, ERROR_CODES.COUPON_INVALID);
     }
 
     const now = new Date();
     if (now < coupon.start_date) {
-      throw createError('Mã giảm giá chưa đến thời gian sử dụng', 400, 'COUPON_NOT_STARTED');
+      throw createError('Mã giảm giá chưa đến thời gian sử dụng', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_NOT_STARTED);
     }
     if (now > coupon.end_date) {
-      throw createError('Mã giảm giá đã hết hạn', 400, 'COUPON_EXPIRED');
+      throw createError('Mã giảm giá đã hết hạn', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_EXPIRED);
     }
 
     if (coupon.usage_limit !== null && coupon.used_count >= coupon.usage_limit) {
-      throw createError('Mã giảm giá đã hết lượt sử dụng', 400, 'COUPON_LIMIT_REACHED');
+      throw createError('Mã giảm giá đã hết lượt sử dụng', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_LIMIT_REACHED);
     }
 
     if (orderTotal < coupon.min_order_value) {
-      throw createError(`Giá trị đơn hàng tối thiểu để dùng mã này là ${coupon.min_order_value.toLocaleString()}đ`, 400, 'COUPON_MIN_VALUE_NOT_MET');
+      throw createError(`Giá trị đơn hàng tối thiểu để dùng mã này là ${coupon.min_order_value.toLocaleString()}đ`, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_MIN_VALUE_NOT_MET);
     }
 
     let discountAmount = 0;

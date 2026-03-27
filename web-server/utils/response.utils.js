@@ -1,3 +1,5 @@
+const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
+
 /**
  * Gửi response thành công chuẩn
  * @param {import('express').Response} res
@@ -5,7 +7,7 @@
  * @param {string} message
  * @param {number} statusCode
  */
-const sendSuccess = (res, data = null, message = 'success', statusCode = 200) => {
+const sendSuccess = (res, data = null, message = 'success', statusCode = HTTP_STATUS.OK) => {
   return res.status(statusCode).json({ data, message });
 };
 
@@ -15,7 +17,7 @@ const sendSuccess = (res, data = null, message = 'success', statusCode = 200) =>
  * @param {number} statusCode
  * @param {string} code
  */
-const createError = (message, statusCode = 500, code = 'INTERNAL_ERROR') => {
+const createError = (message, statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR, code = ERROR_CODES.INTERNAL_ERROR) => {
   const err = new Error(message);
   err.statusCode = statusCode;
   err.code = code;

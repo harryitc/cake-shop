@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const authService = require('../services/auth.service');
 const { sendSuccess, createError } = require('../utils/response.utils');
+const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
 
 const registerSchema = Joi.object({
   email: Joi.string().email().required().messages({
@@ -62,11 +63,11 @@ const register = async (req, res, next) => {
   try {
     const { error, value } = registerSchema.validate(req.body);
     if (error) {
-      throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
+      throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
     }
 
     const data = await authService.register(value);
-    return sendSuccess(res, data, 'Đăng ký thành công', 201);
+    return sendSuccess(res, data, 'Đăng ký thành công', HTTP_STATUS.CREATED);
   } catch (err) {
     next(err);
   }
@@ -76,11 +77,11 @@ const login = async (req, res, next) => {
   try {
     const { error, value } = loginSchema.validate(req.body);
     if (error) {
-      throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
+      throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
     }
 
     const data = await authService.login(value);
-    return sendSuccess(res, data, 'Đăng nhập thành công', 200);
+    return sendSuccess(res, data, 'Đăng nhập thành công', HTTP_STATUS.OK);
   } catch (err) {
     next(err);
   }
@@ -98,7 +99,7 @@ const getMe = async (req, res, next) => {
 const updateProfile = async (req, res, next) => {
   try {
     const { error, value } = updateProfileSchema.validate(req.body);
-    if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
+    if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     const data = await authService.updateProfile(req.user.userId, value);
     return sendSuccess(res, data, 'Cập nhật thông tin thành công');
@@ -110,7 +111,7 @@ const updateProfile = async (req, res, next) => {
 const changePassword = async (req, res, next) => {
   try {
     const { error, value } = changePasswordSchema.validate(req.body);
-    if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
+    if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     await authService.changePassword(req.user.userId, value.oldPassword, value.newPassword);
     return sendSuccess(res, null, 'Đổi mật khẩu thành công');
@@ -122,7 +123,7 @@ const changePassword = async (req, res, next) => {
 const forgotPassword = async (req, res, next) => {
   try {
     const { error, value } = forgotPasswordSchema.validate(req.body);
-    if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
+    if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     await authService.forgotPassword(value.email);
 
@@ -136,7 +137,7 @@ const resetPassword = async (req, res, next) => {
   try {
     const { token } = req.params;
     const { error, value } = resetPasswordSchema.validate(req.body);
-    if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
+    if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     await authService.resetPassword(token, value.password);
     return sendSuccess(res, null, 'Đặt lại mật khẩu thành công');

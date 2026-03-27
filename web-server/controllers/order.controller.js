@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const orderService = require('../services/order.service');
 const { sendSuccess, createError } = require('../utils/response.utils');
+const { HTTP_STATUS, ERROR_CODES, ORDER_STATUS } = require('../config/constants');
 
 const createOrderSchema = Joi.object({
   address: Joi.string().trim().required().messages({
@@ -18,7 +19,7 @@ const idParamSchema = Joi.object({
 });
 
 const updateStatusSchema = Joi.object({
-  status: Joi.string().valid('CONFIRMED', 'DONE', 'REJECTED', 'PENDING').required().messages({
+  status: Joi.string().valid(...Object.values(ORDER_STATUS)).required().messages({
     'any.only': 'Trạng thái không hợp lệ',
     'any.required': 'Vui lòng cung cấp trạng thái mới',
   }),
@@ -27,10 +28,10 @@ const updateStatusSchema = Joi.object({
 const createOrder = async (req, res, next) => {
   try {
     const { error, value } = createOrderSchema.validate(req.body);
-    if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
+    if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     const order = await orderService.createOrder(req.user.userId, value.address, value.coupon_code);
-    return sendSuccess(res, { order }, 'Đặt hàng thành công', 201);
+    return sendSuccess(res, { order }, 'Đặt hàng thành công', HTTP_STATUS.CREATED);
   } catch (err) {
     next(err);
   }
@@ -39,7 +40,7 @@ const createOrder = async (req, res, next) => {
 const getOrders = async (req, res, next) => {
   try {
     const data = await orderService.getOrders(req.user.userId, req.user.role);
-    return sendSuccess(res, data, 'Lấy danh sách đơn hàng thành công', 200);
+    return sendSuccess(res, data, 'Lấy danh sách đơn hàng thành công', HTTP_STATUS.OK);
   } catch (err) {
     next(err);
   }
@@ -48,10 +49,10 @@ const getOrders = async (req, res, next) => {
 const getOrderById = async (req, res, next) => {
   try {
     const { error: paramError, value: paramValue } = idParamSchema.validate(req.params);
-    if (paramError) throw createError(paramError.details[0].message, 400, 'VALIDATION_ERROR');
+    if (paramError) throw createError(paramError.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     const order = await orderService.getOrderById(paramValue.id, req.user.userId, req.user.role);
-    return sendSuccess(res, { order }, 'Lấy chi tiết đơn hàng thành công', 200);
+    return sendSuccess(res, { order }, 'Lấy chi tiết đơn hàng thành công', HTTP_STATUS.OK);
   } catch (err) {
     next(err);
   }
@@ -60,13 +61,13 @@ const getOrderById = async (req, res, next) => {
 const updateStatus = async (req, res, next) => {
   try {
     const { error: paramError, value: paramValue } = idParamSchema.validate(req.params);
-    if (paramError) throw createError(paramError.details[0].message, 400, 'VALIDATION_ERROR');
+    if (paramError) throw createError(paramError.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     const { error: bodyError, value: bodyValue } = updateStatusSchema.validate(req.body);
-    if (bodyError) throw createError(bodyError.details[0].message, 400, 'VALIDATION_ERROR');
+    if (bodyError) throw createError(bodyError.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     const order = await orderService.updateStatus(paramValue.id, bodyValue.status);
-    return sendSuccess(res, { order }, 'Cập nhật trạng thái đơn hàng thành công', 200);
+    return sendSuccess(res, { order }, 'Cập nhật trạng thái đơn hàng thành công', HTTP_STATUS.OK);
   } catch (err) {
     next(err);
   }

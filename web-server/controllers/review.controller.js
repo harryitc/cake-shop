@@ -1,5 +1,6 @@
 const reviewService = require('../services/review.service');
 const { sendSuccess, createError } = require('../utils/response.utils');
+const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
 const Joi = require('joi');
 
 class ReviewController {
@@ -23,10 +24,10 @@ class ReviewController {
       });
 
       const { error, value } = schema.validate(req.body);
-      if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
+      if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
       const review = await reviewService.createReview(req.user.userId, value);
-      return sendSuccess(res, review, 'Gửi đánh giá thành công', 201);
+      return sendSuccess(res, review, 'Gửi đánh giá thành công', HTTP_STATUS.CREATED);
     } catch (err) {
       next(err);
     }
@@ -60,7 +61,7 @@ class ReviewController {
       const { is_approved } = req.body;
       
       if (typeof is_approved !== 'boolean') {
-        throw createError('Trạng thái is_approved phải là boolean', 400, 'BAD_REQUEST');
+        throw createError('Trạng thái is_approved phải là boolean', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
       }
 
       const review = await reviewService.updateReviewStatus(reviewId, is_approved);

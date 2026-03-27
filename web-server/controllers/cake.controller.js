@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const cakeService = require('../services/cake.service');
 const { sendSuccess, createError } = require('../utils/response.utils');
+const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
 
 // --- Schemas Validate ---
 const getAllQuerySchema = Joi.object({
@@ -86,7 +87,7 @@ const cakeImportConfig = require('../services/import/configs/cake.import.config'
 const importCakes = async (req, res, next) => {
   try {
     if (!req.file) {
-      throw createError('Vui lòng tải lên file Excel', 400, 'VALIDATION_ERROR');
+      throw createError('Vui lòng tải lên file Excel', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
     }
 
     const { mode } = req.query; // UPSERT, INSERT_ONLY, UPDATE_ONLY
@@ -94,7 +95,7 @@ const importCakes = async (req, res, next) => {
 
     const result = await importService.execute(req.file.buffer, cakeImportConfig, mode, userId);
     
-    return sendSuccess(res, result, 'Tiến trình import đã hoàn tất', 200);
+    return sendSuccess(res, result, 'Tiến trình import đã hoàn tất', HTTP_STATUS.OK);
   } catch (err) {
     next(err);
   }
@@ -103,10 +104,10 @@ const importCakes = async (req, res, next) => {
 const getAll = async (req, res, next) => {
   try {
     const { error, value } = getAllQuerySchema.validate(req.query);
-    if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
+    if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     const data = await cakeService.getAll(value);
-    return sendSuccess(res, data, 'Lấy danh sách thành công', 200);
+    return sendSuccess(res, data, 'Lấy danh sách thành công', HTTP_STATUS.OK);
   } catch (err) {
     next(err);
   }
@@ -115,10 +116,10 @@ const getAll = async (req, res, next) => {
 const getById = async (req, res, next) => {
   try {
     const { error, value } = idParamSchema.validate(req.params);
-    if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
+    if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     const data = await cakeService.getById(value.id);
-    return sendSuccess(res, data, 'Lấy chi tiết thành công', 200);
+    return sendSuccess(res, data, 'Lấy chi tiết thành công', HTTP_STATUS.OK);
   } catch (err) {
     next(err);
   }
@@ -127,10 +128,10 @@ const getById = async (req, res, next) => {
 const create = async (req, res, next) => {
   try {
     const { error, value } = createBodySchema.validate(req.body);
-    if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
+    if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     const data = await cakeService.create(value);
-    return sendSuccess(res, data, 'Tạo bánh thành công', 201);
+    return sendSuccess(res, data, 'Tạo bánh thành công', HTTP_STATUS.CREATED);
   } catch (err) {
     next(err);
   }
@@ -140,14 +141,14 @@ const update = async (req, res, next) => {
   try {
     // Validate param ID
     const paramVal = idParamSchema.validate(req.params);
-    if (paramVal.error) throw createError(paramVal.error.details[0].message, 400, 'VALIDATION_ERROR');
+    if (paramVal.error) throw createError(paramVal.error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     // Validate body
     const bodyVal = updateBodySchema.validate(req.body);
-    if (bodyVal.error) throw createError(bodyVal.error.details[0].message, 400, 'VALIDATION_ERROR');
+    if (bodyVal.error) throw createError(bodyVal.error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     const data = await cakeService.update(paramVal.value.id, bodyVal.value);
-    return sendSuccess(res, data, 'Cập nhật bánh thành công', 200);
+    return sendSuccess(res, data, 'Cập nhật bánh thành công', HTTP_STATUS.OK);
   } catch (err) {
     next(err);
   }
@@ -156,10 +157,10 @@ const update = async (req, res, next) => {
 const remove = async (req, res, next) => {
   try {
     const { error, value } = idParamSchema.validate(req.params);
-    if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
+    if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     await cakeService.remove(value.id);
-    return sendSuccess(res, null, 'Xóa bánh thành công', 200);
+    return sendSuccess(res, null, 'Xóa bánh thành công', HTTP_STATUS.OK);
   } catch (err) {
     next(err);
   }

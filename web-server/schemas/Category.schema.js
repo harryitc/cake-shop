@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { CATEGORY_TYPES } = require('../config/constants');
 
 const categorySchema = new mongoose.Schema(
   {
@@ -27,8 +28,8 @@ const categorySchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['OCCASION', 'FLAVOR', 'DIET', 'OTHER'],
-      default: 'OTHER',
+      enum: Object.values(CATEGORY_TYPES),
+      default: CATEGORY_TYPES.OTHER,
     },
     is_featured: {
       type: Boolean,

@@ -1,5 +1,6 @@
 const categoryService = require('../services/category.service');
 const { sendSuccess, createError } = require('../utils/response.utils');
+const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
 const Joi = require('joi');
 
 class CategoryController {
@@ -18,12 +19,12 @@ class CategoryController {
       });
 
       const { error, value } = schema.validate(req.body);
-      if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
+      if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
       const category = await categoryService.createCategory(value);
-      return sendSuccess(res, category, 'Tạo danh mục thành công', 201);
+      return sendSuccess(res, category, 'Tạo danh mục thành công', HTTP_STATUS.CREATED);
     } catch (err) {
-      if (err.code === 11000) return next(createError('Tên danh mục đã tồn tại', 400, 'DUPLICATE_ERROR'));
+      if (err.code === 11000) return next(createError('Tên danh mục đã tồn tại', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.DUPLICATE_ERROR));
       next(err);
     }
   }
@@ -40,7 +41,7 @@ class CategoryController {
   async getById(req, res, next) {
     try {
       const category = await categoryService.getCategoryById(req.params.id);
-      if (!category) throw createError('Không tìm thấy danh mục', 404, 'NOT_FOUND');
+      if (!category) throw createError('Không tìm thấy danh mục', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
       return sendSuccess(res, category);
     } catch (err) {
       next(err);
@@ -59,14 +60,14 @@ class CategoryController {
       });
 
       const { error, value } = schema.validate(req.body);
-      if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
+      if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
       const category = await categoryService.updateCategory(req.params.id, value);
-      if (!category) throw createError('Không tìm thấy danh mục', 404, 'NOT_FOUND');
+      if (!category) throw createError('Không tìm thấy danh mục', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
       
       return sendSuccess(res, category, 'Cập nhật danh mục thành công');
     } catch (err) {
-      if (err.code === 11000) return next(createError('Tên danh mục đã tồn tại', 400, 'DUPLICATE_ERROR'));
+      if (err.code === 11000) return next(createError('Tên danh mục đã tồn tại', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.DUPLICATE_ERROR));
       next(err);
     }
   }
@@ -75,7 +76,7 @@ class CategoryController {
     try {
       // Logic kiểm tra category có cake không đã nằm ở service
       const category = await categoryService.deleteCategory(req.params.id);
-      if (!category) throw createError('Không tìm thấy danh mục', 404, 'NOT_FOUND');
+      if (!category) throw createError('Không tìm thấy danh mục', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
       
       return sendSuccess(res, null, 'Xóa danh mục thành công');
     } catch (err) {

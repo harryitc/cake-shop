@@ -1,5 +1,6 @@
 const couponService = require('../services/coupon.service');
 const { sendSuccess, createError } = require('../utils/response.utils');
+const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
 const Joi = require('joi');
 
 class CouponController {
@@ -18,10 +19,10 @@ class CouponController {
       });
 
       const { error, value } = schema.validate(req.body);
-      if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
+      if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
       const coupon = await couponService.createCoupon(value);
-      return sendSuccess(res, coupon, 'Tạo mã giảm giá thành công', 201);
+      return sendSuccess(res, coupon, 'Tạo mã giảm giá thành công', HTTP_STATUS.CREATED);
     } catch (err) {
       next(err);
     }
@@ -40,7 +41,7 @@ class CouponController {
     try {
       const { code, order_total } = req.body;
       if (!code || !order_total) {
-        throw createError('Vui lòng cung cấp mã và tổng tiền', 400, 'BAD_REQUEST');
+        throw createError('Vui lòng cung cấp mã và tổng tiền', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
       }
 
       const result = await couponService.validateCoupon(code, order_total);
@@ -53,7 +54,7 @@ class CouponController {
   async update(req, res, next) {
     try {
       const coupon = await couponService.updateCoupon(req.params.id, req.body);
-      if (!coupon) throw createError('Không tìm thấy mã giảm giá', 404, 'NOT_FOUND');
+      if (!coupon) throw createError('Không tìm thấy mã giảm giá', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
       return sendSuccess(res, coupon, 'Cập nhật thành công');
     } catch (err) {
       next(err);
@@ -63,7 +64,7 @@ class CouponController {
   async delete(req, res, next) {
     try {
       const coupon = await couponService.deleteCoupon(req.params.id);
-      if (!coupon) throw createError('Không tìm thấy mã giảm giá', 404, 'NOT_FOUND');
+      if (!coupon) throw createError('Không tìm thấy mã giảm giá', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
       return sendSuccess(res, null, 'Xóa thành công');
     } catch (err) {
       next(err);

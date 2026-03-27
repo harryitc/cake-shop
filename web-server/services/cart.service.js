@@ -1,6 +1,7 @@
 const CartItem = require('../schemas/CartItem.schema');
 const Cake = require('../schemas/Cake.schema');
 const { createError } = require('../utils/response.utils');
+const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
 
 /**
  * Lấy danh sách giỏ hàng của current user
@@ -61,14 +62,14 @@ const addItem = async (userId, { cake_id, quantity = 1, variant_id = null }) => 
   // Check sản phẩm có tồn tại không
   const cake = await Cake.findById(cake_id);
   if (!cake) {
-    throw createError('Không tìm thấy sản phẩm bánh này', 404, 'NOT_FOUND');
+    throw createError('Không tìm thấy sản phẩm bánh này', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
   }
 
   // Nếu có variant_id, kiểm tra xem variant có tồn tại trong cake không
   if (variant_id) {
     const variantExists = cake.variants.find(v => v._id.toString() === variant_id.toString());
     if (!variantExists) {
-      throw createError('Không tìm thấy biến thể cho sản phẩm này', 404, 'NOT_FOUND');
+      throw createError('Không tìm thấy biến thể cho sản phẩm này', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
     }
   }
 
@@ -93,7 +94,7 @@ const removeItem = async (userId, itemId) => {
   // Phải kiểm tra cả user_id để tránh xoá hộ giỏ hàng người khác
   const item = await CartItem.findOneAndDelete({ _id: itemId, user_id: userId });
   if (!item) {
-    throw createError('Không tìm thấy sản phẩm trong giỏ hàng', 404, 'NOT_FOUND');
+    throw createError('Không tìm thấy sản phẩm trong giỏ hàng', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
   }
   return true;
 };
@@ -113,7 +114,7 @@ const updateItemQuantity = async (userId, itemId, quantity) => {
   );
 
   if (!item) {
-    throw createError('Không tìm thấy sản phẩm trong giỏ hàng', 404, 'NOT_FOUND');
+    throw createError('Không tìm thấy sản phẩm trong giỏ hàng', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
   }
 
   return item;

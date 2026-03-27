@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { IMPORT_MODES, IMPORT_STATUS, IMPORT_ENTITIES } = require('../config/constants');
 
 const ImportHistorySchema = new mongoose.Schema({
   userId: {
@@ -9,7 +10,7 @@ const ImportHistorySchema = new mongoose.Schema({
   entityType: {
     type: String,
     required: true,
-    enum: ['cakes', 'categories', 'orders', 'coupons'] // Mở rộng theo nhu cầu
+    enum: Object.values(IMPORT_ENTITIES)
   },
   fileName: {
     type: String,
@@ -18,13 +19,13 @@ const ImportHistorySchema = new mongoose.Schema({
   importMode: {
     type: String,
     required: true,
-    enum: ['UPSERT', 'INSERT_ONLY', 'UPDATE_ONLY'],
-    default: 'UPSERT'
+    enum: Object.values(IMPORT_MODES),
+    default: IMPORT_MODES.UPSERT
   },
   status: {
     type: String,
-    enum: ['processing', 'completed', 'failed'],
-    default: 'processing'
+    enum: Object.values(IMPORT_STATUS),
+    default: IMPORT_STATUS.PROCESSING
   },
   stats: {
     total: { type: Number, default: 0 },

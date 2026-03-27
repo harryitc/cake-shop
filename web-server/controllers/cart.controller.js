@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const cartService = require('../services/cart.service');
 const { sendSuccess, createError } = require('../utils/response.utils');
+const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
 
 // --- Schemas Validate ---
 const addItemSchema = Joi.object({
@@ -31,7 +32,7 @@ const getCart = async (req, res, next) => {
   try {
     // req.user.userId đã được attach từ auth.middleware
     const data = await cartService.getCart(req.user.userId);
-    return sendSuccess(res, data, 'Lấy giỏ hàng thành công', 200);
+    return sendSuccess(res, data, 'Lấy giỏ hàng thành công', HTTP_STATUS.OK);
   } catch (err) {
     next(err);
   }
@@ -40,10 +41,10 @@ const getCart = async (req, res, next) => {
 const addItem = async (req, res, next) => {
   try {
     const { error, value } = addItemSchema.validate(req.body);
-    if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
+    if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     const data = await cartService.addItem(req.user.userId, value);
-    return sendSuccess(res, data, 'Cập nhật giỏ hàng thành công', 200);
+    return sendSuccess(res, data, 'Cập nhật giỏ hàng thành công', HTTP_STATUS.OK);
   } catch (err) {
     next(err);
   }
@@ -52,10 +53,10 @@ const addItem = async (req, res, next) => {
 const removeItem = async (req, res, next) => {
   try {
     const { error, value } = itemIdParamSchema.validate(req.params);
-    if (error) throw createError(error.details[0].message, 400, 'VALIDATION_ERROR');
+    if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     await cartService.removeItem(req.user.userId, value.id);
-    return sendSuccess(res, null, 'Đã xóa sản phẩm khỏi giỏ hàng', 200);
+    return sendSuccess(res, null, 'Đã xóa sản phẩm khỏi giỏ hàng', HTTP_STATUS.OK);
   } catch (err) {
     next(err);
   }
@@ -64,13 +65,13 @@ const removeItem = async (req, res, next) => {
 const updateItemQuantity = async (req, res, next) => {
   try {
     const { error: paramError, value: paramValue } = itemIdParamSchema.validate(req.params);
-    if (paramError) throw createError(paramError.details[0].message, 400, 'VALIDATION_ERROR');
+    if (paramError) throw createError(paramError.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     const { error: bodyError, value: bodyValue } = updateQuantitySchema.validate(req.body);
-    if (bodyError) throw createError(bodyError.details[0].message, 400, 'VALIDATION_ERROR');
+    if (bodyError) throw createError(bodyError.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     const data = await cartService.updateItemQuantity(req.user.userId, paramValue.id, bodyValue.quantity);
-    return sendSuccess(res, data, 'Cập nhật số lượng thành công', 200);
+    return sendSuccess(res, data, 'Cập nhật số lượng thành công', HTTP_STATUS.OK);
   } catch (err) {
     next(err);
   }

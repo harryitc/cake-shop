@@ -1,9 +1,10 @@
 const Joi = require('joi');
 const Cake = require('../../../schemas/Cake.schema');
 const Category = require('../../../schemas/Category.schema');
+const { IMPORT_ENTITIES } = require('../../../config/constants');
 
 const cakeImportConfig = {
-  entity: 'cakes',
+  entity: IMPORT_ENTITIES.CAKE,
   model: Cake,
   uniqueKey: 'slug',
   batchSize: 500,

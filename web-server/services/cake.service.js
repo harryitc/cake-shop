@@ -1,5 +1,6 @@
 const Cake = require('../schemas/Cake.schema');
 const { createError } = require('../utils/response.utils');
+const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
 
 /**
  * Láy danh sách bánh (có phân trang và tìm kiếm theo tên)
@@ -90,7 +91,7 @@ const getById = async (id) => {
     .populate('category', 'name slug')
     .populate('categories', 'name slug');
   if (!cake) {
-    throw createError('Không tìm thấy sản phẩm bánh này', 404, 'NOT_FOUND');
+    throw createError('Không tìm thấy sản phẩm bánh này', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
   }
   return cake;
 };
@@ -116,7 +117,7 @@ const update = async (id, data) => {
   // new: true để trả về document sau khi update
   const cake = await Cake.findByIdAndUpdate(id, data, { new: true, runValidators: true });
   if (!cake) {
-    throw createError('Không tìm thấy sản phẩm bánh để cập nhật', 404, 'NOT_FOUND');
+    throw createError('Không tìm thấy sản phẩm bánh để cập nhật', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
   }
   return cake;
 };
@@ -129,7 +130,7 @@ const update = async (id, data) => {
 const remove = async (id) => {
   const cake = await Cake.findByIdAndDelete(id);
   if (!cake) {
-    throw createError('Không tìm thấy sản phẩm bánh để xóa', 404, 'NOT_FOUND');
+    throw createError('Không tìm thấy sản phẩm bánh để xóa', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
   }
   return true;
 };

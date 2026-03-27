@@ -1,3 +1,5 @@
+const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
+
 /**
  * Global Error Handler Middleware
  * Bắt toàn bộ lỗi được đẩy qua next(err), nén thành JSON chuẩn.
@@ -5,14 +7,14 @@
  */
 // eslint-disable-next-line no-unused-vars
 const errorHandler = (err, req, res, next) => {
-  let statusCode = err.statusCode || 500;
-  let code = err.code || 'INTERNAL_ERROR';
+  let statusCode = err.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR;
+  let code = err.code || ERROR_CODES.INTERNAL_ERROR;
   let message = err.message || 'Có lỗi xảy ra từ máy chủ';
 
   // --- Xử lý lỗi đặc thù từ Multer (Upload File) ---
   if (err.name === 'MulterError') {
-    statusCode = 400;
-    code = 'UPLOAD_ERROR';
+    statusCode = HTTP_STATUS.BAD_REQUEST;
+    code = ERROR_CODES.UPLOAD_ERROR;
     switch (err.code) {
       case 'LIMIT_FILE_SIZE':
         message = 'Kích thước tệp quá lớn! Vui lòng tải lên ảnh dưới 5MB.';

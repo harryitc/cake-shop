@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { ORDER_STATUS } = require('../config/constants');
 
 const orderItemSchema = new mongoose.Schema(
   {
@@ -55,8 +56,8 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['PENDING', 'CONFIRMED', 'DONE', 'REJECTED'],
-      default: 'PENDING',
+      enum: Object.values(ORDER_STATUS),
+      default: ORDER_STATUS.PENDING,
     },
     address: {
       type: String,

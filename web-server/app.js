@@ -41,9 +41,11 @@ app.use('/api/v1/analytics', require('./routes/analytics.routes'));
 app.use('/api/v1/wishlist', require('./routes/wishlist.routes'));
 app.use('/api/v1/import', require('./routes/import.routes'));
 
+const { HTTP_STATUS, ERROR_CODES } = require('./config/constants');
+
 // ─── 404 Handler ──────────────────────────────────────────────────────────────
 app.use((req, res, next) => {
-  next(createError('Route không tồn tại', 404, 'NOT_FOUND'));
+  next(createError('Route không tồn tại', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND));
 });
 
 // ─── Global Error Handler (phải đứng cuối cùng) ───────────────────────────────

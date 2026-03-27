@@ -5,12 +5,13 @@ const Cake = require('../schemas/Cake.schema');
 const CouponService = require('./coupon.service');
 const { createError } = require('../utils/response.utils');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../utils/email.utils');
+const { HTTP_STATUS, ERROR_CODES, ORDER_STATUS } = require('../config/constants');
 
 const VALID_TRANSITIONS = {
-  PENDING: ['CONFIRMED', 'REJECTED'],
-  CONFIRMED: ['DONE'],
-  DONE: [],
-  REJECTED: [],
+  [ORDER_STATUS.PENDING]: [ORDER_STATUS.CONFIRMED, ORDER_STATUS.REJECTED],
+  [ORDER_STATUS.CONFIRMED]: [ORDER_STATUS.DONE],
+  [ORDER_STATUS.DONE]: [],
+  [ORDER_STATUS.REJECTED]: [],
 };
 
 const createOrder = async (userId, address, couponCode = null) => {
@@ -23,7 +24,7 @@ const createOrder = async (userId, address, couponCode = null) => {
       .session(session);
 
     if (!cartItems || cartItems.length === 0) {
-      throw createError('Giỏ hàng trống', 400, 'BAD_REQUEST');
+      throw createError('Giỏ hàng trống', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
     }
 
     let total_price = 0;
@@ -32,7 +33,7 @@ const createOrder = async (userId, address, couponCode = null) => {
     // Kiểm tra tồn kho trước khi tính toán
     for (const item of cartItems) {
       if (!item.cake_id) {
-        throw createError('Một sản phẩm trong giỏ hàng không còn tồn tại', 400, 'BAD_REQUEST');
+        throw createError('Một sản phẩm trong giỏ hàng không còn tồn tại', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
       }
 
       let price_at_buy = item.cake_id.price;
@@ -43,7 +44,7 @@ const createOrder = async (userId, address, couponCode = null) => {
       if (item.variant_id) {
         const variant = item.cake_id.variants.find(v => v._id.toString() === item.variant_id.toString());
         if (!variant) {
-          throw createError(`Không tìm thấy biến thể cho sản phẩm "${item.cake_id.name}"`, 400, 'BAD_REQUEST');
+          throw createError(`Không tìm thấy biến thể cho sản phẩm "${item.cake_id.name}"`, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
         }
         price_at_buy = variant.price;
         variant_size = variant.size;
@@ -52,7 +53,7 @@ const createOrder = async (userId, address, couponCode = null) => {
 
       if (current_stock < item.quantity) {
         const productLabel = variant_size ? `"${item.cake_id.name} (${variant_size})"` : `"${item.cake_id.name}"`;
-        throw createError(`Sản phẩm ${productLabel} không đủ số lượng trong kho (còn lại: ${current_stock})`, 400, 'BAD_REQUEST');
+        throw createError(`Sản phẩm ${productLabel} không đủ số lượng trong kho (còn lại: ${current_stock})`, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
       }
 
       total_price += price_at_buy * item.quantity;
@@ -101,7 +102,7 @@ const createOrder = async (userId, address, couponCode = null) => {
           coupon_code: couponCode || '',
           discount_amount,
           final_price,
-          status: 'PENDING',
+          status: ORDER_STATUS.PENDING,
           address,
           items,
         },
@@ -161,11 +162,11 @@ const getOrderById = async (orderId, userId, role) => {
     .populate('user_id', 'email full_name phone avatar_url')
     .populate('items.cake_id', 'name price image_url slug');
   if (!order) {
-    throw createError('Đơn hàng không tồn tại', 404, 'NOT_FOUND');
+    throw createError('Đơn hàng không tồn tại', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
   }
 
   if (role !== 'admin' && order.user_id._id.toString() !== userId) {
-    throw createError('Đơn hàng không tồn tại', 404, 'NOT_FOUND');
+    throw createError('Đơn hàng không tồn tại', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
   }
 
   return order;
@@ -178,16 +179,16 @@ const updateStatus = async (orderId, newStatus) => {
   try {
     const order = await Order.findById(orderId).session(session);
     if (!order) {
-      throw createError('Đơn hàng không tồn tại', 404, 'NOT_FOUND');
+      throw createError('Đơn hàng không tồn tại', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
     }
 
     const allowedTransitions = VALID_TRANSITIONS[order.status];
     if (!allowedTransitions || !allowedTransitions.includes(newStatus)) {
-      throw createError(`Không thể chuyển trạng thái từ ${order.status} sang ${newStatus}`, 400, 'BAD_REQUEST');
+      throw createError(`Không thể chuyển trạng thái từ ${order.status} sang ${newStatus}`, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
     }
 
     // Hoàn kho nếu hủy đơn
-    if (newStatus === 'REJECTED' && (order.status === 'PENDING' || order.status === 'CONFIRMED')) {
+    if (newStatus === ORDER_STATUS.REJECTED && (order.status === ORDER_STATUS.PENDING || order.status === ORDER_STATUS.CONFIRMED)) {
       for (const item of order.items) {
         if (item.variant_id) {
           await Cake.updateOne(
