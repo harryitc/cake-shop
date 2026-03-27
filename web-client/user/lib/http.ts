@@ -6,7 +6,11 @@ export async function httpClient<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const headers = new Headers(options.headers);
-  headers.set("Content-Type", "application/json");
+  
+  // Chỉ set application/json nếu không phải FormData
+  if (!(options.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json");
+  }
 
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("access_token");
