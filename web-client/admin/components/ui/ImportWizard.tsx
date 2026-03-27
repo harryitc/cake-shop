@@ -261,7 +261,7 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
                         { 
                           title: "Sản phẩm", 
                           key: "product",
-                          render: (_, record) => record.rawData?.name || "N/A"
+                          render: (_: any, record: any) => record.rawData?.name || "N/A"
                         },
                         { 
                           title: "Chi tiết lỗi", 

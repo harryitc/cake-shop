@@ -27,12 +27,12 @@ const couponSchema = z.object({
   code: z.string().min(1, 'Vui lòng nhập mã'),
   type: z.enum(['PERCENT', 'FIXED']),
   value: z.number().min(0, 'Giá trị không được âm'),
-  min_order_value: z.number().min(0).default(0),
+  min_order_value: z.number().min(0),
   max_discount_value: z.number().min(0).nullable().optional(),
   start_date: z.any(),
   end_date: z.any(),
   usage_limit: z.number().min(1).nullable().optional(),
-  is_active: z.boolean().default(true),
+  is_active: z.boolean(),
 });
 
 type CouponFormValues = z.infer<typeof couponSchema>;

@@ -90,7 +90,7 @@ const ImportHistoryDrawer: React.FC<ImportHistoryDrawerProps> = ({ open, onClose
         </Space>
       ),
       key: "stats",
-      render: (_, record: any) => (
+      render: (_: any, record: any) => (
         <Space size="small">
           <Tooltip title="Số dòng nhập thành công">
             <Tag color="green">S: {record.stats.success}</Tag>
@@ -123,7 +123,7 @@ const ImportHistoryDrawer: React.FC<ImportHistoryDrawerProps> = ({ open, onClose
     {
       title: "Thao tác",
       key: "action",
-      render: (_, record: any) => (
+      render: (_: any, record: any) => (
         record.stats.failed > 0 && (
           <Button 
             size="small" 
