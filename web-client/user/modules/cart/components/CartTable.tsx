@@ -8,17 +8,17 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { CheckoutModal } from "../../orders/components/CheckoutModal";
 
-const formatPrice = (price: number) => 
+const formatPrice = (price: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
 
-const QuantityControl = ({ 
-  value, 
-  max, 
-  onUpdate 
-}: { 
-  value: number; 
-  max: number; 
-  onUpdate: (num: number) => void 
+const QuantityControl = ({
+  value,
+  max,
+  onUpdate
+}: {
+  value: number;
+  max: number;
+  onUpdate: (num: number) => void
 }) => {
   const [localValue, setLocalValue] = useState(value);
 
@@ -41,11 +41,11 @@ const QuantityControl = ({
 
   return (
     <div className="flex items-center gap-1 bg-gray-50 rounded-lg p-1 w-fit border border-gray-100 shadow-sm">
-      <Button 
+      <Button
         type="text"
         size="small"
         className="flex items-center justify-center hover:!bg-white hover:!text-indigo-600 transition-all rounded-md h-8 w-8"
-        icon={<MinusOutlined className="text-[12px]" />} 
+        icon={<MinusOutlined className="text-[12px]" />}
         onClick={() => {
           if (localValue > 1) {
             const next = localValue - 1;
@@ -66,11 +66,11 @@ const QuantityControl = ({
         onBlur={() => syncUpdate(localValue)}
         onPressEnter={() => syncUpdate(localValue)}
       />
-      <Button 
+      <Button
         type="text"
         size="small"
         className="flex items-center justify-center hover:!bg-white hover:!text-indigo-600 transition-all rounded-md h-8 w-8"
-        icon={<PlusOutlined className="text-[12px]" />} 
+        icon={<PlusOutlined className="text-[12px]" />}
         onClick={() => {
           if (localValue < max) {
             const next = localValue + 1;
@@ -94,9 +94,9 @@ export const CartTable = () => {
 
   if (isLoading) return <div className="p-8"><Skeleton active paragraph={{ rows: 6 }} /></div>;
   if (isError) return <div className="p-8 text-center text-red-500">Lỗi không thể tải giỏ hàng</div>;
-  
+
   const cartLocal: any = rawCart || { items: [], total: 0 };
-  
+
   if (cartLocal.items.length === 0) {
     return (
       <div className="py-20 text-center bg-white rounded-2xl shadow-sm border border-gray-100">
@@ -115,7 +115,7 @@ export const CartTable = () => {
       key: "cake",
       render: (cake: any) => (
         <div className="flex items-center gap-4">
-          <img src={cake.image_url || "https://placehold.co/100x100"} alt={cake.name} className="w-16 h-16 rounded object-cover border" />
+          <img src={cake.image_url ? (cake.image_url.startsWith('http') ? cake.image_url : `http://localhost:5000${cake.image_url}`) : "https://placehold.co/100x100"} alt={cake.name} className="w-16 h-16 rounded object-cover border" />
           <Link href={`/cakes/${cake._id}`} className="font-semibold text-gray-800 hover:text-indigo-600 min-w-[150px]">
             {cake.name}
           </Link>
@@ -132,7 +132,7 @@ export const CartTable = () => {
       dataIndex: "quantity",
       key: "quantity",
       render: (val: number, record: any) => (
-        <QuantityControl 
+        <QuantityControl
           value={val}
           max={record.cake?.stock ?? 99}
           onUpdate={(quantity) => {
@@ -175,14 +175,14 @@ export const CartTable = () => {
     <>
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 md:p-6 overflow-hidden">
         <div className="overflow-x-auto">
-          <Table 
-            dataSource={cartLocal.items} 
-            columns={columns} 
-            rowKey="id" 
+          <Table
+            dataSource={cartLocal.items}
+            columns={columns}
+            rowKey="id"
             pagination={false}
           />
         </div>
-        
+
         <div className="mt-8 flex flex-col md:flex-row justify-between items-end md:items-center bg-gray-50 p-6 rounded-xl border border-gray-100">
           <div className="text-gray-500 mb-4 md:mb-0 text-lg">
             Sản phẩm: <span className="font-bold text-gray-800">{cartLocal.items.length}</span>
@@ -191,9 +191,9 @@ export const CartTable = () => {
             <div className="text-xl text-gray-600">
               Tổng cộng: <span className="text-3xl font-black text-indigo-600 drop-shadow-sm ml-2">{formatPrice(cartLocal.total)}</span>
             </div>
-            <Button 
-              type="primary" 
-              size="large" 
+            <Button
+              type="primary"
+              size="large"
               className="h-12 px-8 bg-black hover:bg-gray-800 font-bold text-[16px] rounded-xl shadow-lg w-full md:w-auto"
               onClick={() => {
                 const token = localStorage.getItem("access_token");
