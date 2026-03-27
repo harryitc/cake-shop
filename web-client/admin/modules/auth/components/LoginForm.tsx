@@ -4,9 +4,10 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, Input, Button, message } from "antd";
-import { useLoginMutation } from "../hooks";
+import { useLoginMutation, useMeQuery } from "../hooks";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useEffect } from "react";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Vui lòng nhập email").email("Email không đúng định dạng"),
@@ -18,6 +19,15 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export const LoginForm = () => {
   const router = useRouter();
   const { mutate: login, isPending } = useLoginMutation();
+  const { data: user } = useMeQuery({
+    enabled: !!(typeof window !== "undefined" && localStorage.getItem("access_token")),
+  });
+
+  useEffect(() => {
+    if (user && user.role === "admin") {
+      router.replace("/admin/cakes");
+    }
+  }, [user, router]);
 
   const { control, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
