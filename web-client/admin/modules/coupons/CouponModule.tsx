@@ -44,8 +44,9 @@ const CouponModule = () => {
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { control, handleSubmit, reset, formState: { errors, isDirty } } = useForm<CouponFormValues>({
+  const { control, handleSubmit, reset, formState: { errors, isDirty, isValid } } = useForm<CouponFormValues>({
     resolver: zodResolver(couponSchema),
+    mode: 'onChange',
     defaultValues: {
       code: '',
       type: 'PERCENT',
@@ -257,7 +258,7 @@ const CouponModule = () => {
         onOk={() => handleSubmit(onSubmit)()}
         onCancel={() => setIsModalVisible(false)}
         confirmLoading={isSubmitting}
-        okButtonProps={{ disabled: !isDirty }}
+        okButtonProps={{ disabled: !isDirty || !isValid }}
         destroyOnClose
         width={600}
       >

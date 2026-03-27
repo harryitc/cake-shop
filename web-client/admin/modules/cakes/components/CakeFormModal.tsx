@@ -114,8 +114,9 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
   const [categories, setCategories] = useState<Category[]>([]);
   const isPending = isCreating || isUpdating;
 
-  const { control, handleSubmit, formState: { errors, isDirty }, reset, setValue, watch } = useForm<CakeFormValues>({
+  const { control, handleSubmit, formState: { errors, isDirty, isValid }, reset, setValue, watch } = useForm<CakeFormValues>({
     resolver: zodResolver(cakeSchema) as any,
+    mode: "onChange",
     defaultValues: {
       name: "", category: "", categories: [], description: "", price: 0, stock: 0, image_url: "",
       variants: [], tags: [], ingredients: [], specifications: { weight: "", servings: "" }
@@ -436,7 +437,7 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
       width={750}
       okButtonProps={{ 
         className: "bg-indigo-600 hover:bg-indigo-700 font-bold px-8 h-12 rounded-xl",
-        disabled: !isDirty
+        disabled: !isDirty || !isValid
       }}
       cancelButtonProps={{ className: "px-6 h-12 font-semibold rounded-xl" }}
     >

@@ -31,8 +31,9 @@ const CategoryModule = () => {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { control, handleSubmit, reset, formState: { errors, isDirty } } = useForm<CategoryFormValues>({
+  const { control, handleSubmit, reset, formState: { errors, isDirty, isValid } } = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
+    mode: 'onChange',
     defaultValues: { name: '', description: '', image_url: '' }
   });
 
@@ -168,7 +169,7 @@ const CategoryModule = () => {
         onOk={() => handleSubmit(onSubmit)()}
         onCancel={() => setIsModalVisible(false)}
         confirmLoading={isSubmitting}
-        okButtonProps={{ disabled: !isDirty }}
+        okButtonProps={{ disabled: !isDirty || !isValid }}
         destroyOnClose
       >
         <Form layout="vertical" className="mt-4">

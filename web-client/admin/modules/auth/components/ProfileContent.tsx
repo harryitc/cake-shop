@@ -37,13 +37,15 @@ export const ProfileContent = () => {
   
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
 
-  const { control: profileControl, handleSubmit: handleProfileSubmit, reset: resetProfile, formState: { isDirty: isProfileDirty } } = useForm<ProfileFormValues>({
+  const { control: profileControl, handleSubmit: handleProfileSubmit, reset: resetProfile, formState: { isDirty: isProfileDirty, isValid: isProfileValid } } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
+    mode: "onChange",
     defaultValues: { full_name: "", phone: "", address: "", avatar_url: "" }
   });
 
-  const { control: passControl, handleSubmit: handlePassSubmit, reset: resetPass, formState: { errors: passErrors, isDirty: isPassDirty } } = useForm<PasswordFormValues>({
+  const { control: passControl, handleSubmit: handlePassSubmit, reset: resetPass, formState: { errors: passErrors, isDirty: isPassDirty, isValid: isPassValid } } = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
+    mode: "onChange",
     defaultValues: { oldPassword: "", newPassword: "", confirmPassword: "" }
   });
 
@@ -134,92 +136,92 @@ export const ProfileContent = () => {
                 </Form.Item>
               </div>
 
-                <Button 
-                  type="primary" 
-                  htmlType="submit" 
-                  loading={isUpdating} 
-                  disabled={!isProfileDirty}
-                  className="bg-indigo-600 font-bold h-10 rounded-lg px-8"
-                >
-                  Lưu Thay Đổi
-                </Button>
-              </Form>
-            </Card>
-
-            <Card className="rounded-2xl shadow-sm border-gray-100 mt-6" title={<span className="font-bold text-red-600">Bảo mật</span>}>
-              <p className="text-gray-500 mb-4">Bạn nên đổi mật khẩu định kỳ để bảo vệ tài khoản.</p>
-              <Button danger icon={<LockOutlined />} onClick={() => setIsPassModalOpen(true)} className="font-semibold rounded-lg h-10">
-                Đổi mật khẩu truy cập
-              </Button>
-            </Card>
-          </div>
-        </div>
-
-        <Modal
-          title={<span className="font-black text-xl">Thiết lập Mật khẩu mới</span>}
-          open={isPassModalOpen}
-          onCancel={() => setIsPassModalOpen(false)}
-          footer={null}
-          destroyOnClose
-        >
-          <Form
-            layout="vertical"
-            onFinish={handlePassSubmit(onChangePassword)}
-            className="mt-6"
-          >
-            <Form.Item 
-              label="Mật khẩu hiện tại" 
-              validateStatus={passErrors.oldPassword ? "error" : ""} 
-              help={passErrors.oldPassword?.message}
-              required
-            >
-              <Controller
-                name="oldPassword"
-                control={passControl}
-                render={({ field }) => <Input.Password {...field} prefix={<LockOutlined className="text-gray-400" />} className="rounded-lg" />}
-              />
-            </Form.Item>
-
-            <Form.Item 
-              label="Mật khẩu mới" 
-              validateStatus={passErrors.newPassword ? "error" : ""} 
-              help={passErrors.newPassword?.message}
-              required
-            >
-              <Controller
-                name="newPassword"
-                control={passControl}
-                render={({ field }) => <Input.Password {...field} prefix={<LockOutlined className="text-gray-400" />} className="rounded-lg" />}
-              />
-            </Form.Item>
-
-            <Form.Item 
-              label="Xác nhận mật khẩu mới" 
-              validateStatus={passErrors.confirmPassword ? "error" : ""} 
-              help={passErrors.confirmPassword?.message}
-              required
-            >
-              <Controller
-                name="confirmPassword"
-                control={passControl}
-                render={({ field }) => <Input.Password {...field} prefix={<LockOutlined className="text-gray-400" />} className="rounded-lg" />}
-              />
-            </Form.Item>
-
-            <div className="flex gap-3 justify-end mt-8">
-              <Button onClick={() => setIsPassModalOpen(false)} className="rounded-lg h-10 px-6 font-semibold">Hủy Bỏ</Button>
               <Button 
                 type="primary" 
                 htmlType="submit" 
-                loading={isChangingPass} 
-                disabled={!isPassDirty}
-                className="bg-indigo-600 rounded-lg h-10 px-6 font-bold"
+                loading={isUpdating} 
+                disabled={!isProfileDirty || !isProfileValid}
+                className="bg-indigo-600 font-bold h-10 rounded-lg px-8"
               >
-                Cập nhật mật khẩu
+                Lưu Thay Đổi
               </Button>
-            </div>
-          </Form>
-        </Modal>
+            </Form>
+          </Card>
+
+          <Card className="rounded-2xl shadow-sm border-gray-100 mt-6" title={<span className="font-bold text-red-600">Bảo mật</span>}>
+            <p className="text-gray-500 mb-4">Bạn nên đổi mật khẩu định kỳ để bảo vệ tài khoản.</p>
+            <Button danger icon={<LockOutlined />} onClick={() => setIsPassModalOpen(true)} className="font-semibold rounded-lg h-10">
+              Đổi mật khẩu truy cập
+            </Button>
+          </Card>
+        </div>
+      </div>
+
+      <Modal
+        title={<span className="font-black text-xl">Thiết lập Mật khẩu mới</span>}
+        open={isPassModalOpen}
+        onCancel={() => setIsPassModalOpen(false)}
+        footer={null}
+        destroyOnClose
+      >
+        <Form
+          layout="vertical"
+          onFinish={handlePassSubmit(onChangePassword)}
+          className="mt-6"
+        >
+          <Form.Item 
+            label="Mật khẩu hiện tại" 
+            validateStatus={passErrors.oldPassword ? "error" : ""} 
+            help={passErrors.oldPassword?.message}
+            required
+          >
+            <Controller
+              name="oldPassword"
+              control={passControl}
+              render={({ field }) => <Input.Password {...field} prefix={<LockOutlined className="text-gray-400" />} className="rounded-lg" />}
+            />
+          </Form.Item>
+
+          <Form.Item 
+            label="Mật khẩu mới" 
+            validateStatus={passErrors.newPassword ? "error" : ""} 
+            help={passErrors.newPassword?.message}
+            required
+          >
+            <Controller
+              name="newPassword"
+              control={passControl}
+              render={({ field }) => <Input.Password {...field} prefix={<LockOutlined className="text-gray-400" />} className="rounded-lg" />}
+            />
+          </Form.Item>
+
+          <Form.Item 
+            label="Xác nhận mật khẩu mới" 
+            validateStatus={passErrors.confirmPassword ? "error" : ""} 
+            help={passErrors.confirmPassword?.message}
+            required
+          >
+            <Controller
+              name="confirmPassword"
+              control={passControl}
+              render={({ field }) => <Input.Password {...field} prefix={<LockOutlined className="text-gray-400" />} className="rounded-lg" />}
+            />
+          </Form.Item>
+
+          <div className="flex gap-3 justify-end mt-8">
+            <Button onClick={() => setIsPassModalOpen(false)} className="rounded-lg h-10 px-6 font-semibold">Hủy Bỏ</Button>
+            <Button 
+              type="primary" 
+              htmlType="submit" 
+              loading={isChangingPass} 
+              disabled={!isPassDirty || !isPassValid}
+              className="bg-indigo-600 rounded-lg h-10 px-6 font-bold"
+            >
+              Cập nhật mật khẩu
+            </Button>
+          </div>
+        </Form>
+      </Modal>
     </div>
   );
 };
