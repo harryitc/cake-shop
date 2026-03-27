@@ -152,6 +152,11 @@ export const OrderTable = () => {
                                    </div>
                                    <div>
                                       <div className="font-bold text-gray-800 text-[13px]">{item.cake_id?.name || "Sản phẩm đã xóa"}</div>
+                                       {item.variant_size && (
+                                          <div className="text-[10px] text-indigo-500 font-black bg-indigo-50 px-1.5 py-0.5 rounded-full uppercase tracking-tighter w-fit mt-0.5">
+                                             Size: {item.variant_size}
+                                          </div>
+                                       )}
                                       <div className="text-[11px] text-gray-400">Đơn giá: {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(item.price_at_buy)}</div>
                                    </div>
                                 </div>

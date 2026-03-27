@@ -150,7 +150,7 @@ export const CakeDetail = ({ id }: { id: string }) => {
             {currentStock > 0 ? (
               <AddToCartBtn 
                 cakeId={cake.id} 
-                variant={selectedVariant ? { size: selectedVariant.size, price: selectedVariant.price } : undefined} 
+                variantId={selectedVariant?._id} 
                 className="flex-grow h-16 rounded-[20px] bg-indigo-600 hover:bg-indigo-700 text-lg font-black shadow-xl shadow-indigo-200 border-none flex items-center justify-center gap-3"
               />
             ) : (

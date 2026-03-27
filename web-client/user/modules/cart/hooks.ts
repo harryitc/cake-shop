@@ -27,11 +27,11 @@ export const useCartQuery = () => {
 export const useAddToCartMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ cake_id, quantity }: { cake_id: string; quantity?: number }) => {
+    mutationFn: async ({ cake_id, quantity, variant_id }: { cake_id: string; quantity?: number; variant_id?: string | null }) => {
       if (isUserLoggedIn()) {
-        return cartApi.addItem({ cake_id, quantity });
+        return cartApi.addItem({ cake_id, quantity, variant_id });
       }
-      return addToLocalCart(cake_id, quantity);
+      return addToLocalCart(cake_id, quantity, variant_id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
@@ -79,7 +79,11 @@ export const useSyncCartMutation = () => {
 
       // Sync từng item lên server
       for (const item of localCart.items) {
-        await cartApi.addItem({ cake_id: item.cake._id, quantity: item.quantity });
+        await cartApi.addItem({ 
+          cake_id: item.cake._id, 
+          quantity: item.quantity, 
+          variant_id: item.variant_id 
+        });
       }
       
       clearLocalCart();

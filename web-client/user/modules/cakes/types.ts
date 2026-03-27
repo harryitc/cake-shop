@@ -7,6 +7,7 @@ export interface ICategoryDTO {
 }
 
 export interface IVariant {
+  _id: string;
   size: string;
   price: number;
   stock: number;

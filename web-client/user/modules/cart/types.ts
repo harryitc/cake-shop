@@ -1,9 +1,12 @@
-import { ICakeDTO } from "../cakes/types";
+import { ICakeDTO, IVariant } from "../cakes/types";
 
 export interface ICartItemDTO {
   id: string;
   cake: ICakeDTO;
+  variant_id?: string | null;
+  variant?: IVariant | null;
   quantity: number;
+  price?: number;
   subtotal: number;
 }
 
@@ -14,5 +17,6 @@ export interface ICartResponse {
 
 export interface IAddToCartPayload {
   cake_id: string;
+  variant_id?: string | null;
   quantity?: number;
 }

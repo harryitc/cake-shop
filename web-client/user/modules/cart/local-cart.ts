@@ -19,23 +19,38 @@ export const saveLocalCart = (cart: ICartResponse) => {
   localStorage.setItem(LOCAL_CART_KEY, JSON.stringify(cart));
 };
 
-export const addToLocalCart = async (cakeId: string, quantity: number = 1) => {
+export const addToLocalCart = async (cakeId: string, quantity: number = 1, variantId: string | null = null) => {
   const cart = getLocalCart();
-  const existingItemIndex = cart.items.findIndex((item) => item.cake._id === cakeId);
+  const existingItemIndex = cart.items.findIndex(
+    (item) => item.cake._id === cakeId && (item.variant_id || null) === (variantId || null)
+  );
 
   if (existingItemIndex > -1) {
     // Update quantity
     cart.items[existingItemIndex].quantity += quantity;
-    cart.items[existingItemIndex].subtotal = 
-      cart.items[existingItemIndex].quantity * cart.items[existingItemIndex].cake.price;
+    const price = cart.items[existingItemIndex].price || cart.items[existingItemIndex].cake.price;
+    cart.items[existingItemIndex].subtotal = cart.items[existingItemIndex].quantity * price;
   } else {
     // Add new item - need to fetch cake info
     const cake = await cakeApi.getById(cakeId);
+    let price = cake.price;
+    let variant = null;
+
+    if (variantId && cake.variants) {
+      variant = cake.variants.find(v => v._id === variantId) || null;
+      if (variant) {
+        price = variant.price;
+      }
+    }
+
     const newItem: ICartItemDTO = {
       id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       cake: cake,
+      variant_id: variantId,
+      variant: variant,
       quantity: quantity,
-      subtotal: cake.price * quantity,
+      price: price,
+      subtotal: price * quantity,
     };
     cart.items.push(newItem);
   }

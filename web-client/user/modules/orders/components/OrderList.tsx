@@ -93,11 +93,19 @@ export const OrderList = () => {
                           />
                         </div>
                         <div>
-                          <div className="font-bold text-gray-800 text-[15px] group-hover:text-indigo-600 transition-colors">{item?.cake_id?.name || "Sản phẩm không khả dụng"}</div>
-                          <div className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
-                            <span className="bg-gray-200/50 px-1.5 py-0.5 rounded text-gray-600 font-medium">x{item.quantity}</span>
-                            <span className="text-gray-300">•</span>
-                            <span>{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(item.price_at_buy)}</span>
+                          <div className="font-bold text-gray-800 text-[15px] group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{item?.cake_id?.name || "Sản phẩm không khả dụng"}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            {item.variant_size && (
+                              <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full uppercase tracking-tighter border border-indigo-100/50">
+                                Size: {item.variant_size}
+                              </span>
+                            )}
+                            <div className="text-xs text-gray-500 flex items-center gap-2">
+                              {item.variant_size && <span className="text-gray-300">•</span>}
+                              <span className="bg-gray-200/50 px-1.5 py-0.5 rounded text-gray-600 font-medium tracking-tight">x{item.quantity}</span>
+                              <span className="text-gray-300">•</span>
+                              <span className="font-medium">{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(item.price_at_buy)}</span>
+                            </div>
                           </div>
                         </div>
                       </div>

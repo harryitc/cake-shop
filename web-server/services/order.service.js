@@ -27,30 +27,55 @@ const createOrder = async (userId, address, couponCode = null) => {
     }
 
     let total_price = 0;
+    const items = [];
     
     // Kiểm tra tồn kho trước khi tính toán
     for (const item of cartItems) {
       if (!item.cake_id) {
         throw createError('Một sản phẩm trong giỏ hàng không còn tồn tại', 400, 'BAD_REQUEST');
       }
-      if (item.cake_id.stock < item.quantity) {
-        throw createError(`Sản phẩm "${item.cake_id.name}" không đủ số lượng trong kho (còn lại: ${item.cake_id.stock})`, 400, 'BAD_REQUEST');
-      }
-    }
 
-    const items = cartItems.map((item) => {
-      const price_at_buy = item.cake_id.price;
+      let price_at_buy = item.cake_id.price;
+      let variant_size = '';
+      let current_stock = item.cake_id.stock;
+
+      // Nếu có biến thể
+      if (item.variant_id) {
+        const variant = item.cake_id.variants.find(v => v._id.toString() === item.variant_id.toString());
+        if (!variant) {
+          throw createError(`Không tìm thấy biến thể cho sản phẩm "${item.cake_id.name}"`, 400, 'BAD_REQUEST');
+        }
+        price_at_buy = variant.price;
+        variant_size = variant.size;
+        current_stock = variant.stock;
+      }
+
+      if (current_stock < item.quantity) {
+        const productLabel = variant_size ? `"${item.cake_id.name} (${variant_size})"` : `"${item.cake_id.name}"`;
+        throw createError(`Sản phẩm ${productLabel} không đủ số lượng trong kho (còn lại: ${current_stock})`, 400, 'BAD_REQUEST');
+      }
+
       total_price += price_at_buy * item.quantity;
-      return {
+      items.push({
         cake_id: item.cake_id._id,
         quantity: item.quantity,
+        variant_id: item.variant_id || null,
+        variant_size: variant_size,
         price_at_buy: price_at_buy,
-      };
-    });
+      });
+    }
     
     // Trừ tồn kho
     for (const item of items) {
-       await Cake.findByIdAndUpdate(item.cake_id, { $inc: { stock: -item.quantity } }, { session });
+      if (item.variant_id) {
+        await Cake.updateOne(
+          { _id: item.cake_id, "variants._id": item.variant_id },
+          { $inc: { "variants.$.stock": -item.quantity } },
+          { session }
+        );
+      } else {
+        await Cake.findByIdAndUpdate(item.cake_id, { $inc: { stock: -item.quantity } }, { session });
+      }
     }
 
     // Xử lý Coupon
@@ -164,7 +189,15 @@ const updateStatus = async (orderId, newStatus) => {
     // Hoàn kho nếu hủy đơn
     if (newStatus === 'REJECTED' && (order.status === 'PENDING' || order.status === 'CONFIRMED')) {
       for (const item of order.items) {
-        await Cake.findByIdAndUpdate(item.cake_id, { $inc: { stock: item.quantity } }, { session });
+        if (item.variant_id) {
+          await Cake.updateOne(
+            { _id: item.cake_id, "variants._id": item.variant_id },
+            { $inc: { "variants.$.stock": item.quantity } },
+            { session }
+          );
+        } else {
+          await Cake.findByIdAndUpdate(item.cake_id, { $inc: { stock: item.quantity } }, { session });
+        }
       }
     }
 

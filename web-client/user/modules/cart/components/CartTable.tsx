@@ -113,19 +113,31 @@ export const CartTable = () => {
       title: "Sản phẩm",
       dataIndex: "cake",
       key: "cake",
-      render: (cake: any) => (
+      render: (cake: any, record: any) => (
         <div className="flex items-center gap-4">
           <img src={cake.image_url ? (cake.image_url.startsWith('http') ? cake.image_url : `http://localhost:5000${cake.image_url}`) : "https://placehold.co/100x100"} alt={cake.name} className="w-16 h-16 rounded object-cover border" />
-          <Link href={`/cakes/${cake._id}`} className="font-semibold text-gray-800 hover:text-indigo-600 min-w-[150px]">
-            {cake.name}
-          </Link>
+          <div className="flex flex-col">
+            <Link href={`/cakes/${cake._id}`} className="font-semibold text-gray-800 hover:text-indigo-600 min-w-[150px]">
+              {cake.name}
+            </Link>
+            {record.variant && (
+              <span className="text-xs text-indigo-500 font-bold bg-indigo-50 px-2 py-0.5 rounded w-fit mt-1">
+                Size: {record.variant.size}
+              </span>
+            )}
+            {record.variant_size && !record.variant && (
+               <span className="text-xs text-indigo-500 font-bold bg-indigo-50 px-2 py-0.5 rounded w-fit mt-1">
+                Size: {record.variant_size}
+              </span>
+            )}
+          </div>
         </div>
       ),
     },
     {
       title: "Đơn giá",
       key: "price",
-      render: (_: any, record: any) => formatPrice(record.cake.price)
+      render: (_: any, record: any) => formatPrice(record.price || record.cake.price)
     },
     {
       title: "Số lượng",
@@ -134,7 +146,7 @@ export const CartTable = () => {
       render: (val: number, record: any) => (
         <QuantityControl
           value={val}
-          max={record.cake?.stock ?? 99}
+          max={record.variant?.stock ?? record.cake?.stock ?? 99}
           onUpdate={(quantity) => {
             updateQuantity({ id: record.id, quantity }, {
               onError: () => message.error("Lỗi cập nhật số lượng"),

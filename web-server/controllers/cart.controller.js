@@ -8,6 +8,7 @@ const addItemSchema = Joi.object({
     'string.pattern.base': 'Cake ID không hợp lệ',
     'any.required': 'Vui lòng cung cấp cake_id',
   }),
+  variant_id: Joi.string().regex(/^[0-9a-fA-F]{24}$/).allow(null, '').optional(),
   quantity: Joi.number().min(1).default(1),
 });
 

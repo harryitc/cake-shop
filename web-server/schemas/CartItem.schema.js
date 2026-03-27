@@ -18,6 +18,10 @@ const cartItemSchema = new mongoose.Schema(
       min: 1,
       default: 1,
     },
+    variant_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -25,6 +29,7 @@ const cartItemSchema = new mongoose.Schema(
 );
 
 // Tạo compound index để db query nhanh hơn và dễ đếm unique items của user
-cartItemSchema.index({ user_id: 1, cake_id: 1 }, { unique: true });
+// Unique dựa trên user + sản phẩm + biến thể
+cartItemSchema.index({ user_id: 1, cake_id: 1, variant_id: 1 }, { unique: true });
 
 module.exports = mongoose.model('CartItem', cartItemSchema);

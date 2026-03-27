@@ -12,6 +12,14 @@ const orderItemSchema = new mongoose.Schema(
       required: true,
       min: 1,
     },
+    variant_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
+    variant_size: {
+      type: String,
+      default: '',
+    },
     price_at_buy: {
       type: Number,
       required: true,
