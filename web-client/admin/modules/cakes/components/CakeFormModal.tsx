@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Modal, Form, Input, InputNumber, App, Upload, Button, Select, Tabs, Space, Divider, Tag } from "antd";
@@ -61,6 +61,7 @@ const cakeSchema = z.object({
   stock: z.number().min(0, "Số lượng không được âm").default(0),
   image_url: z.string().optional(),
   variants: z.array(z.object({
+    _id: z.string().optional(),
     size: z.string().min(1, "Vui lòng nhập kích thước"),
     price: z.number().min(0, "Giá không được âm"),
     stock: z.number().min(0, "Tồn kho không được âm"),
@@ -81,7 +82,7 @@ type CakeFormValues = {
   price: number;
   stock: number;
   image_url?: string;
-  variants?: { size: string; price: number; stock: number }[];
+  variants?: { _id?: string; size: string; price: number; stock: number }[];
   tags?: string[];
   ingredients?: string[];
   specifications?: {
@@ -118,6 +119,11 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
       name: "", category: "", categories: [], description: "", price: 0, stock: 0, image_url: "",
       variants: [], tags: [], ingredients: [], specifications: { weight: "", servings: "" }
     },
+  });
+
+  const { fields, append, remove: removeVariant } = useFieldArray({
+    control,
+    name: "variants",
   });
 
   const currentImageUrl = watch("image_url");
@@ -303,29 +309,68 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
         </div>
       </div>
 
-      <Form.List name="variants">
-        {(fields, { add, remove }) => (
-          <div className="space-y-4">
-            {fields.map(({ key, name, ...restField }) => (
-              <div key={key} className="flex items-start gap-4 p-4 border border-gray-100 rounded-xl bg-gray-50/30">
-                <Form.Item {...restField} name={[name, 'size']} className="flex-[1.5] mb-0" rules={[{ required: true, message: 'Nhập size' }]}>
-                  <Input placeholder="Kích thước (vd: 20cm)" className="rounded-lg h-10" />
-                </Form.Item>
-                <Form.Item {...restField} name={[name, 'price']} className="flex-1 mb-0" rules={[{ required: true, message: 'Nhập giá' }]}>
-                  <InputNumber placeholder="Giá" className="w-full rounded-lg h-10" formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} parser={(value) => value!.replace(/\$\s?|(,*)/g, "") as any} />
-                </Form.Item>
-                <Form.Item {...restField} name={[name, 'stock']} className="flex-1 mb-0" rules={[{ required: true, message: 'Nhập tồn' }]}>
-                  <InputNumber placeholder="Tồn" className="w-full rounded-lg h-10" />
-                </Form.Item>
-                <Button type="text" danger icon={<MinusCircleOutlined />} onClick={() => remove(name)} className="mt-1" />
-              </div>
-            ))}
-            <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />} className="h-10 rounded-xl border-indigo-200 text-indigo-600">
-              Thêm Biến Thể Mới
-            </Button>
+      <div className="space-y-4">
+        {fields.map((field, index) => (
+          <div key={field.id} className="flex items-start gap-4 p-4 border border-gray-100 rounded-xl bg-gray-50/30">
+            <Form.Item 
+              className="flex-[1.5] mb-0" 
+              validateStatus={errors.variants?.[index]?.size ? "error" : ""} 
+              help={errors.variants?.[index]?.size?.message}
+            >
+              <Controller
+                name={`variants.${index}.size`}
+                control={control}
+                render={({ field }) => (
+                  <Input {...field} placeholder="Kích thước (vd: 20cm)" className="rounded-lg h-10" />
+                )}
+              />
+            </Form.Item>
+            <Form.Item 
+              className="flex-1 mb-0" 
+              validateStatus={errors.variants?.[index]?.price ? "error" : ""} 
+              help={errors.variants?.[index]?.price?.message}
+            >
+              <Controller
+                name={`variants.${index}.price`}
+                control={control}
+                render={({ field }) => (
+                  <InputNumber 
+                    {...field} 
+                    placeholder="Giá" 
+                    className="w-full rounded-lg h-10" 
+                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} 
+                    parser={(value) => value!.replace(/\$\s?|(,*)/g, "") as any} 
+                    style={{ width: '100%' }}
+                  />
+                )}
+              />
+            </Form.Item>
+            <Form.Item 
+              className="flex-1 mb-0" 
+              validateStatus={errors.variants?.[index]?.stock ? "error" : ""} 
+              help={errors.variants?.[index]?.stock?.message}
+            >
+              <Controller
+                name={`variants.${index}.stock`}
+                control={control}
+                render={({ field }) => (
+                  <InputNumber {...field} placeholder="Tồn" className="w-full rounded-lg h-10" style={{ width: '100%' }} />
+                )}
+              />
+            </Form.Item>
+            <Button type="text" danger icon={<MinusCircleOutlined />} onClick={() => removeVariant(index)} className="mt-1" />
           </div>
-        )}
-      </Form.List>
+        ))}
+        <Button 
+          type="dashed" 
+          onClick={() => append({ size: "", price: 0, stock: 0 })} 
+          block 
+          icon={<PlusOutlined />} 
+          className="h-10 rounded-xl border-indigo-200 text-indigo-600"
+        >
+          Thêm Biến Thể Mới
+        </Button>
+      </div>
     </div>
   );
 

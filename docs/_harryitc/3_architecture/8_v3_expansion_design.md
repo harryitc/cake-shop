@@ -1,3 +1,9 @@
+---
+title: V3 Expansion Design
+version: 1.1
+type: architecture
+---
+
 # 🏗️ Thiết kế Hệ thống Mở rộng (V3 Design)
 
 Tài liệu này mô tả chi tiết các thay đổi về mặt kỹ thuật cho các tính năng mới trong Phase 3.
@@ -81,3 +87,29 @@ Tài liệu này mô tả chi tiết các thay đổi về mặt kỹ thuật ch
 - **Frontend:** Nút ❤️ trên từng Card sản phẩm. Trang `/wishlist` hiển thị danh sách đã lưu.
 
 ---
+
+## 6. Hệ thống Biến thể sản phẩm (Product Variants)
+
+Hệ thống hỗ trợ các loại bánh có nhiều kích thước (Size) hoặc tùy chọn khác nhau, mỗi biến thể có giá và tồn kho (Stock) riêng.
+
+### 6.1 Database & Security
+- **Update `Cake` Schema**: Thêm mảng `variants` lưu trữ danh sách các tùy chọn.
+- **Update `CartItem` Schema**: Cập nhật chỉ mục duy nhất (Unique Index) dựa trên `user_id + cake_id + variant_id`. Điều này cho phép một người dùng có thể thêm nhiều size khác nhau của cùng một chiếc bánh vào giỏ hàng.
+- **Update `Order` Schema**: Lưu trữ thông tin `variant_id` và `variant_size` trực tiếp trong từng item để phục vụ truy xuất lịch sử.
+
+### 6.2 Business Logic
+- **Snapshot Pricing**: Khi mua hàng, giá của biến thể tại thời điểm thanh toán được lưu cứng vào đơn hàng (price_at_buy).
+- **Inventory Management**: Trừ tồn kho chính xác theo từng biến thể khi đơn hàng được tạo (PENDING) và hoàn trả khi bị hủy (REJECTED).
+
+---
+
+## 7. Quy trình Thanh toán nâng cao (Advanced Checkout)
+
+Cải thiện trải nghiệm người dùng (UX) tại bước xác nhận đơn hàng.
+
+### 7.1 Profile Synchronization
+- Tự động đồng bộ `address` từ hồ sơ cá nhân (`useMeQuery`) vào biểu mẫu thanh toán.
+- Cho phép người dùng chỉnh sửa địa chỉ nhận hàng linh hoạt ngay tại Modal.
+
+### 7.2 Email Notice UI
+- Hiển thị thông báo xác nhận việc hệ thống sẽ gửi email chi tiết đơn hàng sau khi đặt mua thành công, giúp tăng độ tin cậy.

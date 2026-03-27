@@ -19,6 +19,8 @@ export interface IOrderDTO {
 
 export interface IOrderItem {
   cake_id: string | any;
+  variant_id?: string | null;
+  variant_size?: string;
   quantity: number;
   price_at_buy: number;
 }

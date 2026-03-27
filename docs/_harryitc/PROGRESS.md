@@ -68,6 +68,12 @@ updated_at: 2026-03-26
     - [x] Backend: Wishlist Schema
     - [x] User: Toggle favorite, Wishlist page
 
+- [x] **[V3-6] Hệ thống Biến thể sản phẩm (Product Variants)**
+    - [x] Backend: Multi-variant cart (unique index update)
+    - [x] Backend: Variant-aware order persistence (snapshot pricing)
+    - [x] Admin: Cake Form variant management
+    - [x] User: Select variant, checkout profile sync & email UI notice
+
 **Status: ✅ DONE**
 
 ---
@@ -80,3 +86,4 @@ updated_at: 2026-03-26
 | 6-7 | Frontend Apps | ✅ DONE |
 | 8 | Integration | ✅ DONE |
 | 9 | V3 Expansion | ✅ DONE |
+| 10 | Import/Export System | [/] IN PROGRESS |
