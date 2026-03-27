@@ -1,52 +1,33 @@
-# Cake Shop Project
+# Cake Shop Project - Manifesto & Guidelines
 
-## Project Overview
+## 📋 Tổng quan dự án (Project Overview)
 
-This is a full-stack web application for a Cake Shop, organized as a monorepo. It features a Node.js/Express backend for RESTful APIs and two separate Next.js frontends (for users and administrators).
+Đây là một ứng dụng thương mại điện tử chuyên nghiệp cho Cake Shop, được tổ chức dưới dạng Monorepo. Dự án được xây dựng với tư duy ưu tiên hiệu năng, tính mở rộng và trải nghiệm người dùng hiện đại.
 
-**Key Components:**
-- **Backend (`web-server/`)**: An Express.js application providing RESTful APIs. It uses MongoDB (via Mongoose) for data storage, JWT for authentication, and Joi for request validation. The architecture follows a standard Route-Controller-Service-Schema pattern.
-- **Admin Panel (`web-client/admin/`)**: A Next.js application (React 19, App Router) designed for shop administrators to manage products, orders, and users. It utilizes Tailwind CSS, Ant Design, Shadcn UI, and React Query.
-- **User Storefront (`web-client/user/`)**: A Next.js application serving as the customer-facing e-commerce storefront.
-- **Documentation (`docs/`)**: Extensive project planning, PRD, architecture design, and specific epics/tasks are maintained in the `docs/_harryitc/` directory.
+**Các thành phần chính:**
+- **Backend (`web-server/`)**: RESTful API xây dựng trên Express.js. Tuân thủ nghiêm ngặt mô hình Route-Controller-Service-Schema.
+- **Admin Panel (`web-client/admin/`)**: Dashboard quản trị bằng Next.js 15 (React 19). Tập trung vào quản lý kho hàng, đơn hàng và xử lý dữ liệu lớn.
+- **User Storefront (`web-client/user/`)**: Trang thương mại điện tử bằng Next.js 15 (React 19), tối ưu hóa cho khách hàng.
+- **Documentation (`docs/`)**: Nguồn chân lý của dự án. Chứa PRDs, Thiết kế kiến trúc và Đặc tả các Epics.
 
-## Building and Running
+## ⚖️ Quy ước & Nguyên tắc phát triển (Development Mandates)
 
-**1. Infrastructure (Database)**
-Start the MongoDB replica set using Docker Compose:
-```bash
-docker-compose up -d
-```
+### 1. Documentation-Driven Development (DDD)
+- **Nguyên tắc**: Không triển khai tính năng lớn hoặc thay đổi kiến trúc nào mà không có tài liệu đặc tả tương ứng trong thư mục `docs/`.
+- **Nguyên tắc**: Việc thực thi code phải bám sát tài liệu. Nếu có thay đổi so với đặc tả ban đầu, tài liệu **PHẢI** được cập nhật trước hoặc song song với code.
 
-**2. Backend API (`web-server/`)**
-```bash
-cd web-server
-npm install
-# Cấu hình file .env (đặc biệt là các biến SMTP_*)
-npm run dev # Chạy tại http://localhost:5000
-```
+### 2. Kiến trúc Backend (Separation of Concerns)
+- **Routes**: Chỉ định nghĩa endpoint và gắn middleware (Auth, Roles). Không chứa logic nghiệp vụ.
+- **Controllers**: Xử lý logic HTTP, trích xuất tham số và định dạng phản hồi. **BẮT BUỘC** sử dụng Joi để validate dữ liệu đầu vào.
+- **Services**: Nơi chứa logic nghiệp vụ cốt lõi. Đây là lớp duy nhất được phép tương tác phức tạp và thực hiện các tính toán business.
+- **Schemas**: Định nghĩa cấu trúc dữ liệu Mongoose, các hooks (như tự động tạo slug) và indexes.
 
-**3. User Frontend (`web-client/user/`)**
-```bash
-cd web-client/user
-npm install
-npm run dev # Chạy tại http://localhost:3000
-```
+### 3. Tiêu chuẩn Frontend
+- **Stack**: Next.js App Router, React 19, TypeScript.
+- **Styling**: Tailwind CSS là công cụ chính. Sử dụng Shadcn UI và Ant Design cho các thành phần UI phức tạp.
+- **State Management**: TanStack Query (React Query) cho server state; React Hook Form + Zod cho validation form.
 
-**4. Admin Frontend (`web-client/admin/`)**
-```bash
-cd web-client/admin
-npm install
-npm run dev # Chạy tại http://localhost:3001
-```
-
-## Development Conventions
-
-- **Git & Workflow**: Sau khi thực hiện xong một tính năng hoặc một yêu cầu chỉnh sửa nào đó, BẮT BUỘC phải thực hiện commit lại những thay đổi tương ứng. Nếu là yêu cầu thêm tính năng hoặc thay đổi logic/kiến trúc, PHẢI cập nhật lại tài liệu trong thư mục `docs/` để phản ánh đúng hiện trạng.
-- **Documentation-Driven Development**: All major features and epics are extensively documented in the `docs/` folder before implementation. Changes to architecture or schemas should align with these specs.
-- **Backend Architecture**: The Express app enforces a strict separation of concerns:
-  - `routes/`: Define API endpoints and attach middleware (auth, roles).
-  - `controllers/`: Handle HTTP requests, extract parameters, perform Joi validation, and format HTTP responses.
-  - `services/`: Contain the core business logic and database interactions.
-  - `schemas/`: Mongoose models defining the database schema and hooks (e.g., auto-generating slugs).
-- **Frontend Stack**: Next.js applications utilize modern React practices, including App Router, React Hook Form, Zod validation, Tailwind CSS for styling, and React Query for API data fetching and state management.
+### 4. Quy trình Git & Workflow
+- **Nguyên tắc**: Mọi tính năng, bản sửa lỗi hoặc tái cấu trúc đều phải đi kèm với commit có mô tả rõ ràng.
+- **Nguyên tắc**: Khi cập nhật logic hoặc kiến trúc, tài liệu trong `docs/` **PHẢI** được cập nhật trong cùng một lần thay đổi để phản ánh đúng hiện trạng dự án.
+- **Bảo mật**: Tuyệt đối không commit các file `.env` hoặc thông tin nhạy cảm.
