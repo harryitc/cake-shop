@@ -1,24 +1,18 @@
 const multer = require('multer');
-const path = require('path');
 
-// Cấu hình lưu trữ
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'public/uploads/');
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
-  },
-});
+// Sử dụng memoryStorage để nhận file vào buffer (bộ nhớ tạm)
+// Sau đó sẽ dùng sharp để xử lý và lưu vào đĩa
+const storage = multer.memoryStorage();
 
 // Bộ lọc file (chỉ chấp nhận ảnh)
 const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image/')) {
     cb(null, true);
   } else {
-    cb(new Error('Chỉ chấp nhận các file định dạng hình ảnh!'), false);
+    // Trả về lỗi định dạng cụ thể
+    const error = new Error('Định dạng tệp không được hỗ trợ! Chỉ chấp nhận các loại hình ảnh (JPG, PNG, WEBP,...)');
+    error.code = 'INVALID_FILE_TYPE';
+    cb(error, false);
   }
 };
 

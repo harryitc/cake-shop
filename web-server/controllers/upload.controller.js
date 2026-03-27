@@ -1,6 +1,8 @@
 const FileSystem = require('../schemas/FileSystem.schema');
 const { sendSuccess, createError } = require('../utils/response.utils');
 const path = require('path');
+const fs = require('fs');
+const sharp = require('sharp');
 
 const uploadImage = async (req, res, next) => {
   try {
@@ -8,13 +10,30 @@ const uploadImage = async (req, res, next) => {
       throw createError('Vui lòng chọn file để tải lên', 400, 'BAD_REQUEST');
     }
 
+    // Tạo tên file mới với đuôi .webp
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const newFilename = `image-${uniqueSuffix}.webp`;
+    const uploadDir = 'public/uploads/';
+    const fullPath = path.join(uploadDir, newFilename);
+
+    // Kiểm tra và tạo thư mục nếu chưa tồn tại
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    // Dùng sharp để chuyển sang .webp và nén
+    // Lưu ý: req.file.buffer có được nhờ multer.memoryStorage()
+    const metadata = await sharp(req.file.buffer)
+      .webp({ quality: 80 }) // Chuyển sang webp, chất lượng 80% (tốt & nhẹ)
+      .toFile(fullPath);
+
     const fileInfo = {
       filename_client: req.file.originalname,
-      filename_server: req.file.filename,
-      ext: path.extname(req.file.originalname),
-      size: req.file.size,
-      path: `/uploads/${req.file.filename}`,
-      domain: '', // Mặc định trống như yêu cầu
+      filename_server: newFilename,
+      ext: '.webp',
+      size: metadata.size, // Kích thước sau khi đã nén
+      path: `/uploads/${newFilename}`,
+      domain: '', // Để trống như cấu hình ban đầu
     };
 
     // Lưu thông tin vào database
@@ -23,7 +42,7 @@ const uploadImage = async (req, res, next) => {
     return sendSuccess(
       res,
       { path: newFile.path },
-      'Tải lên hình ảnh thành công',
+      'Tải lên và tối ưu hóa hình ảnh (.webp) thành công',
       201
     );
   } catch (err) {

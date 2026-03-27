@@ -1,17 +1,22 @@
 "use client";
 
-import { Table, Button, Popconfirm, message, Skeleton } from "antd";
-import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import { Table, Button, Popconfirm, message, Skeleton, Space } from "antd";
+import { EditOutlined, DeleteOutlined, PlusOutlined, FileExcelOutlined, HistoryOutlined } from "@ant-design/icons";
 import { useState } from "react";
-import { useCakesQuery, useDeleteCakeMutation } from "../hooks";
+import { useCakesQuery, useDeleteCakeMutation, useImportCakesMutation } from "../hooks";
 import { ICake } from "../types";
 import { CakeFormModal } from "./CakeFormModal";
+import ImportWizard from "@/components/ui/ImportWizard";
+import ImportHistoryDrawer from "@/components/ui/ImportHistoryDrawer";
 
 export const CakeTable = () => {
   const { data, isLoading, isError } = useCakesQuery();
   const { mutate: deleteCake, isPending: isDeleting } = useDeleteCakeMutation();
+  const { mutateAsync: importCakes } = useImportCakesMutation();
   
   const [modalOpen, setModalOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [selectedCake, setSelectedCake] = useState<ICake | null>(null);
 
   const handleCreate = () => {
@@ -113,15 +118,33 @@ export const CakeTable = () => {
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Danh Mục Bánh</h1>
           <p className="text-gray-500 font-medium mt-1">Quản lý kho hàng, tinh chỉnh thông tin và cập nhật hiển thị lên trang User.</p>
         </div>
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />} 
-          size="large"
-          className="bg-indigo-600 hover:bg-indigo-700 shadow-[0_4px_10px_-2px_rgba(83,58,253,0.3)] font-extrabold rounded-xl h-12 px-6"
-          onClick={handleCreate}
-        >
-          Tạo Bánh Cho Menu
-        </Button>
+        <div className="flex gap-3">
+          <Button 
+            icon={<HistoryOutlined />} 
+            size="large"
+            className="border-gray-200 text-gray-600 hover:text-indigo-600 hover:border-indigo-200 font-bold rounded-xl h-12 px-6"
+            onClick={() => setHistoryOpen(true)}
+          >
+            Lịch sử
+          </Button>
+          <Button 
+            icon={<FileExcelOutlined />} 
+            size="large"
+            className="border-gray-200 text-gray-600 hover:text-indigo-600 hover:border-indigo-200 font-bold rounded-xl h-12 px-6"
+            onClick={() => setImportOpen(true)}
+          >
+            Import Excel
+          </Button>
+          <Button 
+            type="primary" 
+            icon={<PlusOutlined />} 
+            size="large"
+            className="bg-indigo-600 hover:bg-indigo-700 shadow-[0_4px_10px_-2px_rgba(83,58,253,0.3)] font-extrabold rounded-xl h-12 px-6"
+            onClick={handleCreate}
+          >
+            Tạo Bánh Cho Menu
+          </Button>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -138,6 +161,20 @@ export const CakeTable = () => {
         open={modalOpen} 
         onCancel={() => setModalOpen(false)} 
         initialData={selectedCake}
+      />
+
+      <ImportWizard
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        entityName="Sản phẩm Bánh"
+        importFn={(file, mode) => importCakes({ file, mode })}
+        templateUrl="/templates/cake_import_template.xlsx"
+      />
+
+      <ImportHistoryDrawer
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        entityType="cakes"
       />
     </div>
   );

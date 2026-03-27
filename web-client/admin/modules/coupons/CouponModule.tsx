@@ -5,6 +5,9 @@ import { Table, Button, Modal, Form, Input, message, Space, Popconfirm, Select, 
 import { PlusOutlined, EditOutlined, DeleteOutlined, GiftOutlined } from '@ant-design/icons';
 import { httpClient } from '@/lib/http';
 import dayjs from 'dayjs';
+import { useForm, Controller, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 
 interface Coupon {
   _id: string;
@@ -20,13 +23,43 @@ interface Coupon {
   is_active: boolean;
 }
 
+const couponSchema = z.object({
+  code: z.string().min(1, 'Vui lòng nhập mã'),
+  type: z.enum(['PERCENT', 'FIXED']),
+  value: z.number().min(0, 'Giá trị không được âm'),
+  min_order_value: z.number().min(0).default(0),
+  max_discount_value: z.number().min(0).nullable().optional(),
+  start_date: z.any(),
+  end_date: z.any(),
+  usage_limit: z.number().min(1).nullable().optional(),
+  is_active: z.boolean().default(true),
+});
+
+type CouponFormValues = z.infer<typeof couponSchema>;
+
 const CouponModule = () => {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
-  const [form] = Form.useForm();
-  const couponType = Form.useWatch('type', form);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { control, handleSubmit, reset, formState: { errors, isDirty } } = useForm<CouponFormValues>({
+    resolver: zodResolver(couponSchema),
+    defaultValues: {
+      code: '',
+      type: 'PERCENT',
+      value: 0,
+      min_order_value: 0,
+      max_discount_value: null,
+      start_date: dayjs(),
+      end_date: dayjs().add(7, 'day'),
+      usage_limit: null,
+      is_active: true,
+    }
+  });
+
+  const couponType = useWatch({ control, name: 'type' });
 
   const fetchCoupons = async () => {
     setLoading(true);
@@ -44,25 +77,43 @@ const CouponModule = () => {
     fetchCoupons();
   }, []);
 
+  useEffect(() => {
+    if (isModalVisible) {
+      if (editingCoupon) {
+        reset({
+          code: editingCoupon.code,
+          type: editingCoupon.type,
+          value: editingCoupon.value,
+          min_order_value: editingCoupon.min_order_value,
+          max_discount_value: editingCoupon.max_discount_value,
+          start_date: dayjs(editingCoupon.start_date),
+          end_date: dayjs(editingCoupon.end_date),
+          usage_limit: editingCoupon.usage_limit,
+          is_active: editingCoupon.is_active,
+        });
+      } else {
+        reset({
+          code: '',
+          type: 'PERCENT',
+          value: 0,
+          min_order_value: 0,
+          max_discount_value: null,
+          start_date: dayjs(),
+          end_date: dayjs().add(7, 'day'),
+          usage_limit: null,
+          is_active: true,
+        });
+      }
+    }
+  }, [isModalVisible, editingCoupon, reset]);
+
   const handleAdd = () => {
     setEditingCoupon(null);
-    form.resetFields();
-    form.setFieldsValue({
-      type: 'PERCENT',
-      is_active: true,
-      start_date: dayjs(),
-      end_date: dayjs().add(7, 'day'),
-    });
     setIsModalVisible(true);
   };
 
   const handleEdit = (record: Coupon) => {
     setEditingCoupon(record);
-    form.setFieldsValue({
-      ...record,
-      start_date: dayjs(record.start_date),
-      end_date: dayjs(record.end_date),
-    });
     setIsModalVisible(true);
   };
 
@@ -76,9 +127,9 @@ const CouponModule = () => {
     }
   };
 
-  const handleModalOk = async () => {
+  const onSubmit = async (values: CouponFormValues) => {
+    setIsSubmitting(true);
     try {
-      const values = await form.validateFields();
       const formattedValues = {
         ...values,
         start_date: values.start_date.toISOString(),
@@ -102,6 +153,8 @@ const CouponModule = () => {
       fetchCoupons();
     } catch (error: any) {
       message.error(error.message || 'Lỗi xử lý');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -201,106 +254,129 @@ const CouponModule = () => {
       <Modal
         title={editingCoupon ? 'Sửa mã giảm giá' : 'Tạo mã giảm giá mới'}
         open={isModalVisible}
-        onOk={handleModalOk}
+        onOk={() => handleSubmit(onSubmit)()}
         onCancel={() => setIsModalVisible(false)}
+        confirmLoading={isSubmitting}
+        okButtonProps={{ disabled: !isDirty }}
         destroyOnClose
         width={600}
       >
-        <Form form={form} layout="vertical">
+        <Form layout="vertical" className="mt-4">
           <div className="grid grid-cols-2 gap-4">
             <Form.Item
-              name="code"
               label="Mã giảm giá"
-              rules={[{ required: true, message: 'Vui lòng nhập mã' }]}
+              validateStatus={errors.code ? 'error' : ''}
+              help={errors.code?.message}
+              required
             >
-              <Input placeholder="Ví dụ: CAKE2024" className="uppercase" />
+              <Controller
+                name="code"
+                control={control}
+                render={({ field }) => <Input {...field} placeholder="Ví dụ: CAKE2024" className="uppercase" />}
+              />
             </Form.Item>
-            <Form.Item
-              name="type"
-              label="Loại giảm giá"
-              rules={[{ required: true }]}
-            >
-              <Select options={[
-                { label: 'Phần trăm (%)', value: 'PERCENT' },
-                { label: 'Số tiền cố định (đ)', value: 'FIXED' },
-              ]} />
+            <Form.Item label="Loại giảm giá" required>
+              <Controller
+                name="type"
+                control={control}
+                render={({ field }) => (
+                  <Select {...field} options={[
+                    { label: 'Phần trăm (%)', value: 'PERCENT' },
+                    { label: 'Số tiền cố định (đ)', value: 'FIXED' },
+                  ]} />
+                )}
+              />
             </Form.Item>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item
-              name="value"
-              label="Giá trị giảm"
-              rules={[{ required: true, message: 'Vui lòng nhập giá trị' }]}
-            >
-              <InputNumber 
-                min={0} 
-                style={{ width: '100%' }} 
-                addonAfter={couponType === 'PERCENT' ? '%' : 'đ'}
-                formatter={couponType === 'FIXED' ? (value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : undefined}
-                parser={couponType === 'FIXED' ? (value) => value!.replace(/\$\s?|(,*)/g, "") as any : undefined}
+            <Form.Item label="Giá trị giảm" required>
+              <Controller
+                name="value"
+                control={control}
+                render={({ field }) => (
+                  <InputNumber 
+                    {...field}
+                    min={0} 
+                    style={{ width: '100%' }} 
+                    addonAfter={couponType === 'PERCENT' ? '%' : 'đ'}
+                    formatter={couponType === 'FIXED' ? (value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : undefined}
+                    parser={couponType === 'FIXED' ? (value) => value!.replace(/\$\s?|(,*)/g, "") as any : undefined}
+                  />
+                )}
               />
             </Form.Item>
-            <Form.Item
-              name="min_order_value"
-              label="Giá trị đơn hàng tối thiểu"
-              initialValue={0}
-            >
-              <InputNumber 
-                min={0} 
-                style={{ width: '100%' }} 
-                addonAfter="đ" 
-                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                parser={(value) => value!.replace(/\$\s?|(,*)/g, "") as any}
+            <Form.Item label="Giá trị đơn hàng tối thiểu">
+              <Controller
+                name="min_order_value"
+                control={control}
+                render={({ field }) => (
+                  <InputNumber 
+                    {...field}
+                    min={0} 
+                    style={{ width: '100%' }} 
+                    addonAfter="đ" 
+                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                    parser={(value) => value!.replace(/\$\s?|(,*)/g, "") as any}
+                  />
+                )}
               />
             </Form.Item>
           </div>
 
           {couponType === 'PERCENT' && (
-            <Form.Item
-              name="max_discount_value"
-              label="Giảm tối đa (Tùy chọn)"
-            >
-              <InputNumber 
-                min={0} 
-                style={{ width: '100%' }} 
-                addonAfter="đ" 
-                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                parser={(value) => value!.replace(/\$\s?|(,*)/g, "") as any}
+            <Form.Item label="Giảm tối đa (Tùy chọn)">
+              <Controller
+                name="max_discount_value"
+                control={control}
+                render={({ field }) => (
+                  <InputNumber 
+                    {...field}
+                    min={0} 
+                    style={{ width: '100%' }} 
+                    addonAfter="đ" 
+                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                    parser={(value) => value!.replace(/\$\s?|(,*)/g, "") as any}
+                    value={field.value ?? undefined}
+                  />
+                )}
               />
             </Form.Item>
           )}
 
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item
-              name="start_date"
-              label="Ngày bắt đầu"
-              rules={[{ required: true }]}
-            >
-              <DatePicker style={{ width: '100%' }} showTime />
+            <Form.Item label="Ngày bắt đầu" required>
+              <Controller
+                name="start_date"
+                control={control}
+                render={({ field }) => <DatePicker {...field} style={{ width: '100%' }} showTime />}
+              />
             </Form.Item>
-            <Form.Item
-              name="end_date"
-              label="Ngày kết thúc"
-              rules={[{ required: true }]}
-            >
-              <DatePicker style={{ width: '100%' }} showTime />
+            <Form.Item label="Ngày kết thúc" required>
+              <Controller
+                name="end_date"
+                control={control}
+                render={({ field }) => <DatePicker {...field} style={{ width: '100%' }} showTime />}
+              />
             </Form.Item>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item
-              name="usage_limit"
-              label="Giới hạn số lần dùng (Tùy chọn)"
-            >
-              <InputNumber min={1} style={{ width: '100%' }} placeholder="Không giới hạn" />
+            <Form.Item label="Giới hạn số lần dùng (Tùy chọn)">
+              <Controller
+                name="usage_limit"
+                control={control}
+                render={({ field }) => (
+                  <InputNumber {...field} min={1} style={{ width: '100%' }} placeholder="Không giới hạn" value={field.value ?? undefined} />
+                )}
+              />
             </Form.Item>
-            <Form.Item
-              name="is_active"
-              label="Trạng thái"
-              valuePropName="checked"
-            >
-              <Switch />
+            <Form.Item label="Trạng thái" valuePropName="checked">
+              <Controller
+                name="is_active"
+                control={control}
+                render={({ field }) => <Switch {...field} checked={field.value} />}
+              />
             </Form.Item>
           </div>
         </Form>

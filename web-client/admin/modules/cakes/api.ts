@@ -13,6 +13,14 @@ export const cakeApi = {
     httpClient(`/cakes/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
   delete: (id: string) => 
     httpClient(`/cakes/${id}`, { method: "DELETE" }),
+  import: (file: File, mode: string = "UPSERT") => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return httpClient(`/cakes/import?mode=${mode}`, {
+      method: "POST",
+      body: formData,
+    });
+  },
   uploadImage: (file: File) => {
     const formData = new FormData();
     formData.append("image", file);

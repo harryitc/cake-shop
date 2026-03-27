@@ -114,7 +114,7 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
   const [categories, setCategories] = useState<Category[]>([]);
   const isPending = isCreating || isUpdating;
 
-  const { control, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<CakeFormValues>({
+  const { control, handleSubmit, formState: { errors, isDirty }, reset, setValue, watch } = useForm<CakeFormValues>({
     resolver: zodResolver(cakeSchema) as any,
     defaultValues: {
       name: "", category: "", categories: [], description: "", price: 0, stock: 0, image_url: "",
@@ -132,17 +132,17 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
 
   const applyPreset = (type: keyof typeof CAKE_PRESETS) => {
     const preset = CAKE_PRESETS[type];
-    setValue("name", preset.namePrefix);
-    setValue("description", preset.description);
-    setValue("tags", preset.tags);
-    setValue("variants", preset.variants);
-    setValue("ingredients", preset.ingredients);
+    setValue("name", preset.namePrefix, { shouldDirty: true });
+    setValue("description", preset.description, { shouldDirty: true });
+    setValue("tags", preset.tags, { shouldDirty: true });
+    setValue("variants", preset.variants as any, { shouldDirty: true });
+    setValue("ingredients", preset.ingredients, { shouldDirty: true });
     message.success(`Đã áp dụng mẫu ${type}`);
   };
 
   const appendDescription = (phrase: string) => {
     const newDesc = currentDescription ? `${currentDescription} ${phrase}` : phrase;
-    setValue("description", newDesc);
+    setValue("description", newDesc, { shouldDirty: true });
   };
 
   useEffect(() => {
@@ -160,24 +160,28 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
   useEffect(() => {
     if (open) {
       if (initialData) {
-        setValue("name", initialData.name);
-        setValue("category", (initialData as any).category?._id || (initialData as any).category || "");
-        setValue("categories", (initialData.categories || []).map(c => typeof c === 'object' ? c._id : c));
-        setValue("description", initialData.description || "");
-        setValue("price", initialData.price);
-        setValue("stock", initialData.stock || 0);
-        setValue("variants", initialData.variants || []);
-        setValue("tags", initialData.tags || []);
-        setValue("ingredients", initialData.ingredients || []);
-        setValue("specifications", {
-          weight: initialData.specifications?.weight || "",
-          servings: initialData.specifications?.servings || ""
-        });
-
         const path = initialData.imageUrl.startsWith("http") && !initialData.imageUrl.includes(API_DOMAIN)
           ? initialData.imageUrl
           : initialData.imageUrl.replace(API_DOMAIN, "");
-        setValue("image_url", path === "https://placehold.co/100x100?text=No+Image" ? "" : path);
+        
+        const finalImagePath = path === "https://placehold.co/100x100?text=No+Image" ? "" : path;
+
+        reset({
+          name: initialData.name,
+          category: (initialData as any).category?._id || (initialData as any).category || "",
+          categories: (initialData.categories || []).map(c => typeof c === 'object' ? (c as any)._id : c),
+          description: initialData.description || "",
+          price: initialData.price,
+          stock: initialData.stock || 0,
+          variants: initialData.variants || [],
+          tags: initialData.tags || [],
+          ingredients: initialData.ingredients || [],
+          specifications: {
+            weight: initialData.specifications?.weight || "",
+            servings: initialData.specifications?.servings || ""
+          },
+          image_url: finalImagePath
+        });
       } else {
         reset({
           name: "", category: "", categories: [], description: "", price: 0, stock: 0, image_url: "",
@@ -185,12 +189,12 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
         });
       }
     }
-  }, [open, initialData, setValue, reset]);
+  }, [open, initialData, reset]);
 
   const handleUpload = (file: File) => {
     uploadImage(file, {
       onSuccess: (data) => {
-        setValue("image_url", data.path);
+        setValue("image_url", data.path, { shouldDirty: true });
         message.success("Upload ảnh thành công");
       },
       onError: (err) => message.error(err.message || "Upload ảnh thất bại"),
@@ -430,7 +434,10 @@ export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProp
       okText={isEditing ? "Lưu Thay Đổi" : "Tạo Mới"}
       cancelText="Hủy Bỏ"
       width={750}
-      okButtonProps={{ className: "bg-indigo-600 hover:bg-indigo-700 font-bold px-8 h-12 rounded-xl" }}
+      okButtonProps={{ 
+        className: "bg-indigo-600 hover:bg-indigo-700 font-bold px-8 h-12 rounded-xl",
+        disabled: !isDirty
+      }}
       cancelButtonProps={{ className: "px-6 h-12 font-semibold rounded-xl" }}
     >
       <Form form={undefined} layout="vertical" className="mt-4">

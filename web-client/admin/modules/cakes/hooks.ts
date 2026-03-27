@@ -36,6 +36,14 @@ export const useDeleteCakeMutation = () => {
   });
 };
 
+export const useImportCakesMutation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ file, mode }: { file: File; mode: string }) => cakeApi.import(file, mode),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["cakes"] }),
+  });
+};
+
 export const useUploadImageMutation = () => {
   return useMutation({
     mutationFn: cakeApi.uploadImage,

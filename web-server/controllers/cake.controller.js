@@ -79,7 +79,27 @@ const updateBodySchema = Joi.object({
   'object.min': 'Phải truyền ít nhất một trường để cập nhật'
 });
 
+const importService = require('../services/import/ImportService');
+const cakeImportConfig = require('../services/import/configs/cake.import.config');
+
 // --- Handlers ---
+const importCakes = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      throw createError('Vui lòng tải lên file Excel', 400, 'VALIDATION_ERROR');
+    }
+
+    const { mode } = req.query; // UPSERT, INSERT_ONLY, UPDATE_ONLY
+    const userId = req.user.userId;
+
+    const result = await importService.execute(req.file.buffer, cakeImportConfig, mode, userId);
+    
+    return sendSuccess(res, result, 'Tiến trình import đã hoàn tất', 200);
+  } catch (err) {
+    next(err);
+  }
+};
+
 const getAll = async (req, res, next) => {
   try {
     const { error, value } = getAllQuerySchema.validate(req.query);
@@ -151,4 +171,5 @@ module.exports = {
   create,
   update,
   remove,
+  importCakes,
 };

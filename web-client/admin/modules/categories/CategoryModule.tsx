@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, message, Space, Popconfirm } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { httpClient } from '@/lib/http';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 
 interface Category {
   _id: string;
@@ -13,12 +16,25 @@ interface Category {
   image_url: string;
 }
 
+const categorySchema = z.object({
+  name: z.string().min(1, 'Vui lòng nhập tên danh mục'),
+  description: z.string().optional(),
+  image_url: z.string().optional(),
+});
+
+type CategoryFormValues = z.infer<typeof categorySchema>;
+
 const CategoryModule = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [form] = Form.useForm();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { control, handleSubmit, reset, formState: { errors, isDirty } } = useForm<CategoryFormValues>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: { name: '', description: '', image_url: '' }
+  });
 
   const fetchCategories = async () => {
     setLoading(true);
@@ -36,15 +52,27 @@ const CategoryModule = () => {
     fetchCategories();
   }, []);
 
+  useEffect(() => {
+    if (isModalVisible) {
+      if (editingCategory) {
+        reset({
+          name: editingCategory.name,
+          description: editingCategory.description || '',
+          image_url: editingCategory.image_url || '',
+        });
+      } else {
+        reset({ name: '', description: '', image_url: '' });
+      }
+    }
+  }, [isModalVisible, editingCategory, reset]);
+
   const handleAdd = () => {
     setEditingCategory(null);
-    form.resetFields();
     setIsModalVisible(true);
   };
 
   const handleEdit = (record: Category) => {
     setEditingCategory(record);
-    form.setFieldsValue(record);
     setIsModalVisible(true);
   };
 
@@ -58,28 +86,28 @@ const CategoryModule = () => {
     }
   };
 
-  const handleModalOk = async () => {
+  const onSubmit = async (values: CategoryFormValues) => {
+    setIsSubmitting(true);
     try {
-      const values = await form.validateFields();
       if (editingCategory) {
         await httpClient(`/categories/${editingCategory._id}`, {
           method: 'PUT',
           body: JSON.stringify(values),
         });
         message.success('Cập nhật danh mục thành công');
-        setIsModalVisible(false);
-        fetchCategories();
       } else {
         await httpClient('/categories', {
           method: 'POST',
           body: JSON.stringify(values),
         });
         message.success('Tạo danh mục thành công');
-        setIsModalVisible(false);
-        fetchCategories();
       }
+      setIsModalVisible(false);
+      fetchCategories();
     } catch (error: any) {
       message.error(error.message || 'Lỗi xử lý');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -137,23 +165,38 @@ const CategoryModule = () => {
       <Modal
         title={editingCategory ? 'Sửa danh mục' : 'Thêm danh mục mới'}
         open={isModalVisible}
-        onOk={handleModalOk}
+        onOk={() => handleSubmit(onSubmit)()}
         onCancel={() => setIsModalVisible(false)}
+        confirmLoading={isSubmitting}
+        okButtonProps={{ disabled: !isDirty }}
         destroyOnClose
       >
-        <Form form={form} layout="vertical">
+        <Form layout="vertical" className="mt-4">
           <Form.Item
-            name="name"
             label="Tên danh mục"
-            rules={[{ required: true, message: 'Vui lòng nhập tên danh mục' }]}
+            validateStatus={errors.name ? 'error' : ''}
+            help={errors.name?.message}
+            required
           >
-            <Input placeholder="Ví dụ: Bánh sinh nhật" />
+            <Controller
+              name="name"
+              control={control}
+              render={({ field }) => <Input {...field} placeholder="Ví dụ: Bánh sinh nhật" />}
+            />
           </Form.Item>
-          <Form.Item name="description" label="Mô tả">
-            <Input.TextArea placeholder="Nhập mô tả danh mục" />
+          <Form.Item label="Mô tả">
+            <Controller
+              name="description"
+              control={control}
+              render={({ field }) => <Input.TextArea {...field} placeholder="Nhập mô tả danh mục" />}
+            />
           </Form.Item>
-          <Form.Item name="image_url" label="Link ảnh (Tùy chọn)">
-            <Input placeholder="URL hình ảnh" />
+          <Form.Item label="Link ảnh (Tùy chọn)">
+            <Controller
+              name="image_url"
+              control={control}
+              render={({ field }) => <Input {...field} placeholder="URL hình ảnh" />}
+            />
           </Form.Item>
         </Form>
       </Modal>

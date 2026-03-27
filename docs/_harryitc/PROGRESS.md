@@ -86,4 +86,32 @@ updated_at: 2026-03-26
 | 6-7 | Frontend Apps | ✅ DONE |
 | 8 | Integration | ✅ DONE |
 | 9 | V3 Expansion | ✅ DONE |
-| 10 | Import/Export System | [/] IN PROGRESS |
+## Phase 10 — 🚀 Hệ thống Import/Export (Phase 4)
+> **Spec:** [`epic_9_import_export/`](./4_epic_and_stories/epic_9_import_export/OVERVIEW.md)
+
+- [x] **[V4-1] Engine xử lý Import Excel (Generic)**
+    - [x] Backend: ImportService (ExcelJS, BulkWrite)
+    - [x] Backend: Cấu hình ánh xạ (Mapping Config) cho Cakes
+- [x] **[V4-2] Giao diện Wizard Import (3 Bước)**
+    - [x] Admin: ImportWizard component (Shared UI)
+    - [x] Admin: Tích hợp vào màn hình Quản lý Bánh
+- [x] **[V4-3] Xử lý lỗi & Báo cáo (Error Handling)**
+    - [x] Backend: API Xuất file Excel báo cáo lỗi (Cột lỗi ở cuối)
+    - [x] Admin: Bảng Preview lỗi nhanh tại Bước 3
+- [x] **[V4-4] Quản lý Lịch sử Import**
+    - [x] Backend: API Lấy danh sách lịch sử (Phân trang, Filter)
+    - [x] Admin: ImportHistoryDrawer (Xem lại kết quả & tải báo cáo cũ)
+
+**Status: ✅ DONE**
+
+---
+
+## 📊 Tổng tiến độ
+
+| Phase | Mô tả | Status |
+|-------|-------|--------|
+| 0-5 | Backend Core | ✅ DONE |
+| 6-7 | Frontend Apps | ✅ DONE |
+| 8 | Integration | ✅ DONE |
+| 9 | V3 Expansion | ✅ DONE |
+| 10 | Import/Export System | ✅ DONE |

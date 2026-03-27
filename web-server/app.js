@@ -25,8 +25,8 @@ app.use(cors({
   credentials: true
 }));
 app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/v1/auth', require('./routes/auth.routes'));
@@ -39,6 +39,7 @@ app.use('/api/v1/coupons', require('./routes/coupon.routes'));
 app.use('/api/v1/uploads', require('./routes/upload.routes'));
 app.use('/api/v1/analytics', require('./routes/analytics.routes'));
 app.use('/api/v1/wishlist', require('./routes/wishlist.routes'));
+app.use('/api/v1/import', require('./routes/import.routes'));
 
 // ─── 404 Handler ──────────────────────────────────────────────────────────────
 app.use((req, res, next) => {
