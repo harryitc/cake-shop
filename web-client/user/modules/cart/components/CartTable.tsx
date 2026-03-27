@@ -222,7 +222,12 @@ export const CartTable = () => {
           </div>
         </div>
       </div>
-      <CheckoutModal open={modalOpen} onCancel={() => setModalOpen(false)} totalPrice={cartLocal.total} />
+      <CheckoutModal 
+        open={modalOpen} 
+        onCancel={() => setModalOpen(false)} 
+        totalPrice={cartLocal.total} 
+        items={cartLocal.items} 
+      />
     </>
   );
 };
