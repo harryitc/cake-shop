@@ -8,6 +8,8 @@ const { MailtrapTransport } = require('mailtrap');
 const transporter = nodemailer.createTransport(
   MailtrapTransport({
     token: process.env.SMTP_TOKEN,
+    sandbox: true,
+    testInboxId: 4492444,
   })
 );
 
