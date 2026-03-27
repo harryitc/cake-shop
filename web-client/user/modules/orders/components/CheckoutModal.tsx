@@ -10,6 +10,8 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { httpClient } from "@/lib/http";
 import { GiftOutlined, CheckCircleOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, StarOutlined, MailOutlined } from "@ant-design/icons";
+import { API_DOMAIN } from "@/lib/configs";
+
 
 const checkoutSchema = z.object({
   address: z.string().min(5, "Địa chỉ phải đủ chi tiết (ít nhất 5 ký tự)"),
@@ -123,7 +125,7 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
         <div className="bg-gray-50/80 p-4 rounded-xl mb-6 border border-gray-100 flex items-center gap-4">
            <Avatar 
              size={54} 
-             src={me?.avatar_url ? (me.avatar_url.startsWith('http') ? me.avatar_url : `http://localhost:5000${me.avatar_url}`) : undefined}
+             src={me?.avatar_url ? (me.avatar_url.startsWith('http') ? me.avatar_url : `${API_DOMAIN}${me.avatar_url}`) : undefined}
              icon={<UserOutlined />}
              className="bg-indigo-100 text-indigo-600 border-2 border-white shadow-sm shrink-0"
            />
@@ -148,7 +150,7 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
                 <div className="flex gap-3">
                   <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 shrink-0">
                     <img 
-                      src={item.cake.image_url ? (item.cake.image_url.startsWith('http') ? item.cake.image_url : `http://localhost:5000${item.cake.image_url}`) : "https://placehold.co/100x100"} 
+                      src={item.cake.image_url ? (item.cake.image_url.startsWith('http') ? item.cake.image_url : `${API_DOMAIN}${item.cake.image_url}`) : "https://placehold.co/100x100"} 
                       className="w-full h-full object-cover" 
                       alt={item.cake.name} 
                     />

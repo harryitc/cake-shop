@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, message, Space, Rate, Tag, Avatar, Tooltip } from 'antd';
 import { CheckOutlined, CloseOutlined, UserOutlined, EyeOutlined } from '@ant-design/icons';
 import { httpClient } from '@/lib/http';
+import { API_DOMAIN } from "@/lib/configs";
+
 
 interface Review {
   _id: string;
@@ -80,7 +82,7 @@ const ReviewModule = () => {
       render: (_: any, record: Review) => (
         <Space>
           <img 
-            src={record.cake?.image_url ? (record.cake.image_url.startsWith('http') ? record.cake.image_url : `http://localhost:5000${record.cake.image_url}`) : ''} 
+            src={record.cake?.image_url ? (record.cake.image_url.startsWith('http') ? record.cake.image_url : `${API_DOMAIN}${record.cake.image_url}`) : ''} 
             alt="cake" 
             className="w-8 h-8 rounded object-cover"
           />

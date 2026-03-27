@@ -1,4 +1,5 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+import { API_BASE_URL } from "./configs";
+
 
 export async function httpClient<T>(
   endpoint: string,

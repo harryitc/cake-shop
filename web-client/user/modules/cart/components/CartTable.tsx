@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { CheckoutModal } from "../../orders/components/CheckoutModal";
 
+import { API_DOMAIN } from "@/lib/configs";
+
 const formatPrice = (price: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
 
@@ -115,7 +117,7 @@ export const CartTable = () => {
       key: "cake",
       render: (cake: any, record: any) => (
         <div className="flex items-center gap-4">
-          <img src={cake.image_url ? (cake.image_url.startsWith('http') ? cake.image_url : `http://localhost:5000${cake.image_url}`) : "https://placehold.co/100x100"} alt={cake.name} className="w-16 h-16 rounded object-cover border" />
+          <img src={cake.image_url ? (cake.image_url.startsWith('http') ? cake.image_url : `${API_DOMAIN}${cake.image_url}`) : "https://placehold.co/100x100"} alt={cake.name} className="w-16 h-16 rounded object-cover border" />
           <div className="flex flex-col">
             <Link href={`/cakes/${cake._id}`} className="font-semibold text-gray-800 hover:text-indigo-600 min-w-[150px]">
               {cake.name}

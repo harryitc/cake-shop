@@ -9,7 +9,8 @@ import { useState, useEffect } from "react";
 import { useWishlist } from "../../../hooks/use-wishlist";
 import { useMeQuery } from "../../auth/hooks";
 
-const API_DOMAIN = process.env.NEXT_PUBLIC_API_DOMAIN || "http://localhost:5000";
+import { API_DOMAIN } from "@/lib/configs";
+
 
 export const CakeDetail = ({ id }: { id: string }) => {
   const [page, setPage] = useState(1);

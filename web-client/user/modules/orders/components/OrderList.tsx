@@ -7,6 +7,8 @@ import { IOrder } from "../types";
 import { useState } from "react";
 import { ReviewModal } from "../../cakes/components/ReviewModal";
 import { StarOutlined } from "@ant-design/icons";
+import { API_DOMAIN } from "@/lib/configs";
+
 
 export const OrderList = () => {
   const router = useRouter();
@@ -87,7 +89,7 @@ export const OrderList = () => {
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-white rounded-lg border border-gray-100 overflow-hidden shadow-sm group-hover:scale-105 transition-transform">
                           <img
-                            src={item?.cake_id?.image_url ? (item?.cake_id?.image_url.startsWith('http') ? item?.cake_id?.image_url : `http://localhost:5000${item?.cake_id.image_url}`) : "https://placehold.co/100x100?text=Cake"}
+                            src={item?.cake_id?.image_url ? (item?.cake_id?.image_url.startsWith('http') ? item?.cake_id?.image_url : `${API_DOMAIN}${item?.cake_id.image_url}`) : "https://placehold.co/100x100?text=Cake"}
                             alt="cake"
                             className="w-full h-full object-cover"
                           />

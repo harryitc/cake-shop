@@ -102,7 +102,8 @@ interface CakeFormModalProps {
   initialData?: ICake | null;
 }
 
-const API_DOMAIN = process.env.NEXT_PUBLIC_API_DOMAIN || "http://localhost:5000";
+import { API_DOMAIN } from "@/lib/configs";
+
 
 export const CakeFormModal = ({ open, onCancel, initialData }: CakeFormModalProps) => {
   const { message } = App.useApp();

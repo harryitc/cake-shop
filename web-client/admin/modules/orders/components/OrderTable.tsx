@@ -3,6 +3,8 @@
 import { Table, Select, message, Skeleton } from "antd";
 import { useOrdersQuery, useUpdateOrderStatusMutation } from "../hooks";
 import { IOrder } from "../types";
+import { API_DOMAIN } from "@/lib/configs";
+
 
 export const OrderTable = () => {
   const { data, isLoading, isError } = useOrdersQuery();
@@ -145,7 +147,7 @@ export const OrderTable = () => {
                                 <div className="flex items-center gap-4">
                                    <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
                                       <img 
-                                         src={item.cake_id?.image_url ? (item.cake_id.image_url.startsWith('http') ? item.cake_id.image_url : `http://localhost:5000${item.cake_id.image_url}`) : "https://placehold.co/100x100?text=Cake"} 
+                                         src={item.cake_id?.image_url ? (item.cake_id.image_url.startsWith('http') ? item.cake_id.image_url : `${API_DOMAIN}${item.cake_id.image_url}`) : "https://placehold.co/100x100?text=Cake"} 
                                          alt={item.cake_id?.name} 
                                          className="w-full h-full object-cover"
                                       />

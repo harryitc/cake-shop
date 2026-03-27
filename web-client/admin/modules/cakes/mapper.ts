@@ -1,6 +1,7 @@
 import { ICake, ICakeDTO } from "./types";
 
-const API_DOMAIN = process.env.NEXT_PUBLIC_API_DOMAIN || "http://localhost:5000";
+import { API_DOMAIN } from "@/lib/configs";
+
 
 export const mapCakeToModel = (dto: ICakeDTO): ICake => {
   const imageUrl = dto.image_url 

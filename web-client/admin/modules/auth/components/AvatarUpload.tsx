@@ -11,7 +11,8 @@ interface AvatarUploadProps {
   onChange?: (path: string) => void;
 }
 
-const API_DOMAIN = process.env.NEXT_PUBLIC_API_DOMAIN || "http://localhost:5000";
+import { API_DOMAIN } from "@/lib/configs";
+
 
 export const AvatarUpload = ({ value, onChange }: AvatarUploadProps) => {
   const { message } = App.useApp();
