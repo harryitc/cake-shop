@@ -1,5 +1,3 @@
 public/uploads
-# .env
+.env*
 node_modules
-
-.env.local
