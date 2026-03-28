@@ -27,8 +27,10 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <OrderList />
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-6xl mx-auto px-4">
+        <OrderList />
+      </div>
     </div>
   );
 }

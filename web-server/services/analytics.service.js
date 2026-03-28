@@ -12,8 +12,8 @@ const getStats = async () => {
   ]);
   const totalRevenue = revenueData.length > 0 ? revenueData[0].total : 0;
 
-  // 2. Tổng số đơn hàng
-  const totalOrders = await Order.countDocuments();
+  // 2. Tổng số đơn hàng thành công
+  const completedOrders = await Order.countDocuments({ status: 'DONE' });
 
   // 3. Đơn hàng đang chờ (PENDING)
   const pendingOrders = await Order.countDocuments({ status: 'PENDING' });
@@ -21,11 +21,16 @@ const getStats = async () => {
   // 4. Tổng số loại bánh
   const totalCakes = await Cake.countDocuments();
 
+  // 5. Giá trị đơn hàng trung bình (AOV)
+  const averageOrderValue = completedOrders > 0 ? totalRevenue / completedOrders : 0;
+
   return {
     totalRevenue,
-    totalOrders,
+    totalOrders: await Order.countDocuments(),
+    completedOrders,
     pendingOrders,
     totalCakes,
+    averageOrderValue,
   };
 };
 
@@ -67,11 +72,60 @@ const getBestSellers = async () => {
     {
       $project: {
         name: '$cakeInfo.name',
+        image_url: '$cakeInfo.image_url',
+        price: '$cakeInfo.price',
         soldQuantity: 1,
         revenue: 1,
       },
     },
   ]);
+};
+
+/**
+ * Thống kê doanh thu theo danh mục (chỉ tính đơn DONE)
+ */
+const getCategoryDistribution = async () => {
+  return await Order.aggregate([
+    { $match: { status: 'DONE' } },
+    { $unwind: '$items' },
+    {
+      $lookup: {
+        from: 'cakes',
+        localField: 'items.cake_id',
+        foreignField: '_id',
+        as: 'cake',
+      },
+    },
+    { $unwind: '$cake' },
+    {
+      $lookup: {
+        from: 'categories',
+        localField: 'cake.category',
+        foreignField: '_id',
+        as: 'category',
+      },
+    },
+    { $unwind: '$category' },
+    {
+      $group: {
+        _id: '$category.name',
+        value: { $sum: { $multiply: ['$items.quantity', '$items.price_at_buy'] } },
+      },
+    },
+    { $project: { name: '$_id', value: 1, _id: 0 } },
+    { $sort: { value: -1 } },
+  ]);
+};
+
+/**
+ * 5 Đơn hàng gần đây nhất
+ */
+const getRecentOrders = async () => {
+  return await Order.find()
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .populate('user_id', 'full_name email')
+    .lean();
 };
 
 /**
@@ -104,5 +158,7 @@ module.exports = {
   getStats,
   getOrderStatusDistribution,
   getBestSellers,
+  getCategoryDistribution,
+  getRecentOrders,
   getRevenueTimeline,
 };

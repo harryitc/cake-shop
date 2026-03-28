@@ -49,6 +49,22 @@ const couponSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    usage_limit_per_user: {
+      type: Number,
+      default: 1,
+      min: 1,
+    },
+    applicable_categories: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category',
+        default: [],
+      },
+    ],
+    description: {
+      type: String,
+      trim: true,
+    },
   },
   {
     timestamps: true,

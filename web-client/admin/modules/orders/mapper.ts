@@ -31,5 +31,8 @@ export const mapOrderToModel = (dto: IOrderDTO): IOrder => {
     couponCode: dto.coupon_code,
     discountAmount: dto.discount_amount,
     finalPrice: dto.final_price,
+    pointsUsed: dto.points_used,
+    pointsDiscountAmount: dto.points_discount_amount,
+    pointsEarned: dto.points_earned,
   };
 };

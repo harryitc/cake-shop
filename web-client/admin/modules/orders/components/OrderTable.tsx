@@ -1,6 +1,6 @@
 "use client";
 
-import { Table, Select, message, Skeleton } from "antd";
+import { Table, Select, message, Skeleton, Tag, Divider } from "antd";
 import { useOrdersQuery, useUpdateOrderStatusMutation } from "../hooks";
 import { IOrder } from "../types";
 import { API_DOMAIN } from "@/lib/configs";
@@ -76,9 +76,14 @@ export const OrderTable = () => {
       render: (_: any, record: IOrder) => (
         <div className="flex flex-col">
           <span className="font-black text-indigo-600 text-[15px]">{record.formattedTotal}</span>
-          {record.discountAmount && record.discountAmount > 0 && (
+          {Number(record.discountAmount) > 0 && (
             <span className="text-[10px] text-green-500 font-bold">
-               Giảm: {new Intl.NumberFormat("vi-VN").format(record.discountAmount)}đ ({record.couponCode})
+               Mã giảm: -{new Intl.NumberFormat("vi-VN").format(record.discountAmount!)}đ ({record.couponCode})
+            </span>
+          )}
+          {Number(record.pointsDiscountAmount) > 0 && (
+            <span className="text-[10px] text-orange-500 font-bold">
+               Dùng điểm: -{new Intl.NumberFormat("vi-VN").format(record.pointsDiscountAmount!)}đ ({record.pointsUsed} pts)
             </span>
           )}
         </div>
@@ -125,98 +130,127 @@ export const OrderTable = () => {
           className="custom-admin-table"
           expandable={{
             expandedRowRender: (record: IOrder) => (
-              <div className="bg-gray-50/50 p-6 rounded-2xl border border-dashed border-gray-200 ml-12 mr-8 mb-4">
-                 <div className="flex flex-col md:flex-row justify-between gap-6 mb-6">
-                    <div className="flex-1">
-                       <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3">Thông tin khách hàng</h4>
-                       <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                          <div className="flex items-center gap-3 mb-2">
-                             <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xs">
-                                {record.userName.charAt(0).toUpperCase()}
-                             </div>
-                             <div>
-                                <p className="text-gray-900 font-bold mb-0 text-[14px]">{record.userName}</p>
-                                <p className="text-gray-400 text-[11px] mb-0">{record.userEmail}</p>
-                             </div>
+              <div className="bg-slate-50/50 p-6 rounded-2xl border border-slate-100 ml-12 mr-8 mb-4 shadow-sm">
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                  {/* Left Column: Product Details (2/3 width) */}
+                  <div className="xl:col-span-2 space-y-3">
+                    <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-2">
+                       Chi tiết sản phẩm ({record.itemsCount})
+                    </h4>
+                    
+                    <div className="space-y-2">
+                      {record.items.map((item, idx) => (
+                        <div 
+                          key={idx} 
+                          className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-100 cursor-pointer hover:border-indigo-400 transition-all group"
+                          onClick={() => item.cake_id?._id && handleShowCakeDetail(item.cake_id._id)}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-lg overflow-hidden border border-slate-100 bg-slate-50 group-hover:shadow-sm transition-all">
+                              <img 
+                                src={item.cake_id?.image_url ? (item.cake_id.image_url.startsWith('http') ? item.cake_id.image_url : `${API_DOMAIN}${item.cake_id.image_url}`) : "https://placehold.co/100x100?text=Cake"} 
+                                alt={item.cake_id?.name} 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div>
+                              <div className="font-bold text-slate-800 text-[13px] group-hover:text-indigo-600 transition-colors leading-tight">{item.cake_id?.name || "Sản phẩm đã xóa"}</div>
+                              <div className="flex items-center gap-2 mt-1">
+                                {item.variant_size && (
+                                  <span className="text-[9px] text-indigo-500 font-black bg-indigo-50 px-1.5 py-0.5 rounded uppercase tracking-tighter">
+                                    Size: {item.variant_size}
+                                  </span>
+                                )}
+                                <span className="text-slate-400 text-[11px]">
+                                  {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(item.price_at_buy)}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <div className="pt-2 border-t border-gray-50 space-y-1">
-                             <p className="text-gray-600 text-[12px] mb-0 flex items-center gap-2">
-                                <span className="text-gray-300">SĐT:</span> <span className="font-medium">{record.userPhone}</span>
-                             </p>
-                             <p className="text-gray-600 text-[12px] mb-0 flex items-start gap-2">
-                                <span className="text-gray-300 whitespace-nowrap">Địa chỉ:</span> <span className="font-medium leading-relaxed">{record.address}</span>
-                             </p>
+                          <div className="text-right">
+                            <div className="text-slate-400 text-[11px] font-bold">x{item.quantity}</div>
+                            <div className="font-bold text-indigo-600 text-[13px]">
+                              {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(item.price_at_buy * item.quantity)}
+                            </div>
                           </div>
-                       </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="flex-[1.5]">
-                       <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3 text-right">Chi tiết sản phẩm</h4>
-                       <div className="space-y-3">
-                          {record.items.map((item, idx) => (
-                             <div 
-                                key={idx} 
-                                className="flex items-center justify-between bg-white p-3 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:border-indigo-300 transition-colors group"
-                                onClick={() => item.cake_id?._id && handleShowCakeDetail(item.cake_id._id)}
-                             >
-                                <div className="flex items-center gap-4">
-                                   <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 bg-gray-50 group-hover:shadow-md transition-shadow">
-                                      <img 
-                                         src={item.cake_id?.image_url ? (item.cake_id.image_url.startsWith('http') ? item.cake_id.image_url : `${API_DOMAIN}${item.cake_id.image_url}`) : "https://placehold.co/100x100?text=Cake"} 
-                                         alt={item.cake_id?.name} 
-                                         className="w-full h-full object-cover"
-                                      />
-                                   </div>
-                                   <div>
-                                      <div className="font-bold text-gray-800 text-[13px] group-hover:text-indigo-600 transition-colors">{item.cake_id?.name || "Sản phẩm đã xóa"}</div>
-                                       {item.variant_size && (
-                                          <div className="text-[10px] text-indigo-500 font-black bg-indigo-50 px-1.5 py-0.5 rounded-full uppercase tracking-tighter w-fit mt-0.5">
-                                             Size: {item.variant_size}
-                                          </div>
-                                       )}
-                                      <div className="text-[11px] text-gray-400">Đơn giá: {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(item.price_at_buy)}</div>
-                                   </div>
-                                </div>
-                                <div className="text-right">
-                                   <div className="text-[11px] text-gray-400 font-medium">x{item.quantity}</div>
-                                   <div className="font-bold text-indigo-600 text-[13px]">{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(item.price_at_buy * item.quantity)}</div>
-                                </div>
-                             </div>
-                          ))}
-                       </div>
+                  </div>
+
+                  {/* Right Column: Info & Summary (1/3 width) */}
+                  <div className="space-y-5">
+                    {/* Customer Section */}
+                    <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                      <h4 className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-3">Khách hàng</h4>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xs">
+                          {record.userName.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-slate-800 font-bold mb-0 text-[13px]">{record.userName}</p>
+                          <p className="text-slate-400 text-[10px] mb-0">{record.userEmail}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-1.5 pt-2 border-t border-slate-50 text-[11px]">
+                        <p className="flex justify-between m-0">
+                          <span className="text-slate-400">SĐT:</span> 
+                          <span className="font-bold text-slate-600">{record.userPhone}</span>
+                        </p>
+                        <p className="flex flex-col gap-0.5 m-0">
+                          <span className="text-slate-400">Địa chỉ:</span> 
+                          <span className="font-medium text-slate-500 line-clamp-2">{record.address}</span>
+                        </p>
+                      </div>
                     </div>
-                 </div>
-                 <div className="mt-4 flex justify-end pt-3 border-t border-gray-100">
-                    <div className="text-right">
-                       <div className="text-[11px] text-gray-400">Tạm tính: {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(record.totalPrice)}</div>
-                       {record.discountAmount && record.discountAmount > 0 ? (
-                          <div className="text-[11px] text-green-500 font-bold">Giảm giá ({record.couponCode}): -{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(record.discountAmount)}</div>
-                       ) : null}
-                       <div className="text-[18px] font-black text-indigo-600 mt-1">Tổng cộng: {record.formattedTotal}</div>
+
+                    {/* Summary Section */}
+                    <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm space-y-2.5">
+                      <h4 className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Thanh toán</h4>
+                      <div className="flex justify-between items-center text-[12px]">
+                        <span className="text-slate-400">Tạm tính:</span>
+                        <span className="font-medium text-slate-600">{new Intl.NumberFormat("vi-VN").format(record.totalPrice)}đ</span>
+                      </div>
+                      
+                      {Number(record.discountAmount) > 0 && (
+                        <div className="flex justify-between items-center text-[12px]">
+                          <span className="text-emerald-500 font-medium">Mã giảm:</span>
+                          <span className="font-bold text-emerald-600">-{new Intl.NumberFormat("vi-VN").format(record.discountAmount!)}đ</span>
+                        </div>
+                      )}
+                      
+                      {Number(record.pointsDiscountAmount) > 0 && (
+                        <div className="flex justify-between items-center text-[12px]">
+                          <span className="text-orange-500 font-medium">Dùng điểm:</span>
+                          <span className="font-bold text-orange-600">-{new Intl.NumberFormat("vi-VN").format(record.pointsDiscountAmount!)}đ</span>
+                        </div>
+                      )}
+                      
+                      <Divider className="my-1 border-slate-50" />
+                      
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-slate-800 font-black text-[12px]">Tổng cộng:</span>
+                        <span className="text-[18px] font-black text-indigo-600">{record.formattedTotal}</span>
+                      </div>
+                      
+                      <div className="mt-2 bg-indigo-50/50 p-2 rounded-lg border border-indigo-100 flex justify-between items-center">
+                        <span className="text-[10px] text-indigo-400 uppercase font-black tracking-tight">Tích điểm</span>
+                        <span className="text-indigo-600 font-black text-[13px]">+{record.pointsEarned || 0} pts</span>
+                      </div>
                     </div>
-                 </div>
+                  </div>
+                </div>
               </div>
-            ),
+            )
           }}
         />
       </div>
 
       <CakeDetailDrawer 
+        cakeId={selectedCakeId} 
         visible={drawerVisible} 
         onClose={() => setDrawerVisible(false)} 
-        cakeId={selectedCakeId} 
       />
-
-      <style jsx global>{`
-        .custom-admin-table .ant-table-thead > tr > th {
-          background-color: #fafafa;
-          color: #999;
-          font-size: 12px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          border-bottom: 1px solid #f0f0f0;
-        }
-      `}</style>
     </div>
   );
 };

@@ -3,13 +3,14 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Modal, Form, Input, App, Button, Tag, Divider, Avatar } from "antd";
+import { Modal, Form, Input, App, Button, Tag, Divider, Avatar, Switch } from "antd";
 import { useCreateOrderMutation } from "../hooks";
 import { useMeQuery } from "../../auth/hooks";
+import { useLoyaltyQuery } from "../../loyalty/hooks";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { httpClient } from "@/lib/http";
-import { GiftOutlined, CheckCircleOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, StarOutlined, MailOutlined } from "@ant-design/icons";
+import { GiftOutlined, CheckCircleOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, StarOutlined, MailOutlined, CrownOutlined } from "@ant-design/icons";
 import { API_DOMAIN } from "@/lib/configs";
 
 
@@ -35,6 +36,7 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
   const router = useRouter();
   const { mutate, isPending } = useCreateOrderMutation();
   const { data: me } = useMeQuery({ enabled: open });
+  const { data: loyaltyData } = useLoyaltyQuery();
   
   const [couponLoading, setCouponLoading] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<{
@@ -42,6 +44,53 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
     discountAmount: number;
     finalPrice: number;
   } | null>(null);
+
+  const [usePoints, setUsePoints] = useState(false);
+
+  // Use latest loyalty data from separate API
+  const currentPoints = loyaltyData?.loyalty_points ?? me?.loyalty_points ?? 0;
+  const currentRank = loyaltyData?.rank ?? me?.rank ?? "BRONZE";
+
+  // Calculate points usage
+  // Default logic: 1 point = 1 VND, max 20% discount
+  const pointToVndRatio = 1;
+  const maxDiscountPercentage = 20;
+  
+  const currentTotal = appliedCoupon ? appliedCoupon.finalPrice : totalPrice;
+  const maxDiscountFromPoints = Math.floor(currentTotal * (maxDiscountPercentage / 100));
+  const maxPointsAvailable = Math.min(currentPoints, Math.floor(maxDiscountFromPoints / pointToVndRatio));
+  
+  const pointsDiscountAmount = usePoints ? maxPointsAvailable * pointToVndRatio : 0;
+  const finalOrderPrice = currentTotal - pointsDiscountAmount;
+
+  const getRankColor = (rank?: string) => {
+    switch (rank) {
+      case "SILVER": return "text-slate-400 bg-slate-50 border-slate-200";
+      case "GOLD": return "text-amber-500 bg-amber-50 border-amber-200";
+      case "DIAMOND": return "text-cyan-500 bg-cyan-50 border-cyan-200";
+      default: return "text-orange-600 bg-orange-50 border-orange-200";
+    }
+  };
+
+  const getRankLabel = (rank?: string) => {
+    switch (rank) {
+      case "SILVER": return "Bạc";
+      case "GOLD": return "Vàng";
+      case "DIAMOND": return "Kim cương";
+      default: return "Đồng";
+    }
+  };
+
+  const getEarnRatio = (rank?: string) => {
+    switch (rank) {
+      case "SILVER": return 0.02;
+      case "GOLD": return 0.03;
+      case "DIAMOND": return 0.05;
+      default: return 0.01;
+    }
+  };
+
+  const expectedPoints = Math.floor(finalOrderPrice * getEarnRatio(currentRank));
 
   const { control, handleSubmit, formState: { errors }, reset, getValues, setValue } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -85,6 +134,7 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
     const payload = {
       address: values.address,
       coupon_code: appliedCoupon ? appliedCoupon.code : undefined,
+      points_to_use: usePoints ? maxPointsAvailable : 0,
     };
 
     mutate(payload, {
@@ -92,6 +142,7 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
         message.success("Đặt hàng thành công!");
         reset();
         setAppliedCoupon(null);
+        setUsePoints(false);
         onCancel();
         router.push("/orders");
       },
@@ -104,6 +155,7 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
   const handleClose = () => {
     reset();
     setAppliedCoupon(null);
+    setUsePoints(false);
     onCancel();
   };
 
@@ -130,7 +182,12 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
              className="bg-indigo-100 text-indigo-600 border-2 border-white shadow-sm shrink-0"
            />
            <div className="flex-grow">
-              <div className="font-bold text-gray-800 text-base">{me?.full_name || "Khách hàng"}</div>
+              <div className="flex items-center gap-2">
+                <div className="font-bold text-gray-800 text-base">{me?.full_name || "Khách hàng"}</div>
+                <Tag className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase flex items-center gap-1 border ${getRankColor(currentRank)}`}>
+                  <CrownOutlined /> {getRankLabel(currentRank)}
+                </Tag>
+              </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
                  <span className="text-xs text-gray-500 flex items-center gap-1.5 whitespace-nowrap">
                     <UserOutlined className="text-[10px]" /> {me?.email}
@@ -186,20 +243,59 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
                 <span className="font-semibold">-{formatPrice(appliedCoupon.discountAmount)}</span>
              </div>
            )}
+           {usePoints && (
+             <div className="flex justify-between mb-2 text-indigo-600">
+                <span className="flex items-center gap-1 font-medium"><StarOutlined /> Dùng điểm tích lũy:</span>
+                <span className="font-semibold">-{formatPrice(pointsDiscountAmount)}</span>
+             </div>
+           )}
            <Divider className="my-3 border-indigo-100/30" />
            <div className="flex justify-between text-lg">
               <span className="font-bold text-gray-800">Tổng thanh toán:</span>
               <span className="font-black text-indigo-600 text-2xl drop-shadow-sm">
-                {formatPrice(appliedCoupon ? appliedCoupon.finalPrice : totalPrice)}
+                {formatPrice(finalOrderPrice)}
               </span>
            </div>
            <div className="mt-4 pt-3 border-t border-indigo-100/20 text-[11px] text-gray-400 italic leading-relaxed">
               <MailOutlined className="text-indigo-300 mr-1.5" /> 
               Email xác nhận đơn hàng sẽ được gửi đến <b>{me?.email}</b> sau khi đặt hàng thành công.
+              {expectedPoints > 0 && (
+                <div className="mt-1 text-green-600 font-medium flex items-center gap-1">
+                  <StarOutlined className="text-[10px]" /> Bạn sẽ nhận được khoảng <b>{expectedPoints.toLocaleString()}</b> điểm sau khi đơn hàng hoàn thành.
+                </div>
+              )}
            </div>
         </div>
 
         <Form layout="vertical">
+          <div className="bg-white border border-indigo-50 rounded-xl p-4 mb-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-amber-100 p-2 rounded-lg">
+                  <CrownOutlined className="text-amber-600 text-lg" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-gray-800">Dùng điểm Cake Rewards</div>
+                  <div className="text-[11px] text-gray-500">
+                    Bạn có <span className="font-bold text-indigo-600">{currentPoints.toLocaleString()}</span> điểm. 
+                    Tối đa giảm 20% đơn hàng.
+                  </div>
+                </div>
+              </div>
+              <Switch 
+                checked={usePoints} 
+                onChange={setUsePoints} 
+                disabled={!currentPoints || currentPoints === 0}
+              />
+            </div>
+            {usePoints && (
+              <div className="mt-3 text-[11px] text-indigo-500 bg-indigo-50 px-3 py-2 rounded-lg flex justify-between items-center">
+                <span>Số điểm sẽ sử dụng:</span>
+                <span className="font-bold text-sm">-{maxPointsAvailable.toLocaleString()} pts</span>
+              </div>
+            )}
+          </div>
+
           <Form.Item
             label={<span className="font-bold text-gray-700 flex items-center gap-1.5"><EnvironmentOutlined /> Địa chỉ nhận hàng</span>}
             validateStatus={errors.address ? "error" : ""}

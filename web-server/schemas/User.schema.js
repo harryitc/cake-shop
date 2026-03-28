@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { USER_ROLES } = require('../config/constants');
+const { USER_ROLES, LOYALTY_RANKS } = require('../config/constants');
 
 const userSchema = new mongoose.Schema(
   {
@@ -37,6 +37,30 @@ const userSchema = new mongoose.Schema(
     avatar_url: {
       type: String,
       default: '',
+    },
+    birthday: {
+      type: Date,
+      default: null,
+    },
+    loyalty_points: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
+    total_spent: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
+    rank: {
+      type: String,
+      enum: Object.values(LOYALTY_RANKS),
+      default: LOYALTY_RANKS.BRONZE,
+      index: true,
+    },
+    rank_lock: {
+      type: Boolean,
+      default: false,
     },
     reset_password_token: {
       type: String,

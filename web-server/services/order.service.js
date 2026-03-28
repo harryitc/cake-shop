@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 const Order = require('../schemas/Order.schema');
 const CartItem = require('../schemas/CartItem.schema');
 const Cake = require('../schemas/Cake.schema');
+const User = require('../schemas/User.schema');
 const CouponService = require('./coupon.service');
+const LoyaltyService = require('./loyalty.service');
 const { createError } = require('../utils/response.utils');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../utils/email.utils');
 const { HTTP_STATUS, ERROR_CODES, ORDER_STATUS } = require('../config/constants');
@@ -14,11 +16,16 @@ const VALID_TRANSITIONS = {
   [ORDER_STATUS.REJECTED]: [],
 };
 
-const createOrder = async (userId, address, couponCode = null) => {
+const createOrder = async (userId, address, couponCode = null, pointsToUse = 0) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
+    const user = await User.findById(userId).session(session);
+    if (!user) {
+      throw createError('Người dùng không tồn tại', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    }
+
     const cartItems = await CartItem.find({ user_id: userId })
       .populate('cake_id')
       .session(session);
@@ -94,6 +101,37 @@ const createOrder = async (userId, address, couponCode = null) => {
       await CouponService.incrementUsedCount(couponCode, session);
     }
 
+    // Xử lý dùng điểm (Points Redemption)
+    let points_discount_amount = 0;
+    let points_used = 0;
+
+    if (pointsToUse > 0) {
+      if (user.loyalty_points < pointsToUse) {
+        throw createError('Số dư điểm không đủ', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
+      }
+
+      const loyaltyConfig = await LoyaltyService.getConfig();
+      const maxDiscountPercent = loyaltyConfig.max_point_discount_percentage / 100;
+      const pointToVndRatio = loyaltyConfig.point_to_vnd_ratio;
+
+      // Giới hạn dùng điểm
+      const maxPointsDiscount = Math.floor(final_price * maxDiscountPercent);
+      points_used = Math.min(pointsToUse, Math.floor(maxPointsDiscount / pointToVndRatio));
+      points_discount_amount = points_used * pointToVndRatio;
+      
+      final_price -= points_discount_amount;
+      
+      // Trừ điểm của người dùng
+      await LoyaltyService.addPoints(
+        userId, 
+        -points_used, 
+        `Dùng điểm cho đơn hàng #${userId}_${Date.now()}`, 
+        null, 
+        null,
+        session
+      );
+    }
+
     const newOrders = await Order.create(
       [
         {
@@ -101,6 +139,8 @@ const createOrder = async (userId, address, couponCode = null) => {
           total_price,
           coupon_code: couponCode || '',
           discount_amount,
+          points_used,
+          points_discount_amount,
           final_price,
           status: ORDER_STATUS.PENDING,
           address,
@@ -111,6 +151,16 @@ const createOrder = async (userId, address, couponCode = null) => {
     );
 
     const order = newOrders[0];
+
+    // Cập nhật lại lịch sử điểm với ID đơn hàng thực tế
+    if (points_used > 0) {
+      const PointHistory = require('../schemas/PointHistory.schema');
+      await PointHistory.findOneAndUpdate(
+        { user: userId, points_change: -points_used, order: null },
+        { order: order._id, reason: `Dùng điểm cho đơn hàng #${order._id}` },
+        { session }
+      );
+    }
 
     await CartItem.deleteMany({ user_id: userId }).session(session);
 
@@ -137,7 +187,11 @@ const createOrder = async (userId, address, couponCode = null) => {
 
 const getOrders = async (userId, role) => {
   let query = {};
+  // Nếu là user bình thường, chỉ lấy đơn của họ
+  // Nếu là admin và có truyền userId, lấy đơn của user đó. Nếu không truyền, lấy tất cả.
   if (role !== 'admin') {
+    query.user_id = userId;
+  } else if (userId) {
     query.user_id = userId;
   }
 
@@ -205,6 +259,13 @@ const updateStatus = async (orderId, newStatus) => {
     order.status = newStatus;
     await order.save({ session });
     
+    // Xử lý Loyalty (Tích điểm/Thăng hạng hoặc Hoàn điểm)
+    if (newStatus === ORDER_STATUS.DONE) {
+      await LoyaltyService.processOrderCompletion(orderId, session);
+    } else if (newStatus === ORDER_STATUS.REJECTED) {
+      await LoyaltyService.refundPoints(orderId, session);
+    }
+
     await session.commitTransaction();
 
     // Gửi email cập nhật trạng thái

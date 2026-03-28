@@ -30,6 +30,9 @@ export interface IOrderDTO {
   };
   items?: IOrderItem[];
   items_count?: number;
+  points_used?: number;
+  points_discount_amount?: number;
+  points_earned?: number;
 }
 
 export interface IOrder {
@@ -49,6 +52,9 @@ export interface IOrder {
   couponCode?: string;
   discountAmount?: number;
   finalPrice?: number;
+  pointsUsed?: number;
+  pointsDiscountAmount?: number;
+  pointsEarned?: number;
 }
 
 export interface IUpdateStatusPayload {

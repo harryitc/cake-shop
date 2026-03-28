@@ -11,7 +11,7 @@ interface AvatarUploadProps {
   onChange?: (path: string) => void;
 }
 
-import { API_DOMAIN } from "@/lib/configs";
+import { getImageUrl } from "@/lib/utils";
 
 
 export const AvatarUpload = ({ value, onChange }: AvatarUploadProps) => {
@@ -35,9 +35,7 @@ export const AvatarUpload = ({ value, onChange }: AvatarUploadProps) => {
     return false;
   };
 
-  const imageUrl = value 
-    ? (value.startsWith("http") ? value : `${API_DOMAIN}${value}`)
-    : null;
+  const imageUrl = getImageUrl(value);
 
   return (
     <div className="flex flex-col items-center gap-4">

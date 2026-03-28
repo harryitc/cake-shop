@@ -68,4 +68,14 @@ module.exports = {
     ADMIN: 'admin',
     USER: 'user',
   },
+  LOYALTY_RANKS: {
+    BRONZE: 'BRONZE',
+    SILVER: 'SILVER',
+    GOLD: 'GOLD',
+    DIAMOND: 'DIAMOND',
+  },
+  POINT_TYPES: {
+    PLUS: 'PLUS',
+    MINUS: 'MINUS',
+  },
 };

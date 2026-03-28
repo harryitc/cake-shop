@@ -9,6 +9,7 @@ const createOrderSchema = Joi.object({
     'any.required': 'Vui lòng cung cấp địa chỉ giao hàng',
   }),
   coupon_code: Joi.string().trim().uppercase().allow('').optional(),
+  points_to_use: Joi.number().min(0).optional().default(0),
 });
 
 const idParamSchema = Joi.object({
@@ -30,7 +31,12 @@ const createOrder = async (req, res, next) => {
     const { error, value } = createOrderSchema.validate(req.body);
     if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
-    const order = await orderService.createOrder(req.user.userId, value.address, value.coupon_code);
+    const order = await orderService.createOrder(
+      req.user.userId, 
+      value.address, 
+      value.coupon_code,
+      value.points_to_use
+    );
     return sendSuccess(res, { order }, 'Đặt hàng thành công', HTTP_STATUS.CREATED);
   } catch (err) {
     next(err);
@@ -39,7 +45,9 @@ const createOrder = async (req, res, next) => {
 
 const getOrders = async (req, res, next) => {
   try {
-    const data = await orderService.getOrders(req.user.userId, req.user.role);
+    // Admin có thể truyền userId qua query để lọc
+    const targetUserId = req.user.role === 'admin' ? req.query.userId : req.user.userId;
+    const data = await orderService.getOrders(targetUserId, req.user.role);
     return sendSuccess(res, data, 'Lấy danh sách đơn hàng thành công', HTTP_STATUS.OK);
   } catch (err) {
     next(err);

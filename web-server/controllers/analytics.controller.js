@@ -6,11 +6,13 @@ const { sendSuccess } = require('../utils/response.utils');
  */
 const getDashboardStats = async (req, res, next) => {
   try {
-    const [stats, distribution, bestSellers, timeline] = await Promise.all([
+    const [stats, distribution, bestSellers, timeline, categoryDistribution, recentOrders] = await Promise.all([
       analyticsService.getStats(),
       analyticsService.getOrderStatusDistribution(),
       analyticsService.getBestSellers(),
       analyticsService.getRevenueTimeline(),
+      analyticsService.getCategoryDistribution(),
+      analyticsService.getRecentOrders(),
     ]);
 
     return sendSuccess(
@@ -20,6 +22,8 @@ const getDashboardStats = async (req, res, next) => {
         orderDistribution: distribution,
         bestSellers,
         revenueTimeline: timeline,
+        categoryDistribution,
+        recentOrders,
       },
       'Lấy thống kê thành công'
     );

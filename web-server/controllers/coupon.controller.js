@@ -15,6 +15,9 @@ class CouponController {
         start_date: Joi.date().required(),
         end_date: Joi.date().min(Joi.ref('start_date')).required(),
         usage_limit: Joi.number().min(1).allow(null).optional(),
+        usage_limit_per_user: Joi.number().min(1).default(1),
+        applicable_categories: Joi.array().items(Joi.string()).default([]),
+        description: Joi.string().allow('').optional(),
         is_active: Joi.boolean().default(true),
       });
 
@@ -39,12 +42,14 @@ class CouponController {
 
   async validate(req, res, next) {
     try {
-      const { code, order_total } = req.body;
+      const { code, order_total, cart_items } = req.body;
+      const userId = req.user ? req.user.id : null;
+
       if (!code || !order_total) {
         throw createError('Vui lòng cung cấp mã và tổng tiền', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
       }
 
-      const result = await couponService.validateCoupon(code, order_total);
+      const result = await couponService.validateCoupon(code, order_total, userId, cart_items || []);
       return sendSuccess(res, result, 'Mã giảm giá hợp lệ');
     } catch (err) {
       next(err);

@@ -1,7 +1,7 @@
 "use client";
 
 import { Layout, Menu } from "antd";
-import { ShopOutlined, HistoryOutlined, UserOutlined, DashboardOutlined, TagsOutlined, StarOutlined, GiftOutlined } from "@ant-design/icons";
+import { ShopOutlined, HistoryOutlined, UserOutlined, DashboardOutlined, TagsOutlined, StarOutlined, GiftOutlined, ShoppingCartOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -36,8 +36,23 @@ export const AdminSidebar = () => {
     },
     {
       key: "/admin/orders",
-      icon: <HistoryOutlined />,
+      icon: <ShoppingCartOutlined />,
       label: <Link href="/admin/orders">Quản lý Đơn hàng</Link>,
+    },
+    {
+      key: "customers-group",
+      icon: <UserOutlined />,
+      label: "Quản lý khách hàng",
+      children: [
+        {
+          key: "/admin/customers",
+          label: <Link href="/admin/customers">Danh sách khách hàng</Link>,
+        },
+        {
+          key: "/admin/loyalty-config",
+          label: <Link href="/admin/loyalty-config">Cấu hình Loyalty</Link>,
+        },
+      ],
     },
     {
       key: "/admin/profile",

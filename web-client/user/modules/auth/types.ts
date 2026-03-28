@@ -6,6 +6,9 @@ export interface IUser {
   phone?: string;
   address?: string;
   avatar_url?: string;
+  loyalty_points?: number;
+  total_spent?: number;
+  rank?: 'BRONZE' | 'SILVER' | 'GOLD' | 'DIAMOND';
   createdAt: string;
   updatedAt: string;
 }

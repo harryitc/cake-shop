@@ -14,9 +14,9 @@ export default function DashboardLayout({
 }) {
   return (
     <AuthGuard>
-      <Layout className="min-h-screen flex flex-row">
+      <Layout className="min-h-screen">
         <AdminSidebar />
-        <Layout className="transition-all bg-gray-50 flex-grow">
+        <Layout className="transition-all bg-gray-50 flex flex-col min-h-screen">
           <AdminHeader />
           <Content className="p-8">
             {children}

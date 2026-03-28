@@ -115,3 +115,28 @@ updated_at: 2026-03-26
 | 8 | Integration | ✅ DONE |
 | 9 | V3 Expansion | ✅ DONE |
 | 10 | Import/Export System | ✅ DONE |
+| 11 | Loyalty Program | ✅ DONE |
+
+---
+
+## Phase 11 — 🚀 Hệ thống Thành viên & Tích điểm (Phase 5)
+> **Spec:** [`epic_10_loyalty_program/`](./4_epic_and_stories/epic_10_loyalty_program/OVERVIEW.md)
+
+- [x] **[V5-1] Backend Core: Loyalty Engine**
+    - [x] Schema: User updates, PointHistory, LoyaltyConfig
+    - [x] Service: Points calculation, Tiering (Bronze -> Silver -> Gold -> Diamond)
+    - [x] Order Integration: Accumulate points on DONE, Refund on REJECTED
+    - [x] Technical Optimization: Atomic updates ($inc), Transactions (session), Aggregation stats
+- [x] **[V5-2] Quản trị Khách hàng (Admin CRM)**
+    - [x] Admin: Customer 360 View (Fullscreen Modal) with comprehensive data
+    - [x] Admin: Unified transaction stats (Total spent + Order count)
+    - [x] Admin: Order status breakdown (Success, Processing, Canceled) with values
+    - [x] Admin: Point history timeline & manual point adjustment
+    - [x] Admin: Global Loyalty settings (Config API & UI)
+    - [x] Admin: Loyalty Dashboard with tooltips and modern icons
+    - [x] Admin: Rank Override & Locking functionality
+- [x] **[V5-3] Trải nghiệm Khách hàng (User Loyalty)**
+    - [x] User: Loyalty dashboard in Profile (Badge, Progress, History)
+    - [x] User: Point usage at Checkout (Max 20% discount logic)
+
+**Status: ✅ DONE**

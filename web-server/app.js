@@ -40,6 +40,7 @@ app.use('/api/v1/uploads', require('./routes/upload.routes'));
 app.use('/api/v1/analytics', require('./routes/analytics.routes'));
 app.use('/api/v1/wishlist', require('./routes/wishlist.routes'));
 app.use('/api/v1/import', require('./routes/import.routes'));
+app.use('/api/v1/loyalty', require('./routes/loyalty.routes'));
 
 const { HTTP_STATUS, ERROR_CODES } = require('./config/constants');
 

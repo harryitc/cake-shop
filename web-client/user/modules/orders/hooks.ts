@@ -20,6 +20,9 @@ export const mapOrderToModel = (dto: IOrderDTO): IOrder => ({
   coupon_code: dto.coupon_code,
   discount_amount: dto.discount_amount,
   final_price: dto.final_price,
+  points_used: dto.points_used,
+  points_discount_amount: dto.points_discount_amount,
+  points_earned: dto.points_earned,
 });
 
 export const useOrdersQuery = () => {

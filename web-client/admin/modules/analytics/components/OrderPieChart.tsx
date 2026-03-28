@@ -28,7 +28,7 @@ export const OrderPieChart = ({ data }: OrderPieChartProps) => {
   }));
 
   return (
-    <Card className="rounded-3xl shadow-sm border border-gray-100 mt-6 h-full" title={<span className="font-extrabold text-gray-800">Trạng Thái Đơn Hàng</span>}>
+    <Card className="rounded-xl border border-gray-100 shadow-sm h-full" title={<span className="font-bold text-gray-800">Trạng Thái Đơn Hàng</span>}>
       <div className="h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>

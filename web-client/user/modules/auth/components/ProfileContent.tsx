@@ -1,13 +1,19 @@
 "use client";
 
-import { Form, Input, Button, Card, App, Spin, Modal } from "antd";
-import { LockOutlined, MailOutlined, UserOutlined, PhoneOutlined, HomeOutlined } from "@ant-design/icons";
+import { App, Spin } from "antd";
 import { useMeQuery, useUpdateProfileMutation, useChangePasswordMutation } from "../hooks";
-import { AvatarUpload } from "./AvatarUpload";
 import { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+
+// Components
+import { ProfileSidebar } from "./ProfileSidebar";
+import { OverviewSection } from "./profile-sections/OverviewSection";
+import { SecuritySection } from "./profile-sections/SecuritySection";
+import { OrdersSection } from "./profile-sections/OrdersSection";
+import { RewardsSection } from "./profile-sections/RewardsSection";
+import { AddressSection } from "./profile-sections/AddressSection";
 
 const profileSchema = z.object({
   full_name: z.string().min(1, "Vui lòng nhập họ tên"),
@@ -36,14 +42,25 @@ export const ProfileContent = () => {
   const { mutate: changePassword, isPending: isChangingPass } = useChangePasswordMutation();
   
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
 
-  const { control: profileControl, handleSubmit: handleProfileSubmit, reset: resetProfile, formState: { isDirty: isProfileDirty, isValid: isProfileValid } } = useForm<ProfileFormValues>({
+  const { 
+    control: profileControl, 
+    handleSubmit: handleProfileSubmit, 
+    reset: resetProfile, 
+    formState: { isDirty: isProfileDirty, isValid: isProfileValid } 
+  } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     mode: "onChange",
     defaultValues: { full_name: "", phone: "", address: "", avatar_url: "" }
   });
 
-  const { control: passControl, handleSubmit: handlePassSubmit, reset: resetPass, formState: { errors: passErrors, isDirty: isPassDirty, isValid: isPassValid } } = useForm<PasswordFormValues>({
+  const { 
+    control: passControl, 
+    handleSubmit: handlePassSubmit, 
+    reset: resetPass, 
+    formState: { errors: passErrors, isDirty: isPassDirty, isValid: isPassValid } 
+  } = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
     mode: "onChange",
     defaultValues: { oldPassword: "", newPassword: "", confirmPassword: "" }
@@ -66,7 +83,7 @@ export const ProfileContent = () => {
         message.success("Cập nhật thông tin thành công");
         resetProfile(values);
       },
-      onError: (err) => message.error(err.message || "Lỗi cập nhật"),
+      onError: (err: any) => message.error(err.message || "Lỗi cập nhật"),
     });
   };
 
@@ -79,149 +96,89 @@ export const ProfileContent = () => {
         localStorage.removeItem("access_token");
         window.location.href = "/login";
       },
-      onError: (err) => message.error(err.message || "Lỗi đổi mật khẩu"),
+      onError: (err: any) => message.error(err.message || "Lỗi đổi mật khẩu"),
     });
   };
 
-  if (isLoading) return <div className="flex justify-center p-20"><Spin size="large" /></div>;
+  if (isLoading) return <div className="flex justify-center p-20 min-h-screen items-center bg-gray-50/30"><Spin size="large" /></div>;
+
+  const renderSection = () => {
+    switch (activeTab) {
+      case "overview":
+        return (
+          <OverviewSection 
+            user={user}
+            profileControl={profileControl}
+            handleProfileSubmit={handleProfileSubmit}
+            onUpdateProfile={onUpdateProfile}
+            isUpdating={isUpdating}
+            isProfileDirty={isProfileDirty}
+            isProfileValid={isProfileValid}
+            updateProfileAvatar={(path) => updateProfile({ avatar_url: path })}
+          />
+        );
+      case "orders":
+        return <OrdersSection />;
+      case "address":
+        return (
+          <AddressSection 
+            profileControl={profileControl}
+            handleProfileSubmit={handleProfileSubmit}
+            onUpdateProfile={onUpdateProfile}
+            isUpdating={isUpdating}
+            isProfileDirty={isProfileDirty}
+            isProfileValid={isProfileValid}
+          />
+        );
+      case "rewards":
+        return <RewardsSection />;
+      case "security":
+        return (
+          <SecuritySection 
+            passControl={passControl}
+            handlePassSubmit={handlePassSubmit}
+            onChangePassword={onChangePassword}
+            isChangingPass={isChangingPass}
+            isPassDirty={isPassDirty}
+            isPassValid={isPassValid}
+            passErrors={passErrors}
+            isPassModalOpen={isPassModalOpen}
+            setIsPassModalOpen={setIsPassModalOpen}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  const getPageTitle = (tab: string) => {
+    switch (tab) {
+      case "overview": return "Hồ sơ cá nhân";
+      case "orders": return "Đơn hàng của mình";
+      case "address": return "Sổ địa chỉ";
+      case "rewards": return "Ưu đãi thành viên";
+      case "security": return "Bảo mật tài khoản";
+      default: return "";
+    }
+  }
 
   return (
-    <div className="max-w-4xl mx-auto py-10 px-4">
-      <h1 className="text-3xl font-black text-gray-900 mb-8">Hồ Sơ Cá Nhân</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <Card className="rounded-2xl shadow-sm border-gray-100 flex flex-col items-center justify-center p-6 text-center">
-          <AvatarUpload 
-            value={user?.avatar_url} 
-            onChange={(path) => updateProfile({ avatar_url: path })} 
-          />
-          <div className="mt-4">
-            <div className="font-bold text-lg text-gray-800">{user?.full_name || "Chưa đặt tên"}</div>
-            <div className="text-gray-500 text-sm">{user?.email}</div>
-            <div className="mt-2 inline-block px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold uppercase tracking-wider">
-              {user?.role}
-            </div>
+    <div className="bg-[#FFF8F0]/30 min-h-screen">
+      <div className="max-w-6xl mx-auto py-8 px-4 grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Left Sidebar */}
+        <div className="lg:col-span-1 h-full lg:sticky lg:top-4">
+          <ProfileSidebar activeTab={activeTab} onTabChange={setActiveTab} user={user} />
+        </div>
+
+        {/* Main Content Area */}
+        <div className="lg:col-span-3 min-h-[500px] flex flex-col gap-5">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-1.5 h-7 bg-gradient-to-b from-[#D4AF37] to-[#F1B24A] rounded-full shadow-md shadow-[#D4AF37]/20" />
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight m-0">{getPageTitle(activeTab)}</h1>
           </div>
-        </Card>
-
-        <div className="md:col-span-2 flex flex-col gap-6">
-          <Card className="rounded-2xl shadow-sm border-gray-100" title={<span className="font-bold">Thông tin cơ bản</span>}>
-            <Form layout="vertical" onFinish={handleProfileSubmit(onUpdateProfile)}>
-              <Form.Item label="Email (Không thể thay đổi)">
-                <Input prefix={<MailOutlined className="text-gray-400" />} value={user?.email} disabled className="rounded-lg bg-gray-50" />
-              </Form.Item>
-
-              <Form.Item label="Họ và Tên">
-                <Controller
-                  name="full_name"
-                  control={profileControl}
-                  render={({ field }) => <Input {...field} prefix={<UserOutlined className="text-gray-400" />} placeholder="Nhập họ tên của bạn" className="rounded-lg" />}
-                />
-              </Form.Item>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Form.Item label="Số điện thoại">
-                  <Controller
-                    name="phone"
-                    control={profileControl}
-                    render={({ field }) => <Input {...field} prefix={<PhoneOutlined className="text-gray-400" />} placeholder="Nhập số điện thoại" className="rounded-lg" />}
-                  />
-                </Form.Item>
-                <Form.Item label="Địa chỉ">
-                  <Controller
-                    name="address"
-                    control={profileControl}
-                    render={({ field }) => <Input {...field} prefix={<HomeOutlined className="text-gray-400" />} placeholder="Nhập địa chỉ mặc định" className="rounded-lg" />}
-                  />
-                </Form.Item>
-              </div>
-
-              <Button 
-                type="primary" 
-                htmlType="submit" 
-                loading={isUpdating} 
-                disabled={!isProfileDirty || !isProfileValid}
-                className="bg-indigo-600 font-bold h-10 rounded-lg px-8"
-              >
-                Lưu Thay Đổi
-              </Button>
-            </Form>
-          </Card>
-
-          <Card className="rounded-2xl shadow-sm border-gray-100 mt-6" title={<span className="font-bold text-red-600">Bảo mật</span>}>
-            <p className="text-gray-500 mb-4">Bạn nên đổi mật khẩu định kỳ để bảo vệ tài khoản.</p>
-            <Button danger icon={<LockOutlined />} onClick={() => setIsPassModalOpen(true)} className="font-semibold rounded-lg h-10">
-              Đổi mật khẩu truy cập
-            </Button>
-          </Card>
+          {renderSection()}
         </div>
       </div>
-
-      <Modal
-        title={<span className="font-black text-xl">Thiết lập Mật khẩu mới</span>}
-        open={isPassModalOpen}
-        onCancel={() => setIsPassModalOpen(false)}
-        footer={null}
-        destroyOnClose
-      >
-        <Form
-          layout="vertical"
-          onFinish={handlePassSubmit(onChangePassword)}
-          className="mt-6"
-        >
-          <Form.Item 
-            label="Mật khẩu hiện tại" 
-            validateStatus={passErrors.oldPassword ? "error" : ""} 
-            help={passErrors.oldPassword?.message}
-            required
-          >
-            <Controller
-              name="oldPassword"
-              control={passControl}
-              render={({ field }) => <Input.Password {...field} prefix={<LockOutlined className="text-gray-400" />} className="rounded-lg" />}
-            />
-          </Form.Item>
-
-          <Form.Item 
-            label="Mật khẩu mới" 
-            validateStatus={passErrors.newPassword ? "error" : ""} 
-            help={passErrors.newPassword?.message}
-            required
-          >
-            <Controller
-              name="newPassword"
-              control={passControl}
-              render={({ field }) => <Input.Password {...field} prefix={<LockOutlined className="text-gray-400" />} className="rounded-lg" />}
-            />
-          </Form.Item>
-
-          <Form.Item 
-            label="Xác nhận mật khẩu mới" 
-            validateStatus={passErrors.confirmPassword ? "error" : ""} 
-            help={passErrors.confirmPassword?.message}
-            required
-          >
-            <Controller
-              name="confirmPassword"
-              control={passControl}
-              render={({ field }) => <Input.Password {...field} prefix={<LockOutlined className="text-gray-400" />} className="rounded-lg" />}
-            />
-          </Form.Item>
-
-          <div className="flex gap-3 justify-end mt-8">
-            <Button onClick={() => setIsPassModalOpen(false)} className="rounded-lg h-10 px-6 font-semibold">Hủy Bỏ</Button>
-            <Button 
-              type="primary" 
-              htmlType="submit" 
-              loading={isChangingPass} 
-              disabled={!isPassDirty || !isPassValid}
-              className="bg-indigo-600 rounded-lg h-10 px-6 font-bold"
-            >
-              Cập nhật mật khẩu
-            </Button>
-          </div>
-        </Form>
-      </Modal>
     </div>
   );
 };

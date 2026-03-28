@@ -86,7 +86,7 @@ export const ProfileContent = () => {
   if (isLoading) return <div className="flex justify-center p-20"><Spin size="large" /></div>;
 
   return (
-    <div className="max-w-4xl mx-auto py-10 px-4">
+    <div className="max-w-4xl">
       <h1 className="text-3xl font-black text-gray-900 mb-8">Hồ Sơ Cá Nhân</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

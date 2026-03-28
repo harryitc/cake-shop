@@ -4,13 +4,12 @@ import { useCakeQuery, useCakeReviewsQuery } from "../hooks";
 import { AddToCartBtn } from "../../cart/components/AddToCartBtn";
 import { Skeleton, Breadcrumb, Rate, Avatar, List, Empty, Pagination, Tag, Divider, Radio, Space, Button, message } from "antd";
 import Link from "next/link";
-import { ArrowLeftOutlined, UserOutlined, InfoCircleOutlined, HeartOutlined, HeartFilled } from "@ant-design/icons";
+import { ArrowLeftOutlined, UserOutlined, InfoCircleOutlined, HeartOutlined, HeartFilled, StarOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import { useWishlist } from "../../../hooks/use-wishlist";
 import { useMeQuery } from "../../auth/hooks";
-
-import { API_DOMAIN } from "@/lib/configs";
-
+import { useLoyaltyQuery } from "../../loyalty/hooks";
+import { getAvatarUrl, getImageUrl } from "@/lib/utils";
 
 export const CakeDetail = ({ id }: { id: string }) => {
   const [page, setPage] = useState(1);
@@ -19,6 +18,16 @@ export const CakeDetail = ({ id }: { id: string }) => {
   const { data: reviewsData, isLoading: isLoadingReviews } = useCakeReviewsQuery(id, page);
   const { isLiked, toggleWishlist, isPending } = useWishlist();
   const { data: user } = useMeQuery();
+  const { data: loyalty } = useLoyaltyQuery();
+
+  const getEarnRatio = (rank?: string) => {
+    switch (rank) {
+      case "SILVER": return 0.02;
+      case "GOLD": return 0.03;
+      case "DIAMOND": return 0.05;
+      default: return 0.01;
+    }
+  };
 
   useEffect(() => {
     if (cake && cake.variants && cake.variants.length > 0) {
@@ -39,6 +48,7 @@ export const CakeDetail = ({ id }: { id: string }) => {
   }
 
   const currentPrice = selectedVariant ? selectedVariant.price : cake.price;
+  const potentialPoints = Math.floor(currentPrice * getEarnRatio(loyalty?.rank));
   const currentStock = selectedVariant ? selectedVariant.stock : cake.stock;
   const formattedCurrentPrice = new Intl.NumberFormat("vi-VN", {
     style: "currency",
@@ -64,7 +74,7 @@ export const CakeDetail = ({ id }: { id: string }) => {
             ))}
           </div>
           <img
-            src={cake.imageUrl}
+            src={getImageUrl(cake.imageUrl)}
             alt={cake.name}
             className="w-full aspect-square rounded-[24px] object-cover shadow-2xl shadow-indigo-100/50 group-hover:scale-[1.02] transition-transform duration-500"
           />
@@ -94,19 +104,27 @@ export const CakeDetail = ({ id }: { id: string }) => {
           </div>
 
           <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 mb-8">
-            <div className="flex items-baseline gap-4 mb-4">
+            <div className="flex items-baseline flex-wrap gap-4 mb-4">
               <span className="text-5xl font-black text-indigo-600 tracking-tighter">
                 {formattedCurrentPrice}
               </span>
-              {currentStock > 0 ? (
-                <span className="text-green-600 bg-green-50 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider">
-                  Sẵn có {currentStock} sản phẩm
-                </span>
-              ) : (
-                <span className="text-red-600 bg-red-50 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider">
-                  Tạm hết hàng
-                </span>
-              )}
+              <div className="flex flex-col">
+                {potentialPoints > 0 && (
+                  <div className="flex items-center gap-1.5 text-amber-500 font-bold bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100/50 mb-1">
+                    <StarOutlined className="text-xs" />
+                    <span className="text-xs">+{potentialPoints.toLocaleString()} pts</span>
+                  </div>
+                )}
+                {currentStock > 0 ? (
+                  <span className="text-green-600 bg-green-50 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider text-center">
+                    Sẵn có {currentStock} sản phẩm
+                  </span>
+                ) : (
+                  <span className="text-red-600 bg-red-50 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider text-center">
+                    Tạm hết hàng
+                  </span>
+                )}
+              </div>
             </div>
 
             {cake.variants && cake.variants.length > 0 && (
@@ -234,7 +252,7 @@ export const CakeDetail = ({ id }: { id: string }) => {
                               size={64} 
                               icon={<UserOutlined />} 
                               className="border-2 border-indigo-50 shadow-sm"
-                              src={review.user.avatar_url ? (review.user.avatar_url.startsWith('http') ? review.user.avatar_url : `${API_DOMAIN}${review.user.avatar_url}`) : undefined}
+                              src={getAvatarUrl(review.user.avatar_url)}
                             />
                             <div className="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-white shadow-sm"></div>
                           </div>

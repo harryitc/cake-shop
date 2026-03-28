@@ -5,6 +5,9 @@ export interface IOrderDTO {
   coupon_code?: string;
   discount_amount?: number;
   final_price?: number;
+  points_used?: number;
+  points_discount_amount?: number;
+  points_earned?: number;
   status: 'PENDING' | 'CONFIRMED' | 'DONE' | 'REJECTED';
   address: string;
   items: Array<{
@@ -38,9 +41,13 @@ export interface IOrder {
   coupon_code?: string;
   discount_amount?: number;
   final_price?: number;
+  points_used?: number;
+  points_discount_amount?: number;
+  points_earned?: number;
 }
 
 export interface ICreateOrderPayload {
   address: string;
   coupon_code?: string;
+  points_to_use?: number;
 }

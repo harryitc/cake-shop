@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, message, Space, Rate, Tag, Avatar, Tooltip, Modal, Input, Form } from 'antd';
 import { CheckOutlined, CloseOutlined, UserOutlined, EyeOutlined, MessageOutlined, ExportOutlined } from '@ant-design/icons';
 import { httpClient } from '@/lib/http';
-import { API_DOMAIN } from "@/lib/configs";
+import { getAvatarUrl, getImageUrl } from "@/lib/utils";
 
 
 interface Review {
@@ -14,6 +14,7 @@ interface Review {
     full_name: string;
     name: string;
     email: string;
+    avatar_url?: string;
   };
   cake: {
     _id: string;
@@ -98,7 +99,7 @@ const ReviewModule = () => {
       key: 'user',
       render: (_: any, record: Review) => (
         <Space>
-          <Avatar icon={<UserOutlined />} />
+          <Avatar src={getAvatarUrl(record.user?.avatar_url)} icon={<UserOutlined />} />
           <div>
             <div className="font-bold whitespace-nowrap">{record.user?.full_name || record.user?.name || 'N/A'}</div>
             <div className="text-xs text-gray-400">{record.user?.email}</div>
@@ -113,7 +114,7 @@ const ReviewModule = () => {
         <Space direction="vertical" size={0}>
           <Space>
             <img 
-              src={record.cake?.image_url ? (record.cake.image_url.startsWith('http') ? record.cake.image_url : `${API_DOMAIN}${record.cake.image_url}`) : ''} 
+              src={getImageUrl(record.cake?.image_url)} 
               alt="cake" 
               className="w-8 h-8 rounded object-cover"
             />
@@ -199,7 +200,7 @@ const ReviewModule = () => {
   ];
 
   return (
-    <div className="p-6 max-w-[1400px] mx-auto">
+    <div>
       <div className="mb-8 flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Quản lý Đánh giá</h1>
