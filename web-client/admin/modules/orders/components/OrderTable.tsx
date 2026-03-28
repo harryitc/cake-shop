@@ -4,11 +4,21 @@ import { Table, Select, message, Skeleton } from "antd";
 import { useOrdersQuery, useUpdateOrderStatusMutation } from "../hooks";
 import { IOrder } from "../types";
 import { API_DOMAIN } from "@/lib/configs";
+import { useState } from "react";
+import { CakeDetailDrawer } from "../../cakes/components/CakeDetailDrawer";
 
 
 export const OrderTable = () => {
+  const [selectedCakeId, setSelectedCakeId] = useState<string | null>(null);
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  
   const { data, isLoading, isError } = useOrdersQuery();
   const { mutate: updateStatus, isPending } = useUpdateOrderStatusMutation();
+
+  const handleShowCakeDetail = (id: string) => {
+    setSelectedCakeId(id);
+    setDrawerVisible(true);
+  };
 
   const handleStatusChange = (id: string, value: string) => {
     updateStatus({ id, payload: { status: value } }, {
@@ -143,9 +153,13 @@ export const OrderTable = () => {
                        <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3 text-right">Chi tiết sản phẩm</h4>
                        <div className="space-y-3">
                           {record.items.map((item, idx) => (
-                             <div key={idx} className="flex items-center justify-between bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                             <div 
+                                key={idx} 
+                                className="flex items-center justify-between bg-white p-3 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:border-indigo-300 transition-colors group"
+                                onClick={() => item.cake_id?._id && handleShowCakeDetail(item.cake_id._id)}
+                             >
                                 <div className="flex items-center gap-4">
-                                   <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
+                                   <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 bg-gray-50 group-hover:shadow-md transition-shadow">
                                       <img 
                                          src={item.cake_id?.image_url ? (item.cake_id.image_url.startsWith('http') ? item.cake_id.image_url : `${API_DOMAIN}${item.cake_id.image_url}`) : "https://placehold.co/100x100?text=Cake"} 
                                          alt={item.cake_id?.name} 
@@ -153,7 +167,7 @@ export const OrderTable = () => {
                                       />
                                    </div>
                                    <div>
-                                      <div className="font-bold text-gray-800 text-[13px]">{item.cake_id?.name || "Sản phẩm đã xóa"}</div>
+                                      <div className="font-bold text-gray-800 text-[13px] group-hover:text-indigo-600 transition-colors">{item.cake_id?.name || "Sản phẩm đã xóa"}</div>
                                        {item.variant_size && (
                                           <div className="text-[10px] text-indigo-500 font-black bg-indigo-50 px-1.5 py-0.5 rounded-full uppercase tracking-tighter w-fit mt-0.5">
                                              Size: {item.variant_size}
@@ -185,6 +199,13 @@ export const OrderTable = () => {
           }}
         />
       </div>
+
+      <CakeDetailDrawer 
+        visible={drawerVisible} 
+        onClose={() => setDrawerVisible(false)} 
+        cakeId={selectedCakeId} 
+      />
+
       <style jsx global>{`
         .custom-admin-table .ant-table-thead > tr > th {
           background-color: #fafafa;

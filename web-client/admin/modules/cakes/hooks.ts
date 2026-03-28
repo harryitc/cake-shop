@@ -12,6 +12,17 @@ export const useCakesQuery = (search?: string) => {
   });
 };
 
+export const useCakeQuery = (id: string, enabled = true) => {
+  return useQuery({
+    queryKey: ["cake", id],
+    queryFn: async () => {
+      const data = await cakeApi.getById(id);
+      return mapCakeToModel(data);
+    },
+    enabled: !!id && enabled,
+  });
+};
+
 export const useCreateCakeMutation = () => {
   const qc = useQueryClient();
   return useMutation({

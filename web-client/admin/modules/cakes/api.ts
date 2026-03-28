@@ -7,6 +7,8 @@ export const cakeApi = {
     if (search) url += `?search=${encodeURIComponent(search)}`;
     return httpClient<{ items: ICakeDTO[]; total: number }>(url, { method: "GET" });
   },
+  getById: (id: string) => 
+    httpClient<ICakeDTO>(`/cakes/${id}`, { method: "GET" }),
   create: (payload: ICreateCakePayload) => 
     httpClient("/cakes", { method: "POST", body: JSON.stringify(payload) }),
   update: ({ id, payload }: { id: string; payload: IUpdateCakePayload }) => 
