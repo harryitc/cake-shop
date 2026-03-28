@@ -53,12 +53,12 @@
 - [x] **Technical Integrity:** Atomic updates ($inc), Transaction support (session), and consistent data mapping (camelCase).
 - [x] **Sync Script:** `web-server/scripts/sync-loyalty-data.js` for migrating existing data.
 
-## 4. Frontend Integration (User)
-- **Profile Page:** Thêm tab "Cake Rewards" hiển thị Rank Badge, Progress Bar và điểm hiện tại.
-- **Checkout Page:** 
-    - Input nhập số điểm muốn dùng.
-    - Validation thời gian thực (Check số dư điểm, check giới hạn 20% đơn hàng).
-    - Hiển thị số tiền được giảm tương ứng.
+## 5. Frontend Integration (User)
+- [x] **Profile Page:** Thêm tab "Cake Rewards" hiển thị Rank Badge, Progress Bar và điểm hiện tại.
+- [x] **Checkout Page:** 
+    - [x] Input nhập số điểm muốn dùng.
+    - [x] Validation thời gian thực (Check số dư điểm, check giới hạn 20% đơn hàng).
+    - [x] Hiển thị số tiền được giảm tương ứng.
 
-## 5. Deployment & Migration Strategy
-- Chạy script cập nhật `total_spent` cho các user đã có đơn hàng `DONE` trước đó để đồng bộ hạng thành viên ban đầu.
+## 6. Deployment & Migration Strategy
+- [x] Chạy script cập nhật `total_spent` cho các user đã có đơn hàng `DONE` trước đó để đồng bộ hạng thành viên ban đầu.
