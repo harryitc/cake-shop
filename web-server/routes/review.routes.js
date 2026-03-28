@@ -13,5 +13,6 @@ router.post('/', authenticate, reviewController.create);
 // Admin routes
 router.get('/admin', authenticate, requireRole('admin'), reviewController.getAllAdmin);
 router.put('/admin/:reviewId/status', authenticate, requireRole('admin'), reviewController.updateStatus);
+router.put('/admin/:reviewId/reply', authenticate, requireRole('admin'), reviewController.reply);
 
 module.exports = router;

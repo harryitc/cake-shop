@@ -70,6 +70,21 @@ class ReviewController {
       next(err);
     }
   }
+  async reply(req, res, next) {
+    try {
+      const { reviewId } = req.params;
+      const { reply } = req.body;
+
+      if (!reply || reply.trim() === '') {
+        throw createError('Vui lòng nhập nội dung phản hồi', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
+      }
+
+      const review = await reviewService.adminReply(reviewId, reply);
+      return sendSuccess(res, review, 'Phản hồi đánh giá thành công');
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 module.exports = new ReviewController();

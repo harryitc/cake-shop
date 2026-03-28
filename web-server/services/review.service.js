@@ -126,6 +126,18 @@ class ReviewService {
     await this.recalculateCakeRating(review.cake);
     return review;
   }
+  /**
+   * Cập nhật phản hồi cho Review (Admin)
+   */
+  async adminReply(reviewId, reply) {
+    const review = await Review.findByIdAndUpdate(
+      reviewId, 
+      { reply, repliedAt: new Date() }, 
+      { new: true }
+    );
+    if (!review) throw createError('Không tìm thấy đánh giá', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    return review;
+  }
 }
 
 module.exports = new ReviewService();

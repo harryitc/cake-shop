@@ -32,6 +32,14 @@ const reviewSchema = new mongoose.Schema(
       type: Boolean,
       default: true, // Mặc định tự động duyệt, có thể chuyển thành false nếu cần kiểm duyệt gắt gao
     },
+    reply: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    repliedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
