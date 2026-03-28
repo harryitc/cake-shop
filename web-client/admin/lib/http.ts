@@ -26,8 +26,10 @@ export async function httpClient<T>(
   if (!response.ok) {
     if (response.status === 401 && typeof window !== "undefined") {
       localStorage.removeItem("access_token");
-      // Redirect cho trang Admin
-      window.location.href = "/admin/login";
+      // Tránh reload vô tận if đang ở trang login
+      if (!window.location.pathname.includes("/admin/login")) {
+        window.location.href = "/admin/login";
+      }
     }
     throw new Error(payload?.error?.message || "Đã xảy ra lỗi hệ thống API");
   }
