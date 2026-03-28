@@ -40,8 +40,8 @@ const couponSchema = z.object({
   start_date: z.any(),
   end_date: z.any(),
   usage_limit: z.number().min(1).nullable().optional(),
-  usage_limit_per_user: z.number().min(1).default(1),
-  applicable_categories: z.array(z.string()).default([]),
+  usage_limit_per_user: z.number().min(1),
+  applicable_categories: z.array(z.string()),
   description: z.string().optional().nullable(),
   is_active: z.boolean(),
 });

@@ -47,7 +47,7 @@ export const CakeList = () => {
   const flavorCats = categories.filter(c => c.type === 'FLAVOR');
   const dietCats = categories.filter(c => c.type === 'DIET');
 
-  const FilterSidebar = () => (
+  const renderFilterSidebar = () => (
     <div className="flex flex-col gap-8 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm sticky top-24">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-black text-gray-900 flex items-center gap-2">
@@ -178,7 +178,7 @@ export const CakeList = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
         {/* Sidebar for Desktop */}
         <aside className="hidden lg:block lg:col-span-1">
-          <FilterSidebar />
+          {renderFilterSidebar()}
         </aside>
 
         {/* Main Content */}
@@ -254,7 +254,7 @@ export const CakeList = () => {
              <Button type="text" icon={<CloseOutlined />} onClick={() => setShowMobileFilter(false)} />
           </div>
           <div className="flex-grow overflow-y-auto">
-             <FilterSidebar />
+             {renderFilterSidebar()}
           </div>
           <div className="p-4 border-t bg-gray-50">
              <Button type="primary" block className="h-12 rounded-xl bg-indigo-600 font-bold" onClick={() => setShowMobileFilter(false)}>Áp dụng</Button>

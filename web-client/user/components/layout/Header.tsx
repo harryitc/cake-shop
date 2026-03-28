@@ -9,6 +9,7 @@ import { useMeQuery } from "@/modules/auth/hooks";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { getAvatarUrl } from "@/lib/utils";
+import { ICartResponse } from "@/modules/cart/types";
 
 export const Header = () => {
   const { data: cart } = useCartQuery();
@@ -70,12 +71,12 @@ export const Header = () => {
     },
     { key: "profile", label: "Hồ sơ của tôi", onClick: () => router.push("/profile") },
     { key: "orders", label: "Đơn hàng đã mua", onClick: () => router.push("/orders") },
-    { key: "divider", type: 'divider' },
+    { key: "divider", type: 'divider' as const },
     { key: "logout", label: "Đăng xuất", danger: true, onClick: handleLogout },
   ];
 
-  const cartLocal: any = cart || { items: [] };
-  const totalItems = cartLocal?.items?.reduce((acc: number, item: any) => acc + item.quantity, 0) || 0;
+  const cartLocal = (cart as ICartResponse) || { items: [], total: 0 };
+  const totalItems = cartLocal.items.reduce((acc, item) => acc + item.quantity, 0);
 
   // Header styles based on state
   const headerClasses = `fixed top-0 left-0 w-full z-[100] transition-all duration-300 h-20 flex items-center ${

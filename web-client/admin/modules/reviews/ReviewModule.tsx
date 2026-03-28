@@ -242,7 +242,7 @@ const ReviewModule = () => {
         <div className="py-4">
           <div className="mb-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
             <div className="text-xs text-gray-400 mb-1">Nội dung đánh giá của khách:</div>
-            <div className="font-medium text-gray-700 italic line-clamp-3">"{replyingReview?.comment}"</div>
+            <div className="font-medium text-gray-700 italic line-clamp-3">&quot;{replyingReview?.comment}&quot;</div>
           </div>
           
           <Form form={form} onFinish={handleReplySubmit} layout="vertical">

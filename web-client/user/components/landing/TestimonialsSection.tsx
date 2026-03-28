@@ -49,7 +49,7 @@ export function TestimonialsSection() {
               </div>
 
               <p className="text-gray-600 text-lg leading-relaxed italic mb-8 relative z-10">
-                "{item.content}"
+                &quot;{item.content}&quot;
               </p>
 
               <div className="flex items-center gap-4">
