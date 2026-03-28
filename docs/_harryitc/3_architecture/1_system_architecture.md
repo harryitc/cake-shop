@@ -1,11 +1,13 @@
 ---
 title: System Architecture Overview
-version: 1.0
+version: 2.0 (V5 Loyalty)
 type: architecture
 related_docs:
   - 2_frontend_architecture.md
   - 3_backend_architecture.md
-  - 4_database_design_v1.md
+  - 4_database_design_v2.md
+  - 9_bulk_data_architecture.md
+  - 10_loyalty_design.md
 ---
 
 # 🏗️ SYSTEM ARCHITECTURE OVERVIEW

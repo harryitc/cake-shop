@@ -1,9 +1,9 @@
 ---
 title: Project Progress Tracker
 project: Cake Shop
-version: 2.0 (V3 Expansion)
+version: 3.0 (V5 Loyalty)
 created_at: 2026-03-24
-updated_at: 2026-03-26
+updated_at: 2026-03-28
 ---
 
 # 🚀 Cake Shop — Progress Tracker
