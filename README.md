@@ -7,6 +7,14 @@ Cake Shop là một nền tảng thương mại điện tử hoàn chỉnh, đư
 
 ---
 
+## 🖼️ Project Preview
+
+| 🛒 Storefront (Người dùng) | 🛡️ Admin Dashboard (Quản trị) |
+| :---: | :---: |
+| ![User Storefront](assets/user_demo.png) | ![Admin Dashboard](assets/admin_demo.png) |
+
+---
+
 ## 🌐 Live Demo
 
 Hệ thống có thể được truy cập trực tiếp thông qua các đường dẫn dưới đây:
