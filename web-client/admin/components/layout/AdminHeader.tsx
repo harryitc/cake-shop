@@ -25,15 +25,15 @@ export const AdminHeader = () => {
   ];
 
   return (
-    <Layout.Header className="bg-white h-20 px-8 flex items-center justify-between border-b border-gray-100 shadow-[0_1px_2px_rgba(0,0,0,0.02)] sticky top-0 z-10 w-full">
-      <div className="text-2xl font-black text-gray-800 tracking-tight">Dashboard Quản Trị</div>
+    <Layout.Header className="!bg-white h-20 px-8 flex items-center justify-between border-b border-gray-100 shadow-[0_1px_2px_rgba(0,0,0,0.02)] sticky top-0 z-10 w-full transition-all">
+      <div />
       <div className="flex items-center gap-4">
         <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
           <div className="h-11 px-4 flex items-center gap-3 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-100 transition-colors cursor-pointer">
             <Avatar 
               src={getAvatarUrl(user?.avatar_url)} 
               icon={<UserOutlined />} 
-              className="bg-indigo-100 text-indigo-600"
+              className="bg-indigo-100 text-indigo-600 border border-indigo-200"
             />
             <span className="font-bold text-indigo-700">{user?.full_name || "Admin"}</span>
           </div>

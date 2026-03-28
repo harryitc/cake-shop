@@ -63,7 +63,7 @@ export const DashboardOverview = () => {
   ];
 
   return (
-    <div className="max-w-[1600px] mx-auto pb-10">
+    <div className="pb-10">
       <div className="mb-8">
         <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Báo cáo Tổng quan</h1>
         <p className="text-gray-500 font-medium">Chào mừng trở lại! Theo dõi hiệu quả kinh doanh của cửa hàng.</p>

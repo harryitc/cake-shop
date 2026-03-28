@@ -5,7 +5,13 @@ import { ShopOutlined, HistoryOutlined, UserOutlined, DashboardOutlined, TagsOut
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export const AdminSidebar = () => {
+export const AdminSidebar = ({
+  collapsed,
+  onCollapse,
+}: {
+  collapsed: boolean;
+  onCollapse: (collapsed: boolean) => void;
+}) => {
   const pathname = usePathname();
 
   const menuItems = [
@@ -66,14 +72,28 @@ export const AdminSidebar = () => {
       width={260}
       theme="light"
       collapsible
-      className="border-r border-gray-100 shadow-sm fixed h-screen z-20 left-0 top-0"
+      collapsed={collapsed}
+      onCollapse={onCollapse}
+      className="border-r border-gray-100 shadow-sm !z-30 transition-all duration-300"
+      style={{
+        overflow: 'auto',
+        height: '100vh',
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        bottom: 0,
+      }}
     >
-      <div className="h-20 flex items-center justify-center border-b border-gray-100 bg-white">
-        <Link href="/admin/cakes" className="flex items-center gap-2">
-          <div className="bg-[#533afd] text-white p-1.5 rounded-lg shadow-sm">
-            <ShopOutlined className="text-xl" />
+      <div className="h-20 flex items-center justify-center border-b border-gray-100 bg-white overflow-hidden whitespace-nowrap px-4">
+        <Link href="/admin/cakes" className="flex items-center gap-3">
+          <div className="bg-[#533afd] text-white p-2 rounded-xl shadow-md min-w-[42px] h-[42px] flex items-center justify-center transition-all duration-300">
+            <ShopOutlined className="text-[22px]" />
           </div>
-          <span className="text-xl font-black text-gray-900 tracking-tight">Admin Portal</span>
+          {!collapsed && (
+            <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent tracking-tight animate-in fade-in slide-in-from-left-2 duration-300">
+              Admin Portal
+            </span>
+          )}
         </Link>
       </div>
       <Menu
