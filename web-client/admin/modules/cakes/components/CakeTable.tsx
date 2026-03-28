@@ -5,28 +5,25 @@ import { EditOutlined, DeleteOutlined, PlusOutlined, FileExcelOutlined, HistoryO
 import { useState } from "react";
 import { useCakesQuery, useDeleteCakeMutation, useImportCakesMutation } from "../hooks";
 import { ICake } from "../types";
-import { CakeFormModal } from "./CakeFormModal";
 import ImportWizard from "@/components/ui/ImportWizard";
 import ImportHistoryDrawer from "@/components/ui/ImportHistoryDrawer";
+import { useRouter } from "next/navigation";
 
 export const CakeTable = () => {
+  const router = useRouter();
   const { data, isLoading, isError } = useCakesQuery();
   const { mutate: deleteCake, isPending: isDeleting } = useDeleteCakeMutation();
   const { mutateAsync: importCakes } = useImportCakesMutation();
   
-  const [modalOpen, setModalOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [selectedCake, setSelectedCake] = useState<ICake | null>(null);
 
   const handleCreate = () => {
-    setSelectedCake(null);
-    setModalOpen(true);
+    router.push("/admin/studio/cakes/create");
   };
 
-  const handleEdit = (cake: ICake) => {
-    setSelectedCake(cake);
-    setModalOpen(true);
+  const handleEdit = (id: string) => {
+    router.push(`/admin/studio/cakes/edit/${id}`);
   };
 
   const handleDelete = (id: string) => {
@@ -94,7 +91,7 @@ export const CakeTable = () => {
             type="text" 
             className="hover:bg-indigo-50 transition-colors rounded-lg"
             icon={<EditOutlined className="text-indigo-600" />} 
-            onClick={() => handleEdit(record)}
+            onClick={() => handleEdit(record.id)}
           />
           <Popconfirm
             title="Xóa Bánh Này?"
@@ -156,12 +153,6 @@ export const CakeTable = () => {
           className="border-t border-gray-100 pt-2"
         />
       </div>
-
-      <CakeFormModal 
-        open={modalOpen} 
-        onCancel={() => setModalOpen(false)} 
-        initialData={selectedCake}
-      />
 
       <ImportWizard
         open={importOpen}
