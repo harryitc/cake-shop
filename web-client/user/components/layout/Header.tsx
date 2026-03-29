@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { getAvatarUrl } from "@/lib/utils";
 import { ICartResponse } from "@/modules/cart/types";
+import { authStorage } from "@/lib/http";
 
 export const Header = () => {
   const { data: cart } = useCartQuery();
@@ -25,7 +26,7 @@ export const Header = () => {
   const isTransparent = isHome && !scrolled;
 
   useEffect(() => {
-    setToken(localStorage.getItem("access_token"));
+    setToken(authStorage.getToken());
     
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
@@ -36,7 +37,7 @@ export const Header = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("access_token");
+    authStorage.removeToken();
     setToken(null);
     window.location.href = "/login";
   };

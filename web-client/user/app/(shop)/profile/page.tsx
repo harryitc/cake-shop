@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Spin } from "antd";
 
+import { authStorage } from "@/lib/http";
+
 export default function ProfilePage() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
+    const token = authStorage.getToken();
     if (!token) {
       router.push("/login?redirect=/profile");
     } else {

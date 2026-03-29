@@ -13,8 +13,6 @@ export interface GetCakesParams {
 
 export const cakeApi = {
   getAll: (params: GetCakesParams = {}) => {
-    // Axios tự động xử lý array params nếu được cấu hình đúng, 
-    // tuy nhiên ở đây chúng ta giữ params nguyên bản để Axios tự serializes
     return httpClient.get<{ items: ICakeDTO[]; total: number }>("/cakes", {
       params: {
         ...params,
@@ -37,4 +35,7 @@ export const cakeApi = {
       },
     });
   },
+
+  createReview: (payload: { cake_id: string; order_id: string; rating: number; comment: string }) =>
+    httpClient.post("/reviews", payload),
 };

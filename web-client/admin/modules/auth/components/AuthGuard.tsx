@@ -5,6 +5,8 @@ import { useRouter, usePathname } from "next/navigation";
 import { useMeQuery } from "../hooks";
 import { Spin } from "antd";
 
+import { authStorage } from "@/lib/http";
+
 export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -16,7 +18,7 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 
   const { data: user, isLoading, isError } = useMeQuery({
     enabled: isMounted && 
-             !!(typeof window !== "undefined" && localStorage.getItem("access_token")) &&
+             !!authStorage.getToken() &&
              !pathname.includes("/login") && 
              !pathname.includes("/forgot-password") && 
              !pathname.includes("/reset-password"),
@@ -24,7 +26,7 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (isMounted) {
-      const token = localStorage.getItem("access_token");
+      const token = authStorage.getToken();
       
       // Nếu không có token và không ở trang login/forgot/reset
       if (!token && !pathname.includes("/login") && !pathname.includes("/forgot-password") && !pathname.includes("/reset-password")) {
@@ -34,7 +36,7 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 
       // Nếu đã có user nhưng không phải admin
       if (user && user.role !== "admin") {
-        localStorage.removeItem("access_token");
+        authStorage.removeToken();
         router.push("/admin/login");
         return;
       }
@@ -47,7 +49,7 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     }
   }, [isMounted, user, isError, pathname, router]);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  const token = authStorage.getToken();
   const isPublicRoute = pathname.includes("/login") || pathname.includes("/forgot-password") || pathname.includes("/reset-password");
 
   // Trong khi đang check auth hoặc nếu không có token trên route cần bảo vệ

@@ -2,7 +2,7 @@
 
 import { Modal, Form, Input, Rate, App } from "antd";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { httpClient } from "@/lib/http";
+import { cakeApi } from "../api";
 
 interface ReviewModalProps {
   open: boolean;
@@ -19,7 +19,7 @@ export const ReviewModal = ({ open, onCancel, cakeId, orderId, cakeName }: Revie
 
   const { mutate: submitReview, isPending } = useMutation({
     mutationFn: (values: { rating: number; comment: string }) =>
-      httpClient.post("/reviews", {
+      cakeApi.createReview({
         cake_id: cakeId,
         order_id: orderId,
         rating: values.rating,
@@ -33,7 +33,7 @@ export const ReviewModal = ({ open, onCancel, cakeId, orderId, cakeName }: Revie
       form.resetFields();
     },
     onError: (err: any) => {
-      message.error(err.message || "Không thể gửi đánh giá. Vui lòng thử lại sau.");
+      message.error(err.message);
     },
   });
 

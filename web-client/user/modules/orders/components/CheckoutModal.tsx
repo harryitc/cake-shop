@@ -9,7 +9,7 @@ import { useMeQuery } from "../../auth/hooks";
 import { useLoyaltyQuery } from "../../loyalty/hooks";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { httpClient } from "@/lib/http";
+import { orderApi } from "../api";
 import { GiftOutlined, CheckCircleOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, StarOutlined, MailOutlined, CrownOutlined } from "@ant-design/icons";
 import { API_DOMAIN } from "@/lib/configs";
 
@@ -112,10 +112,7 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
 
     setCouponLoading(true);
     try {
-      const result = await httpClient<any>("/coupons/validate", {
-        method: "POST",
-        body: JSON.stringify({ code, order_total: totalPrice })
-      });
+      const result = await orderApi.validateCoupon(code, totalPrice);
       setAppliedCoupon({
         code: result.coupon.code,
         discountAmount: result.discountAmount,
@@ -123,7 +120,9 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
       });
       message.success("Áp dụng mã giảm giá thành công!");
     } catch (error: any) {
-      message.error(error.message || "Mã giảm giá không hợp lệ");
+      // Chỉ hiện message lỗi nghiệp vụ (Local error)
+      // Lỗi hệ thống đã được interceptor xử lý
+      message.error(error.message);
       setAppliedCoupon(null);
     } finally {
       setCouponLoading(false);

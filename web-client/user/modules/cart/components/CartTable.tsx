@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { CheckoutModal } from "../../orders/components/CheckoutModal";
+import { authStorage } from "@/lib/http";
 
 import { API_DOMAIN } from "@/lib/configs";
 
@@ -210,7 +211,7 @@ export const CartTable = () => {
               size="large"
               className="h-12 px-8 bg-black hover:bg-gray-800 font-bold text-[16px] rounded-xl shadow-lg w-full md:w-auto"
               onClick={() => {
-                const token = localStorage.getItem("access_token");
+                const token = authStorage.getToken();
                 if (!token) {
                   message.warning("Vui lòng đăng nhập để tiến hành đặt hàng");
                   router.push("/login?redirect=/cart");

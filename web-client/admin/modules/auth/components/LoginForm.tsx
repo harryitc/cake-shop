@@ -8,6 +8,7 @@ import { useLoginMutation, useMeQuery } from "../hooks";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect } from "react";
+import { authStorage } from "@/lib/http";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Vui lòng nhập email").email("Email không đúng định dạng"),
@@ -20,7 +21,7 @@ export const LoginForm = () => {
   const router = useRouter();
   const { mutate: login, isPending } = useLoginMutation();
   const { data: user } = useMeQuery({
-    enabled: !!(typeof window !== "undefined" && localStorage.getItem("access_token")),
+    enabled: !!(typeof window !== "undefined" && authStorage.getToken()),
   });
 
   useEffect(() => {
@@ -41,7 +42,7 @@ export const LoginForm = () => {
           message.error("Tài khoản không có quyền Admin!");
           return;
         }
-        localStorage.setItem("access_token", res.token);
+        authStorage.setToken(res.token);
         message.success("Đăng nhập Admin thành công");
         router.push("/admin/cakes");
       },

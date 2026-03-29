@@ -36,6 +36,15 @@ export const useCakeReviewsQuery = (cakeId: string, page: number = 1) => {
   });
 };
 
+export const useCategoriesQuery = () => {
+  return useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      return httpClient.get<any[]>("/categories");
+    },
+  });
+};
+
 export const useUploadImageMutation = () => {
   return useMutation({
     mutationFn: cakeApi.uploadImage,

@@ -1,139 +1,79 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Input, message, Space, Popconfirm, Select, InputNumber, DatePicker, Tag, Switch } from 'antd';
+import { Table, Button, Space, Modal, Form, Input, InputNumber, Select, DatePicker, Switch, message, Popconfirm, Card, Typography, Divider, Tag } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, GiftOutlined } from '@ant-design/icons';
-import { httpClient } from '@/lib/http';
-import dayjs from 'dayjs';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import dayjs from 'dayjs';
+import { useCouponsQuery, useCreateCouponMutation, useUpdateCouponMutation, useDeleteCouponMutation } from './hooks';
+import { useCategoriesQuery } from '../categories/hooks';
 
-interface Category {
-  _id: string;
-  name: string;
-}
-
-interface Coupon {
-  _id: string;
-  code: string;
-  type: 'PERCENT' | 'FIXED';
-  value: number;
-  min_order_value: number;
-  max_discount_value: number | null;
-  start_date: string;
-  end_date: string;
-  usage_limit: number | null;
-  usage_limit_per_user: number;
-  applicable_categories: string[] | Category[];
-  description?: string;
-  used_count: number;
-  is_active: boolean;
-}
+const { Title, Text } = Typography;
+const { Option } = Select;
 
 const couponSchema = z.object({
-  code: z.string().min(1, 'Vui lòng nhập mã'),
-  type: z.enum(['PERCENT', 'FIXED']),
-  value: z.number().min(0, 'Giá trị không được âm'),
-  min_order_value: z.number().min(0),
-  max_discount_value: z.number().min(0).nullable().optional(),
+  code: z.string().min(3, 'Mã phải có ít nhất 3 ký tự').toUpperCase(),
+  description: z.string().optional(),
+  discount_type: z.enum(['PERCENTAGE', 'FIXED_AMOUNT']),
+  discount_value: z.number().min(1, 'Giá trị giảm phải lớn hơn 0'),
+  min_order_value: z.number().default(0),
+  max_discount_value: z.number().optional(),
   start_date: z.any(),
   end_date: z.any(),
-  usage_limit: z.number().min(1).nullable().optional(),
-  usage_limit_per_user: z.number().min(1),
-  applicable_categories: z.array(z.string()),
-  description: z.string().optional().nullable(),
-  is_active: z.boolean(),
+  usage_limit: z.number().min(1, 'Giới hạn sử dụng phải ít nhất là 1'),
+  applicable_categories: z.array(z.string()).optional(),
+  is_active: z.boolean().default(true),
 });
 
 type CouponFormValues = z.infer<typeof couponSchema>;
 
-const CouponModule = () => {
-  const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(false);
+const CouponModule: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingCoupon, setEditingCoupon] = useState<any | null>(null);
 
-  const { control, handleSubmit, reset, formState: { errors, isDirty, isValid } } = useForm<CouponFormValues>({
+  const { data: coupons, isLoading } = useCouponsQuery();
+  const { data: categories } = useCategoriesQuery();
+  
+  const createMutation = useCreateCouponMutation();
+  const updateMutation = useUpdateCouponMutation();
+  const deleteMutation = useDeleteCouponMutation();
+
+  const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<CouponFormValues>({
     resolver: zodResolver(couponSchema),
-    mode: 'onChange',
     defaultValues: {
       code: '',
-      type: 'PERCENT',
-      value: 0,
+      discount_type: 'PERCENTAGE',
+      discount_value: 0,
       min_order_value: 0,
-      max_discount_value: null,
-      start_date: dayjs(),
-      end_date: dayjs().add(7, 'day'),
-      usage_limit: null,
-      usage_limit_per_user: 1,
+      usage_limit: 100,
       applicable_categories: [],
-      description: '',
       is_active: true,
     }
   });
 
-  const couponType = useWatch({ control, name: 'type' });
-
-  const fetchCoupons = async () => {
-    setLoading(true);
-    try {
-      const data = await httpClient.get<Coupon[]>('/coupons');
-      setCoupons(data);
-    } catch (error: any) {
-      message.error(error.message || 'Lỗi khi tải danh sách mã giảm giá');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const data = await httpClient.get<Category[]>('/categories');
-      setCategories(data);
-    } catch (error: any) {
-      console.error('Lỗi khi tải danh mục:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchCoupons();
-    fetchCategories();
-  }, []);
+  const discountType = useWatch({ control, name: 'discount_type' });
 
   useEffect(() => {
     if (isModalVisible) {
       if (editingCoupon) {
         reset({
-          code: editingCoupon.code,
-          type: editingCoupon.type,
-          value: editingCoupon.value,
-          min_order_value: editingCoupon.min_order_value,
-          max_discount_value: editingCoupon.max_discount_value,
+          ...editingCoupon,
           start_date: dayjs(editingCoupon.start_date),
           end_date: dayjs(editingCoupon.end_date),
-          usage_limit: editingCoupon.usage_limit,
-          usage_limit_per_user: editingCoupon.usage_limit_per_user || 1,
-          applicable_categories: (editingCoupon.applicable_categories as any[]).map(cat => typeof cat === 'string' ? cat : cat._id),
-          description: editingCoupon.description || '',
-          is_active: editingCoupon.is_active,
         });
       } else {
         reset({
           code: '',
-          type: 'PERCENT',
-          value: 0,
+          discount_type: 'PERCENTAGE',
+          discount_value: 0,
           min_order_value: 0,
-          max_discount_value: null,
-          start_date: dayjs(),
-          end_date: dayjs().add(7, 'day'),
-          usage_limit: null,
-          usage_limit_per_user: 1,
+          usage_limit: 100,
           applicable_categories: [],
-          description: '',
           is_active: true,
+          start_date: dayjs(),
+          end_date: dayjs().add(1, 'month'),
         });
       }
     }
@@ -144,43 +84,42 @@ const CouponModule = () => {
     setIsModalVisible(true);
   };
 
-  const handleEdit = (record: Coupon) => {
+  const handleEdit = (record: any) => {
     setEditingCoupon(record);
     setIsModalVisible(true);
   };
 
   const handleDelete = async (id: string) => {
     try {
-      await httpClient.delete(`/coupons/${id}`);
+      await deleteMutation.mutateAsync(id);
       message.success('Xóa mã giảm giá thành công');
-      fetchCoupons();
     } catch (error: any) {
-      message.error(error.message || 'Lỗi khi xóa mã giảm giá');
+      if (error.statuscode === 422 || error.statuscode === 409) {
+        message.error(error.message);
+      }
     }
   };
 
   const onSubmit = async (values: CouponFormValues) => {
-    setIsSubmitting(true);
-    try {
-      const formattedValues = {
-        ...values,
-        start_date: values.start_date.toISOString(),
-        end_date: values.end_date.toISOString(),
-      };
+    const formattedValues = {
+      ...values,
+      start_date: values.start_date.toISOString(),
+      end_date: values.end_date.toISOString(),
+    };
 
+    try {
       if (editingCoupon) {
-        await httpClient.put(`/coupons/${editingCoupon._id}`, formattedValues);
-        message.success('Cập nhật mã giảm giá thành công');
+        await updateMutation.mutateAsync({ id: editingCoupon.id, data: formattedValues });
+        message.success('Cập nhật thành công');
       } else {
-        await httpClient.post('/coupons', formattedValues);
-        message.success('Tạo mã giảm giá thành công');
+        await createMutation.mutateAsync(formattedValues);
+        message.success('Tạo mã thành công');
       }
       setIsModalVisible(false);
-      fetchCoupons();
     } catch (error: any) {
-      message.error(error.message || 'Lỗi xử lý');
-    } finally {
-      setIsSubmitting(false);
+      if (error.statuscode === 422 || error.statuscode === 409) {
+        message.error(error.message);
+      }
     }
   };
 
@@ -189,78 +128,48 @@ const CouponModule = () => {
       title: 'Mã',
       dataIndex: 'code',
       key: 'code',
-      render: (code: string, record: Coupon) => (
-        <Space direction="vertical" size={0}>
-          <Tag color="blue" className="font-mono font-bold">{code}</Tag>
-          {record.description && <span className="text-xs text-gray-500">{record.description}</span>}
-        </Space>
-      )
+      render: (text: string) => <Tag color="blue" className="font-mono font-bold text-sm">{text}</Tag>,
     },
     {
-      title: 'Loại',
-      dataIndex: 'type',
-      key: 'type',
-      render: (type: string) => (
-        <Tag color={type === 'PERCENT' ? 'green' : 'orange'}>
-          {type === 'PERCENT' ? 'Phần trăm' : 'Cố định'}
-        </Tag>
-      )
+      title: 'Loại giảm',
+      dataIndex: 'discount_type',
+      key: 'discount_type',
+      render: (type: string, record: any) => (
+        <span>
+          {type === 'PERCENTAGE' ? `${record.discount_value}%` : `${record.discount_value.toLocaleString()}đ`}
+        </span>
+      ),
     },
     {
-      title: 'Giá trị',
-      dataIndex: 'value',
-      key: 'value',
-      render: (value: number, record: Coupon) => (
-        <span>{record.type === 'PERCENT' ? `${value}%` : `${value.toLocaleString()}đ`}</span>
-      )
-    },
-    {
-      title: 'Đơn tối thiểu',
-      dataIndex: 'min_order_value',
-      key: 'min_order_value',
-      render: (val: number) => `${val.toLocaleString()}đ`
-    },
-    {
-      title: 'Thời gian',
-      key: 'duration',
-      render: (_: any, record: Coupon) => (
-        <div className="text-xs">
-          <div>Từ: {dayjs(record.start_date).format('DD/MM/YYYY')}</div>
-          <div>Đến: {dayjs(record.end_date).format('DD/MM/YYYY')}</div>
-        </div>
-      )
-    },
-    {
-      title: 'Sử dụng',
+      title: 'Đã dùng',
       key: 'usage',
-      render: (_: any, record: Coupon) => (
-        <div className="text-xs">
-          <div>Tổng: {record.used_count} / {record.usage_limit || '∞'}</div>
-          <div className="text-gray-400 italic">Giới hạn/User: {record.usage_limit_per_user}</div>
-        </div>
-      )
+      render: (_: any, record: any) => (
+        <span>{record.used_count} / {record.usage_limit}</span>
+      ),
+    },
+    {
+      title: 'Hạn dùng',
+      key: 'date',
+      render: (_: any, record: any) => (
+        <span className="text-xs">
+          {dayjs(record.start_date).format('DD/MM')} - {dayjs(record.end_date).format('DD/MM/YYYY')}
+        </span>
+      ),
     },
     {
       title: 'Trạng thái',
       dataIndex: 'is_active',
       key: 'is_active',
-      render: (active: boolean) => (
-        <Tag color={active ? 'success' : 'error'}>
-          {active ? 'Hoạt động' : 'Tắt'}
-        </Tag>
-      )
+      render: (active: boolean) => <Tag color={active ? 'green' : 'red'}>{active ? 'Bật' : 'Tắt'}</Tag>,
     },
     {
       title: 'Thao tác',
       key: 'action',
-      render: (_: any, record: Coupon) => (
+      render: (_: any, record: any) => (
         <Space size="middle">
-          <Button icon={<EditOutlined />} onClick={() => handleEdit(record)}>Sửa</Button>
-          <Popconfirm
-            title="Xóa mã giảm giá này?"
-            onConfirm={() => handleDelete(record._id)}
-          >
-            <Button danger icon={<DeleteOutlined />}>Xóa</Button>
+          <Button type="text" icon={<EditOutlined style={{ color: '#1890ff' }} />} onClick={() => handleEdit(record)} />
+          <Popconfirm title="Xóa mã này?" onConfirm={() => handleDelete(record.id)}>
+            <Button type="text" danger icon={<DeleteOutlined />} />
           </Popconfirm>
         </Space>
       ),
@@ -268,205 +177,154 @@ const CouponModule = () => {
   ];
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <GiftOutlined /> Quản lý Mã giảm giá
-        </h1>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          Tạo mã mới
-        </Button>
-      </div>
+    <div className="p-6">
+      <Card bordered={false} className="shadow-sm">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <Title level={3} style={{ margin: 0 }}>
+              <GiftOutlined className="mr-2" />
+              Chương trình giảm giá
+            </Title>
+            <Text type="secondary">Quản lý mã khuyến mãi và ưu đãi khách hàng</Text>
+          </div>
+          <Button 
+            type="primary" 
+            icon={<PlusOutlined />} 
+            onClick={handleAdd}
+            size="large"
+            className="rounded-lg h-11 px-6 bg-black hover:bg-gray-800 border-none"
+          >
+            Tạo mã mới
+          </Button>
+        </div>
 
-      <Table
-        columns={columns}
-        dataSource={coupons}
-        rowKey="_id"
-        loading={loading}
-      />
+        <Divider className="my-4" />
+
+        <Table 
+          columns={columns} 
+          dataSource={coupons} 
+          rowKey="id" 
+          loading={isLoading}
+          pagination={{ pageSize: 10 }}
+        />
+      </Card>
 
       <Modal
-        title={editingCoupon ? 'Sửa mã giảm giá' : 'Tạo mã giảm giá mới'}
+        title={editingCoupon ? "Cập nhật mã giảm giá" : "Tạo mã giảm giá mới"}
         open={isModalVisible}
-        onOk={() => handleSubmit(onSubmit)()}
         onCancel={() => setIsModalVisible(false)}
-        confirmLoading={isSubmitting}
-        okButtonProps={{ disabled: !isDirty || !isValid }}
-        destroyOnClose
-        width={700}
+        onOk={handleSubmit(onSubmit)}
+        confirmLoading={createMutation.isPending || updateMutation.isPending}
+        width={600}
+        centered
       >
         <Form layout="vertical" className="mt-4">
-          <Form.Item 
-            label="Mô tả"
-            extra="Hiển thị cho khách hàng thấy trong kho voucher (VD: Giảm 20% cho Bánh Kem)"
-          >
-            <Controller
-              name="description"
-              control={control}
-              render={({ field }) => <Input {...field} placeholder="Ví dụ: Giảm giá 20% cho bánh kem" value={field.value ?? ''} />}
-            />
-          </Form.Item>
-
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item
-              label="Mã giảm giá"
-              validateStatus={errors.code ? 'error' : ''}
-              help={errors.code?.message || "Mã in hoa, không khoảng trắng (VD: CAKE2024)"}
-              required
-            >
+            <Form.Item label="Mã giảm giá (Code)" required help={errors.code?.message} validateStatus={errors.code ? 'error' : ''}>
               <Controller
                 name="code"
                 control={control}
-                render={({ field }) => <Input {...field} placeholder="Ví dụ: CAKE2024" className="uppercase" />}
+                render={({ field }) => <Input {...field} placeholder="VD: KM50" size="large" />}
               />
             </Form.Item>
+
             <Form.Item label="Loại giảm giá" required>
               <Controller
-                name="type"
+                name="discount_type"
                 control={control}
                 render={({ field }) => (
-                  <Select {...field} options={[
-                    { label: 'Phần trăm (%)', value: 'PERCENT' },
-                    { label: 'Số tiền cố định (đ)', value: 'FIXED' },
-                  ]} />
+                  <Select {...field} size="large">
+                    <Option value="PERCENTAGE">Phần trăm (%)</Option>
+                    <Option value="FIXED_AMOUNT">Số tiền cố định (đ)</Option>
+                  </Select>
                 )}
               />
             </Form.Item>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item label="Giá trị giảm" required>
+            <Form.Item label="Giá trị giảm" required help={errors.discount_value?.message} validateStatus={errors.discount_value ? 'error' : ''}>
               <Controller
-                name="value"
+                name="discount_value"
                 control={control}
-                render={({ field }) => (
-                  <InputNumber 
-                    {...field}
-                    min={0} 
-                    style={{ width: '100%' }} 
-                    addonAfter={couponType === 'PERCENT' ? '%' : 'đ'}
-                    formatter={couponType === 'FIXED' ? (value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : undefined}
-                    parser={couponType === 'FIXED' ? (value) => value!.replace(/\$\s?|(,*)/g, "") as any : undefined}
-                  />
-                )}
+                render={({ field }) => <InputNumber {...field} min={0} className="w-full" size="large" />}
               />
             </Form.Item>
-            <Form.Item 
-              label="Giá trị đơn hàng tối thiểu"
-              extra="Đơn hàng phải đạt mức này mới được dùng mã"
-            >
+
+            <Form.Item label="Giảm tối đa (VNĐ)" help={errors.max_discount_value?.message}>
+              <Controller
+                name="max_discount_value"
+                control={control}
+                render={({ field }) => <InputNumber {...field} min={0} className="w-full" size="large" placeholder="Để trống nếu không giới hạn" />}
+              />
+            </Form.Item>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Form.Item label="Đơn hàng tối thiểu" required>
               <Controller
                 name="min_order_value"
                 control={control}
-                render={({ field }) => (
-                  <InputNumber 
-                    {...field}
-                    min={0} 
-                    style={{ width: '100%' }} 
-                    addonAfter="đ" 
-                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                    parser={(value) => value!.replace(/\$\s?|(,*)/g, "") as any}
-                  />
-                )}
+                render={({ field }) => <InputNumber {...field} min={0} className="w-full" size="large" />}
               />
             </Form.Item>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            {couponType === 'PERCENT' && (
-              <Form.Item 
-                label="Giảm tối đa (Tùy chọn)"
-                extra="Số tiền giảm tối đa cho 1 đơn hàng"
-              >
-                <Controller
-                  name="max_discount_value"
-                  control={control}
-                  render={({ field }) => (
-                    <InputNumber 
-                      {...field}
-                      min={0} 
-                      style={{ width: '100%' }} 
-                      addonAfter="đ" 
-                      formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                      parser={(value) => value!.replace(/\$\s?|(,*)/g, "") as any}
-                      value={field.value ?? undefined}
-                    />
-                  )}
-                />
-              </Form.Item>
-            )}
-            <Form.Item 
-              label="Giới hạn dùng trên mỗi User"
-              extra="Mỗi khách hàng được dùng mã này tối đa bao nhiêu lần"
-            >
+            <Form.Item label="Tổng lượt dùng" required>
               <Controller
-                name="usage_limit_per_user"
+                name="usage_limit"
                 control={control}
-                render={({ field }) => (
-                  <InputNumber {...field} min={1} style={{ width: '100%' }} />
-                )}
+                render={({ field }) => <InputNumber {...field} min={1} className="w-full" size="large" />}
               />
             </Form.Item>
           </div>
-
-          <Form.Item 
-            label="Áp dụng cho danh mục"
-            extra="Để trống nếu muốn áp dụng cho tất cả sản phẩm. Nếu chọn, chỉ giảm giá trên các sản phẩm thuộc danh mục này."
-          >
-            <Controller
-              name="applicable_categories"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  {...field}
-                  mode="multiple"
-                  allowClear
-                  placeholder="Chọn danh mục"
-                  options={categories.map(cat => ({ label: cat.name, value: cat._id }))}
-                  style={{ width: '100%' }}
-                />
-              )}
-            />
-          </Form.Item>
 
           <div className="grid grid-cols-2 gap-4">
             <Form.Item label="Ngày bắt đầu" required>
               <Controller
                 name="start_date"
                 control={control}
-                render={({ field }) => <DatePicker {...field} style={{ width: '100%' }} showTime />}
+                render={({ field }) => <DatePicker {...field} className="w-full" size="large" format="DD/MM/YYYY" />}
               />
             </Form.Item>
+
             <Form.Item label="Ngày kết thúc" required>
               <Controller
                 name="end_date"
                 control={control}
-                render={({ field }) => <DatePicker {...field} style={{ width: '100%' }} showTime />}
+                render={({ field }) => <DatePicker {...field} className="w-full" size="large" format="DD/MM/YYYY" />}
               />
             </Form.Item>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item 
-              label="Tổng giới hạn dùng (Tùy chọn)"
-              extra="Tổng số lượt dùng tối đa cho toàn hệ thống"
-            >
-              <Controller
-                name="usage_limit"
-                control={control}
-                render={({ field }) => (
-                  <InputNumber {...field} min={1} style={{ width: '100%' }} placeholder="Không giới hạn" value={field.value ?? undefined} />
-                )}
-              />
-            </Form.Item>
-            <Form.Item label="Trạng thái" valuePropName="checked">
-              <Controller
-                name="is_active"
-                control={control}
-                render={({ field }) => <Switch {...field} checked={field.value} />}
-              />
-            </Form.Item>
-          </div>
+          <Form.Item label="Danh mục áp dụng">
+            <Controller
+              name="applicable_categories"
+              control={control}
+              render={({ field }) => (
+                <Select {...field} mode="multiple" placeholder="Chọn các danh mục (để trống nếu áp dụng tất cả)" size="large">
+                  {categories?.map((cat: any) => (
+                    <Option key={cat.id} value={cat.id}>{cat.name}</Option>
+                  ))}
+                </Select>
+              )}
+            />
+          </Form.Item>
+
+          <Form.Item label="Mô tả" help={errors.description?.message}>
+            <Controller
+              name="description"
+              control={control}
+              render={({ field }) => <Input.TextArea {...field} rows={2} placeholder="Mô tả ngắn gọn về ưu đãi" />}
+            />
+          </Form.Item>
+
+          <Form.Item label="Trạng thái kích hoạt">
+            <Controller
+              name="is_active"
+              control={control}
+              render={({ field }) => <Switch checked={field.value} onChange={field.onChange} />}
+            />
+          </Form.Item>
         </Form>
       </Modal>
     </div>

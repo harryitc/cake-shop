@@ -16,8 +16,8 @@ export const useCakeQuery = (id: string, enabled = true) => {
   return useQuery({
     queryKey: ["cake", id],
     queryFn: async () => {
-      const data = await cakeApi.getById(id);
-      return mapCakeToModel(data);
+      const cake = await cakeApi.getById(id);
+      return mapCakeToModel(cake);
     },
     enabled: !!id && enabled,
   });

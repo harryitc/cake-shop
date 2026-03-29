@@ -1,74 +1,33 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { Table, Button, message, Space, Rate, Tag, Avatar, Tooltip, Modal, Input, Form } from 'antd';
-import { CheckOutlined, CloseOutlined, UserOutlined, EyeOutlined, MessageOutlined, ExportOutlined } from '@ant-design/icons';
-import { httpClient } from '@/lib/http';
-import { getAvatarUrl, getImageUrl } from "@/lib/utils";
+import React, { useState } from 'react';
+import { Table, Tag, Space, Button, Modal, Form, Input, message, Rate, Avatar, Tooltip, Card, Typography, Divider } from 'antd';
+import { CheckCircleOutlined, CloseCircleOutlined, MessageOutlined, UserOutlined, CakeOutlined, EyeOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import { useReviewsQuery, useUpdateReviewStatusMutation, useReplyReviewMutation } from './hooks';
 
+const { Title, Text, Paragraph } = Typography;
 
-interface Review {
-  _id: string;
-  user: {
-    _id: string;
-    full_name: string;
-    name: string;
-    email: string;
-    avatar_url?: string;
-  };
-  cake: {
-    _id: string;
-    name: string;
-    slug: string;
-    image_url: string;
-  };
-  rating: number;
-  comment: string;
-  reply?: string;
-  repliedAt?: string;
-  is_approved: boolean;
-  createdAt: string;
-}
-
-const ReviewModule = () => {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+const ReviewModule: React.FC = () => {
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
   const [replyModalVisible, setReplyModalVisible] = useState(false);
-  const [replyingReview, setReplyingReview] = useState<Review | null>(null);
+  const [replyingReview, setReplyingReview] = useState<any | null>(null);
   const [form] = Form.useForm();
-  const [submitting, setSubmitting] = useState(false);
 
-  const fetchReviews = async (page = 1) => {
-    setLoading(true);
-    try {
-      const data = await httpClient.get<any>(`/reviews/admin`, {
-        params: { page, limit: pagination.pageSize }
-      });
-      setReviews(data.items);
-      setPagination({ ...pagination, current: data.page, total: data.total });
-    } catch (error: any) {
-      message.error(error.message || 'Lỗi khi tải danh sách đánh giá');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchReviews();
-  }, []);
+  const { data, isLoading } = useReviewsQuery(pagination.current, pagination.pageSize);
+  const updateStatusMutation = useUpdateReviewStatusMutation();
+  const replyMutation = useReplyReviewMutation();
 
   const handleToggleStatus = async (id: string, currentStatus: boolean) => {
     try {
-      await httpClient.put(`/reviews/admin/${id}/status`, { is_approved: !currentStatus });
+      await updateStatusMutation.mutateAsync({ id, is_approved: !currentStatus });
       message.success(currentStatus ? 'Đã ẩn đánh giá' : 'Đã duyệt đánh giá');
-      fetchReviews(pagination.current);
     } catch (error: any) {
-      message.error(error.message || 'Lỗi khi cập nhật trạng thái');
+      if (error.statuscode === 422) message.error(error.message);
     }
   };
 
-  const showReplyModal = (review: Review) => {
+  const showReplyModal = (review: any) => {
     setReplyingReview(review);
     form.setFieldsValue({ reply: review.reply || '' });
     setReplyModalVisible(true);
@@ -76,16 +35,12 @@ const ReviewModule = () => {
 
   const handleReplySubmit = async (values: { reply: string }) => {
     if (!replyingReview) return;
-    setSubmitting(true);
     try {
-      await httpClient.put(`/reviews/admin/${replyingReview._id}/reply`, values);
+      await replyMutation.mutateAsync({ id: replyingReview.id, reply: values.reply });
       message.success('Gửi phản hồi thành công');
       setReplyModalVisible(false);
-      fetchReviews(pagination.current);
     } catch (error: any) {
-      message.error(error.message || 'Lỗi khi gửi phản hồi');
-    } finally {
-      setSubmitting(false);
+      if (error.statuscode === 422) message.error(error.message);
     }
   };
 
@@ -93,12 +48,12 @@ const ReviewModule = () => {
     {
       title: 'Khách hàng',
       key: 'user',
-      render: (_: any, record: Review) => (
+      render: (_: any, record: any) => (
         <Space>
-          <Avatar src={getAvatarUrl(record.user?.avatar_url)} icon={<UserOutlined />} />
+          <Avatar src={record.user.avatar} icon={<UserOutlined />} />
           <div>
-            <div className="font-bold whitespace-nowrap">{record.user?.full_name || record.user?.name || 'N/A'}</div>
-            <div className="text-xs text-gray-400">{record.user?.email}</div>
+            <div className="font-bold">{record.user.name}</div>
+            <div className="text-xs text-gray-500">{record.user.email}</div>
           </div>
         </Space>
       ),
@@ -106,155 +61,111 @@ const ReviewModule = () => {
     {
       title: 'Sản phẩm',
       key: 'cake',
-      render: (_: any, record: Review) => (
-        <Space direction="vertical" size={0}>
-          <Space>
-            <img 
-              src={getImageUrl(record.cake?.image_url)} 
-              alt="cake" 
-              className="w-8 h-8 rounded object-cover"
-            />
-            <span className="font-medium line-clamp-1">{record.cake?.name}</span>
-          </Space>
-          <Tooltip title="Xem sản phẩm ngoài trang chủ">
-            <Button 
-              type="link" 
-              size="small" 
-              icon={<ExportOutlined />} 
-              className="p-0 text-xs h-auto mt-1"
-              onClick={() => window.open(`http://localhost:3000/cakes/${record.cake?.slug || record.cake?._id}`, '_blank')}
-            >
-              Chi tiết sản phẩm
-            </Button>
-          </Tooltip>
+      render: (_: any, record: any) => (
+        <Space>
+          <Avatar shape="square" src={record.cake.image} icon={<CakeOutlined />} />
+          <div className="text-xs max-w-[150px] truncate">{record.cake.name}</div>
         </Space>
       ),
-      width: 220,
     },
     {
-      title: 'Đánh giá & Phản hồi',
+      title: 'Đánh giá',
       key: 'rating',
-      render: (_: any, record: Review) => (
+      render: (_: any, record: any) => (
         <div>
-          <div className="flex items-center gap-2">
-            <Rate disabled value={record.rating} className="text-[10px]" />
-            <span className="text-[10px] text-gray-400">{new Date(record.createdAt).toLocaleDateString('vi-VN')}</span>
-          </div>
-          <div className="text-gray-800 mt-1 mb-2 font-medium">"{record.comment || 'Không có bình luận'}"</div>
-          
-          {record.reply && (
-            <div className="bg-blue-50 p-2 rounded-lg border border-blue-100 text-xs">
-              <div className="font-bold text-blue-800 mb-1 flex justify-between">
-                <span>Admin phản hồi:</span>
-                <span className="text-[10px] text-blue-400 font-normal">{record.repliedAt ? new Date(record.repliedAt).toLocaleDateString('vi-VN') : ''}</span>
-              </div>
-              <div className="text-blue-700 italic">{record.reply}</div>
-            </div>
-          )}
+          <Rate disabled defaultValue={record.rating} style={{ fontSize: 12 }} />
+          <Paragraph ellipsis={{ rows: 2, expandable: true, symbol: 'Xem thêm' }} className="mt-1 text-sm italic">
+            \"{record.comment}\"
+          </Paragraph>
         </div>
       ),
-      width: 400,
     },
     {
       title: 'Trạng thái',
       dataIndex: 'is_approved',
-      key: 'status',
-      render: (is_approved: boolean) => (
-        <Tag color={is_approved ? 'success' : 'error'} className="rounded-full px-3">
-          {is_approved ? 'Đã duyệt' : 'Đang ẩn'}
+      key: 'is_approved',
+      render: (approved: boolean) => (
+        <Tag color={approved ? 'green' : 'orange'} icon={approved ? <CheckCircleOutlined /> : <CloseCircleOutlined />}>
+          {approved ? 'Đã duyệt' : 'Chờ duyệt'}
         </Tag>
       ),
     },
     {
       title: 'Thao tác',
       key: 'action',
-      render: (_: any, record: Review) => (
-        <Space size="small">
+      render: (_: any, record: any) => (
+        <Space size="middle">
           <Tooltip title={record.is_approved ? "Ẩn đánh giá" : "Duyệt đánh giá"}>
             <Button 
-              icon={record.is_approved ? <CloseOutlined /> : <CheckOutlined />} 
-              onClick={() => handleToggleStatus(record._id, record.is_approved)}
-              danger={record.is_approved}
-              shape="circle"
-              size="small"
-              className={record.is_approved ? '' : 'border-green-500 text-green-500'}
+              type="text" 
+              icon={record.is_approved ? <CloseCircleOutlined className="text-orange-500" /> : <CheckCircleOutlined className="text-green-500" />} 
+              onClick={() => handleToggleStatus(record.id, record.is_approved)}
             />
           </Tooltip>
-          <Tooltip title="Phản hồi bình luận">
-            <Button 
-              icon={<MessageOutlined />} 
-              onClick={() => showReplyModal(record)}
-              type="primary"
-              ghost
-              shape="circle"
-              size="small"
-            />
-          </Tooltip>
+          <Button 
+            type="primary" 
+            ghost 
+            size="small"
+            icon={<MessageOutlined />} 
+            onClick={() => showReplyModal(record)}
+          >
+            Phản hồi
+          </Button>
         </Space>
       ),
     },
   ];
 
   return (
-    <div>
-      <div className="mb-8 flex justify-between items-end">
-        <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Quản lý Đánh giá</h1>
-          <p className="text-gray-500 font-medium mt-1">Lắng nghe ý kiến của khách hàng và tương tác trực tiếp qua phản hồi.</p>
+    <div className="p-6">
+      <Card bordered={false} className="shadow-sm">
+        <div className="mb-6">
+          <Title level={3} style={{ margin: 0 }}>
+            <MessageOutlined className="mr-2" />
+            Quản lý Đánh giá
+          </Title>
+          <Text type="secondary">Theo dõi và phản hồi ý kiến từ khách hàng</Text>
         </div>
-      </div>
 
-      <Table
-        columns={columns}
-        dataSource={reviews}
-        rowKey="_id"
-        loading={loading}
-        pagination={{
-          ...pagination,
-          onChange: (page) => fetchReviews(page),
-          showSizeChanger: false,
-          position: ['bottomCenter']
-        }}
-        className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden"
-      />
+        <Divider className="my-4" />
+
+        <Table 
+          columns={columns} 
+          dataSource={data?.items} 
+          rowKey="id" 
+          loading={isLoading}
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: data?.total,
+            onChange: (page) => setPagination({ ...pagination, current: page }),
+          }}
+        />
+      </Card>
 
       <Modal
-        title={
-          <div className="flex items-center gap-2">
-            <MessageOutlined className="text-blue-600" />
-            <span>Phản hồi đánh giá của {replyingReview?.user?.full_name || replyingReview?.user?.name}</span>
-          </div>
-        }
+        title="Phản hồi đánh giá"
         open={replyModalVisible}
         onCancel={() => setReplyModalVisible(false)}
         onOk={() => form.submit()}
-        confirmLoading={submitting}
+        confirmLoading={replyMutation.isPending}
         okText="Gửi phản hồi"
         cancelText="Hủy"
-        destroyOnClose
         centered
-        className="rounded-2xl"
       >
-        <div className="py-4">
-          <div className="mb-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
-            <div className="text-xs text-gray-400 mb-1">Nội dung đánh giá của khách:</div>
-            <div className="font-medium text-gray-700 italic line-clamp-3">&quot;{replyingReview?.comment}&quot;</div>
-          </div>
-          
-          <Form form={form} onFinish={handleReplySubmit} layout="vertical">
-            <Form.Item 
-              name="reply" 
-              label={<span className="font-bold text-gray-700">Nội dung phản hồi của Admin</span>}
-              rules={[{ required: true, message: 'Vui lòng nhập nội dung phản hồi' }]}
-            >
-              <Input.TextArea 
-                placeholder="Cảm ơn khách hàng đã đánh giá sản phẩm của shop..." 
-                rows={4} 
-                className="rounded-xl border-gray-200 focus:border-blue-300 focus:shadow-[0_0_0_2px_rgba(59,130,246,0.1)] transition-all"
-              />
-            </Form.Item>
-          </Form>
+        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+          <div className="font-bold text-gray-700 mb-1">{replyingReview?.user.name} đánh giá:</div>
+          <Paragraph className="italic mb-0 text-gray-600">\"{replyingReview?.comment}\"</Paragraph>
         </div>
+        <Form form={form} onFinish={handleReplySubmit} layout="vertical">
+          <Form.Item 
+            name="reply" 
+            label="Nội dung phản hồi từ cửa hàng" 
+            rules={[{ required: true, message: 'Vui lòng nhập nội dung phản hồi' }]}
+          >
+            <Input.TextArea rows={4} placeholder="Cảm ơn khách hàng hoặc giải đáp thắc mắc..." />
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );

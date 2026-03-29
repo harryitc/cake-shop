@@ -5,11 +5,11 @@ const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
  * Bắt toàn bộ lỗi được đẩy qua next(err), nén thành JSON chuẩn.
  * Không bao giờ để lộ stack trace ra ngoài môi trường production.
  */
-// eslint-disable-next-line no-unused-vars
 const errorHandler = (err, req, res, next) => {
   let statusCode = err.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR;
   let code = err.code || ERROR_CODES.INTERNAL_ERROR;
   let message = err.message || 'Có lỗi xảy ra từ máy chủ';
+  let details = err.details || null;
 
   // --- Xử lý lỗi đặc thù từ Multer (Upload File) ---
   if (err.name === 'MulterError') {
@@ -32,23 +32,26 @@ const errorHandler = (err, req, res, next) => {
     statusCode = 400;
   }
 
-  // --- Ẩn thông báo lỗi hệ thống ở Production ---
-  const finalMessage =
-    statusCode === 500 && process.env.NODE_ENV === 'production'
-      ? 'Có lỗi xảy ra từ máy chủ'
-      : message;
+  const isProd = process.env.NODE_ENV === 'production';
 
-  if (process.env.NODE_ENV !== 'production') {
-    console.error(`[ERROR] ${statusCode} ${code}:`, message);
+  const errorBody = {
+    error: {
+      code,
+      statuscode: statusCode,
+      timestamp: err.timestamp || new Date().toISOString(),
+      message: (statusCode === 500 && isProd) 
+               ? 'Máy chủ hiện đang bận, vui lòng thử lại sau.' 
+               : message,
+      details
+    }
+  };
+
+  if (!isProd) {
+    console.error(`[ERROR] ${code}:`, message);
     if (statusCode === 500) console.error(err.stack);
   }
 
-  return res.status(statusCode).json({
-    error: { 
-      code, 
-      message: finalMessage 
-    },
-  });
+  res.status(statusCode).json(errorBody);
 };
 
 module.exports = errorHandler;

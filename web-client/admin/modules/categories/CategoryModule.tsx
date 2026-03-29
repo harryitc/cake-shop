@@ -1,57 +1,37 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Input, message, Space, Popconfirm } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import { httpClient } from '@/lib/http';
+import { Table, Button, Space, Modal, Form, Input, message, Popconfirm, Tag, Image, Card, Typography, Divider } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, FolderOpenOutlined } from '@ant-design/icons';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { Category } from './types';
+import { useCategoriesQuery, useCreateCategoryMutation, useUpdateCategoryMutation, useDeleteCategoryMutation } from './hooks';
 
-interface Category {
-  _id: string;
-  name: string;
-  slug: string;
-  description: string;
-  image_url: string;
-}
+const { Title, Text } = Typography;
 
 const categorySchema = z.object({
-  name: z.string().min(1, 'Vui lòng nhập tên danh mục'),
+  name: z.string().min(2, 'Tên danh mục phải có ít nhất 2 ký tự'),
   description: z.string().optional(),
-  image_url: z.string().optional(),
+  image_url: z.string().url('Link ảnh không hợp lệ').or(z.literal('')),
 });
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
 
-const CategoryModule = () => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(false);
+const CategoryModule: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<any | null>(null);
 
-  const { control, handleSubmit, reset, formState: { errors, isDirty, isValid } } = useForm<CategoryFormValues>({
+  const { data: categories, isLoading } = useCategoriesQuery();
+  const createMutation = useCreateCategoryMutation();
+  const updateMutation = useUpdateCategoryMutation();
+  const deleteMutation = useDeleteCategoryMutation();
+
+  const { control, handleSubmit, reset, formState: { errors } } = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
-    mode: 'onChange',
     defaultValues: { name: '', description: '', image_url: '' }
   });
-
-  const fetchCategories = async () => {
-    setLoading(true);
-    try {
-      const data = await httpClient.get<Category[]>('/categories');
-      setCategories(data);
-    } catch (error: any) {
-      message.error(error.message || 'Lỗi khi tải danh sách danh mục');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
 
   useEffect(() => {
     if (isModalVisible) {
@@ -72,37 +52,37 @@ const CategoryModule = () => {
     setIsModalVisible(true);
   };
 
-  const handleEdit = (record: Category) => {
+  const handleEdit = (record: any) => {
     setEditingCategory(record);
     setIsModalVisible(true);
   };
 
   const handleDelete = async (id: string) => {
     try {
-      await httpClient.delete(`/categories/${id}`);
+      await deleteMutation.mutateAsync(id);
       message.success('Xóa danh mục thành công');
-      fetchCategories();
     } catch (error: any) {
-      message.error(error.message || 'Lỗi khi xóa danh mục');
+      // Chỉ hiện message lỗi nghiệp vụ (Local error)
+      if (error.statuscode === 422 || error.statuscode === 409) {
+        message.error(error.message);
+      }
     }
   };
 
   const onSubmit = async (values: CategoryFormValues) => {
-    setIsSubmitting(true);
     try {
       if (editingCategory) {
-        await httpClient.put(`/categories/${editingCategory._id}`, values);
+        await updateMutation.mutateAsync({ id: editingCategory.id, data: values });
         message.success('Cập nhật danh mục thành công');
       } else {
-        await httpClient.post('/categories', values);
+        await createMutation.mutateAsync(values);
         message.success('Tạo danh mục thành công');
       }
       setIsModalVisible(false);
-      fetchCategories();
     } catch (error: any) {
-      message.error(error.message || 'Lỗi xử lý');
-    } finally {
-      setIsSubmitting(false);
+      if (error.statuscode === 422 || error.statuscode === 409) {
+        message.error(error.message);
+      }
     }
   };
 
@@ -111,30 +91,42 @@ const CategoryModule = () => {
       title: 'Tên danh mục',
       dataIndex: 'name',
       key: 'name',
+      render: (text: string) => <Text strong>{text}</Text>,
     },
     {
-      title: 'Slug',
-      dataIndex: 'slug',
-      key: 'slug',
+      title: 'Ảnh',
+      dataIndex: 'image_url',
+      key: 'image_url',
+      render: (url: string) => url ? <Image src={url} alt="category" width={50} height={50} className="rounded object-cover" /> : <Tag color="default">Không có ảnh</Tag>,
     },
     {
       title: 'Mô tả',
       dataIndex: 'description',
       key: 'description',
+      ellipsis: true,
     },
     {
       title: 'Thao tác',
       key: 'action',
-      render: (_: any, record: Category) => (
+      render: (_: any, record: any) => (
         <Space size="middle">
-          <Button icon={<EditOutlined />} onClick={() => handleEdit(record)}>Sửa</Button>
+          <Button 
+            type="text" 
+            icon={<EditOutlined style={{ color: '#1890ff' }} />} 
+            onClick={() => handleEdit(record)}
+          />
           <Popconfirm
             title="Bạn có chắc chắn muốn xóa danh mục này?"
-            onConfirm={() => handleDelete(record._id)}
+            onConfirm={() => handleDelete(record.id)}
             okText="Xóa"
             cancelText="Hủy"
+            okButtonProps={{ danger: true }}
           >
-            <Button danger icon={<DeleteOutlined />}>Xóa</Button>
+            <Button 
+              type="text" 
+              danger 
+              icon={<DeleteOutlined />} 
+            />
           </Popconfirm>
         </Space>
       ),
@@ -142,55 +134,73 @@ const CategoryModule = () => {
   ];
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Quản lý Danh mục</h1>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          Thêm danh mục
-        </Button>
-      </div>
+    <div className="p-6">
+      <Card bordered={false} className="shadow-sm">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <Title level={3} style={{ margin: 0 }}>
+              <FolderOpenOutlined className="mr-2" />
+              Quản lý danh mục
+            </Title>
+            <Text type="secondary">Quản lý các nhóm sản phẩm bánh của cửa hàng</Text>
+          </div>
+          <Button 
+            type="primary" 
+            icon={<PlusOutlined />} 
+            onClick={handleAdd}
+            size="large"
+            className="rounded-lg h-11 px-6 bg-black hover:bg-gray-800 border-none"
+          >
+            Thêm danh mục
+          </Button>
+        </div>
 
-      <Table
-        columns={columns}
-        dataSource={categories}
-        rowKey="_id"
-        loading={loading}
-      />
+        <Divider className="my-4" />
+
+        <Table 
+          columns={columns} 
+          dataSource={categories} 
+          rowKey="id" 
+          loading={isLoading}
+          pagination={{ pageSize: 10 }}
+          className="ant-table-custom"
+        />
+      </Card>
 
       <Modal
-        title={editingCategory ? 'Sửa danh mục' : 'Thêm danh mục mới'}
+        title={editingCategory ? "Cập nhật danh mục" : "Thêm danh mục mới"}
         open={isModalVisible}
-        onOk={() => handleSubmit(onSubmit)()}
         onCancel={() => setIsModalVisible(false)}
-        confirmLoading={isSubmitting}
-        okButtonProps={{ disabled: !isDirty || !isValid }}
+        onOk={handleSubmit(onSubmit)}
+        confirmLoading={createMutation.isPending || updateMutation.isPending}
+        okText={editingCategory ? "Cập nhật" : "Tạo mới"}
+        cancelText="Hủy"
         destroyOnClose
+        centered
+        width={500}
       >
         <Form layout="vertical" className="mt-4">
-          <Form.Item
-            label="Tên danh mục"
-            validateStatus={errors.name ? 'error' : ''}
-            help={errors.name?.message}
-            required
-          >
+          <Form.Item label="Tên danh mục" required validateStatus={errors.name ? 'error' : ''} help={errors.name?.message}>
             <Controller
               name="name"
               control={control}
-              render={({ field }) => <Input {...field} placeholder="Ví dụ: Bánh sinh nhật" />}
+              render={({ field }) => <Input {...field} placeholder="VD: Bánh kem sinh nhật" size="large" />}
             />
           </Form.Item>
-          <Form.Item label="Mô tả">
+
+          <Form.Item label="Mô tả" validateStatus={errors.description ? 'error' : ''} help={errors.description?.message}>
             <Controller
               name="description"
               control={control}
-              render={({ field }) => <Input.TextArea {...field} placeholder="Nhập mô tả danh mục" />}
+              render={({ field }) => <Input.TextArea {...field} placeholder="Mô tả ngắn về danh mục" rows={3} />}
             />
           </Form.Item>
-          <Form.Item label="Link ảnh (Tùy chọn)">
+
+          <Form.Item label="Link ảnh" validateStatus={errors.image_url ? 'error' : ''} help={errors.image_url?.message}>
             <Controller
               name="image_url"
               control={control}
-              render={({ field }) => <Input {...field} placeholder="URL hình ảnh" />}
+              render={({ field }) => <Input {...field} placeholder="https://example.com/image.jpg" size="large" />}
             />
           </Form.Item>
         </Form>

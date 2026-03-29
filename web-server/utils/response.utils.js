@@ -16,11 +16,14 @@ const sendSuccess = (res, data = null, message = 'success', statusCode = HTTP_ST
  * @param {string} message
  * @param {number} statusCode
  * @param {string} code
+ * @param {*} details
  */
-const createError = (message, statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR, code = ERROR_CODES.INTERNAL_ERROR) => {
+const createError = (message, statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR, code = ERROR_CODES.INTERNAL_ERROR, details = null) => {
   const err = new Error(message);
   err.statusCode = statusCode;
   err.code = code;
+  err.timestamp = new Date().toISOString();
+  err.details = details;
   return err;
 };
 

@@ -1,48 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { orderApi } from "./api";
-import { IOrder, IOrderDTO, ICreateOrderPayload } from "./types";
-
-const formatPrice = (price: number) => 
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
-
-export const mapOrderToModel = (dto: IOrderDTO): IOrder => ({
-  id: dto._id,
-  status: dto.status,
-  totalPrice: dto.total_price,
-  formattedTotal: formatPrice(dto.final_price || dto.total_price),
-  address: dto.address,
-  itemsCount: dto.items_count || dto.items?.length || 0,
-  items: dto.items || [],
-  createdAt: dto.createdAt,
-  formattedDate: new Date(dto.createdAt).toLocaleDateString("vi-VN", { 
-    hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" 
-  }),
-  coupon_code: dto.coupon_code,
-  discount_amount: dto.discount_amount,
-  final_price: dto.final_price,
-  points_used: dto.points_used,
-  points_discount_amount: dto.points_discount_amount,
-  points_earned: dto.points_earned,
-});
-
-export const useOrdersQuery = () => {
-  return useQuery({
-    queryKey: ["orders"],
-    queryFn: async () => {
-      const data = await orderApi.getAll();
-      // Backend service trả về { items: [] }
-      return data.items.map(mapOrderToModel);
-    },
-  });
-};
+import { mapOrderToModel } from "./mapper";
 
 export const useCreateOrderMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: ICreateOrderPayload) => orderApi.create(payload),
+    mutationFn: orderApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+};
+
+export const useMyOrdersQuery = () => {
+  return useQuery({
+    queryKey: ["orders"],
+    queryFn: async () => {
+      const res = await orderApi.getMyOrders();
+      return res.items.map(mapOrderToModel);
     },
   });
 };
