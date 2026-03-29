@@ -6,10 +6,7 @@ import { useCartQuery, useRemoveFromCartMutation, useUpdateCartQuantityMutation 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { CheckoutModal } from "../../orders/components/CheckoutModal";
 import { authStorage } from "@/lib/http";
-
-import { API_DOMAIN } from "@/lib/configs";
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
@@ -93,7 +90,6 @@ export const CartTable = () => {
   const { data: rawCart, isLoading, isError } = useCartQuery();
   const { mutate: removeItem, isPending } = useRemoveFromCartMutation();
   const { mutate: updateQuantity } = useUpdateCartQuantityMutation();
-  const [modalOpen, setModalOpen] = useState(false);
 
   if (isLoading) return <div className="p-8"><Skeleton active paragraph={{ rows: 6 }} /></div>;
   if (isError) return <div className="p-8 text-center text-red-500">Lỗi không thể tải giỏ hàng</div>;
@@ -116,31 +112,38 @@ export const CartTable = () => {
       title: "Sản phẩm",
       dataIndex: "cake",
       key: "cake",
-      render: (cake: any, record: any) => (
-        <div className="flex items-center gap-4">
-          <img src={cake.image_url ? (cake.image_url.startsWith('http') ? cake.image_url : `${API_DOMAIN}${cake.image_url}`) : "https://placehold.co/100x100"} alt={cake.name} className="w-16 h-16 rounded object-cover border" />
-          <div className="flex flex-col">
-            <Link href={`/cakes/${cake._id}`} className="font-semibold text-gray-800 hover:text-indigo-600 min-w-[150px]">
-              {cake.name}
-            </Link>
-            {record.variant && (
-              <span className="text-xs text-indigo-500 font-bold bg-indigo-50 px-2 py-0.5 rounded w-fit mt-1">
-                Size: {record.variant.size}
-              </span>
-            )}
-            {record.variant_size && !record.variant && (
-               <span className="text-xs text-indigo-500 font-bold bg-indigo-50 px-2 py-0.5 rounded w-fit mt-1">
-                Size: {record.variant_size}
-              </span>
-            )}
+      render: (cake: any, record: any) => {
+        if (!cake) return <span className="text-gray-400 italic">Sản phẩm không còn tồn tại</span>;
+        return (
+          <div className="flex items-center gap-4">
+            <img 
+              src={cake.imageUrl || "https://placehold.co/100x100?text=No+Img"} 
+              alt={cake.name || "Product"} 
+              className="w-16 h-16 rounded object-cover border" 
+            />
+            <div className="flex flex-col">
+              <Link href={`/cakes/${cake.id || record.cake_id}`} className="font-semibold text-gray-800 hover:text-indigo-600 min-w-[150px]">
+                {cake.name || "Tên sản phẩm không khả dụng"}
+              </Link>
+              {record.variant && (
+                <span className="text-xs text-indigo-500 font-bold bg-indigo-50 px-2 py-0.5 rounded w-fit mt-1">
+                  Size: {record.variant.size}
+                </span>
+              )}
+              {record.variant_size && !record.variant && (
+                 <span className="text-xs text-indigo-500 font-bold bg-indigo-50 px-2 py-0.5 rounded w-fit mt-1">
+                  Size: {record.variant_size}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       title: "Đơn giá",
       key: "price",
-      render: (_: any, record: any) => formatPrice(record.price || record.cake.price)
+      render: (_: any, record: any) => formatPrice(record.price || record.cake?.price || 0)
     },
     {
       title: "Số lượng",
@@ -214,10 +217,10 @@ export const CartTable = () => {
                 const token = authStorage.getToken();
                 if (!token) {
                   message.warning("Vui lòng đăng nhập để tiến hành đặt hàng");
-                  router.push("/login?redirect=/cart");
+                  router.push("/login?redirect=/checkout");
                   return;
                 }
-                setModalOpen(true);
+                router.push("/checkout");
               }}
             >
               Tiến hành Đặt hàng
@@ -225,12 +228,6 @@ export const CartTable = () => {
           </div>
         </div>
       </div>
-      <CheckoutModal 
-        open={modalOpen} 
-        onCancel={() => setModalOpen(false)} 
-        totalPrice={cartLocal.total} 
-        items={cartLocal.items} 
-      />
     </>
   );
 };

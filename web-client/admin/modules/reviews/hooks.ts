@@ -8,9 +8,9 @@ export const useReviewsQuery = (page: number = 1, limit: number = 10) => {
     queryFn: async () => {
       const data = await reviewApi.getAll(page, limit);
       return {
-        items: data.items.map(mapReviewToModel),
-        total: data.total,
-        page: data.page,
+        items: (data.items || []).map(mapReviewToModel),
+        total: data.total || 0,
+        page: data.page || 1,
       };
     },
   });

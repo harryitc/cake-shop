@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
-import { Modal, Form, InputNumber, Input, message } from "antd";
-import { customersService } from "../api";
+import React from "react";
+import { Modal, Form, InputNumber, Input, message, App } from "antd";
+import { useAdjustPointsMutation } from "../hooks";
 
 interface AdjustPointsModalProps {
   userId: string;
   userName: string;
   open: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
 const AdjustPointsModal: React.FC<AdjustPointsModalProps> = ({
@@ -19,22 +19,26 @@ const AdjustPointsModal: React.FC<AdjustPointsModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const [loading, setLoading] = useState(false);
+  const { message: msg } = App.useApp();
   const [form] = Form.useForm();
+  const adjustMutation = useAdjustPointsMutation();
 
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      setLoading(true);
-      await customersService.adjustPoints(userId, values.points, values.reason);
-      message.success("Điều chỉnh điểm thành công");
+      await adjustMutation.mutateAsync({ 
+        userId, 
+        points: values.points, 
+        reason: values.reason 
+      });
+      msg.success("Điều chỉnh điểm thành công");
       form.resetFields();
-      onSuccess();
+      onSuccess?.();
       onClose();
     } catch (error: any) {
-      message.error(error.message || "Điều chỉnh điểm thất bại");
-    } finally {
-      setLoading(false);
+      if (error?.message) {
+        msg.error(error.message);
+      }
     }
   };
 
@@ -44,9 +48,10 @@ const AdjustPointsModal: React.FC<AdjustPointsModalProps> = ({
       open={open}
       onOk={handleOk}
       onCancel={onClose}
-      confirmLoading={loading}
+      confirmLoading={adjustMutation.isPending}
       okText="Xác nhận"
       cancelText="Hủy"
+      destroyOnClose
     >
       <Form form={form} layout="vertical">
         <Form.Item

@@ -7,7 +7,10 @@ export const useCakesQuery = (search?: string) => {
     queryKey: ["cakes", search],
     queryFn: async () => {
       const { items, total } = await cakeApi.getAll(search);
-      return { items: items.map(mapCakeToModel), total };
+      return { 
+        items: (items || []).map(mapCakeToModel), 
+        total: total || 0 
+      };
     },
   });
 };

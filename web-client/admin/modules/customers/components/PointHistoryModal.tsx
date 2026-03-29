@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Modal, Table, List, Typography, Tag, Space } from "antd";
+import { Modal, Table, Typography, Tag, Empty } from "antd";
 import { format } from "date-fns";
 import { customersService } from "../api";
 import { IPointHistoryDTO } from "../types";
@@ -54,10 +54,11 @@ const PointHistoryModal: React.FC<PointHistoryModalProps> = ({
       footer={null}
       width={700}
     >
-      <List
+      <Table
         loading={loading}
-        itemLayout="horizontal"
         dataSource={history}
+        rowKey="_id"
+        showHeader={false}
         pagination={{
           current: page,
           total: total,
@@ -66,30 +67,33 @@ const PointHistoryModal: React.FC<PointHistoryModalProps> = ({
           size: "small",
           style: { marginTop: 16, textAlign: 'right' }
         }}
-        renderItem={(item) => (
-          <List.Item>
-            <List.Item.Meta
-              title={
-                <Space>
-                  <Tag color={item.points_change > 0 ? "success" : "error"}>
+        locale={{
+          emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có lịch sử điểm" />
+        }}
+        columns={[
+          {
+            title: 'Lịch sử',
+            key: 'history',
+            render: (_, item: any) => (
+              <div style={{ padding: '4px 0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Tag color={item.points_change > 0 ? "success" : "error"} style={{ minWidth: '45px', textAlign: 'center' }}>
                     {item.points_change > 0 ? `+${item.points_change}` : item.points_change}
                   </Tag>
                   <Text strong>{item.reason}</Text>
-                </Space>
-              }
-              description={
-                <Space direction="vertical" size={0}>
-                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                </div>
+                <div style={{ marginTop: 6, paddingLeft: '53px' }}>
+                  <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
                     Loại: {item.type}
                   </Text>
-                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                  <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
                     {format(new Date(item.createdAt), "dd/MM/yyyy HH:mm:ss")}
                   </Text>
-                </Space>
-              }
-            />
-          </List.Item>
-        )}
+                </div>
+              </div>
+            )
+          }
+        ]}
       />
     </Modal>
   );

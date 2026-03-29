@@ -62,11 +62,11 @@ export const CakeList = () => {
           <div className="flex flex-col gap-2.5">
             {occasionCats.map(cat => (
               <Checkbox 
-                key={cat._id} 
-                checked={selectedCategories.includes(cat._id)}
+                key={cat.id} 
+                checked={selectedCategories.includes(cat.id)}
                 onChange={(e) => {
-                  if (e.target.checked) setSelectedCategories([...selectedCategories, cat._id]);
-                  else setSelectedCategories(selectedCategories.filter(id => id !== cat._id));
+                  if (e.target.checked) setSelectedCategories([...selectedCategories, cat.id]);
+                  else setSelectedCategories(selectedCategories.filter(id => id !== cat.id));
                 }}
                 className="font-bold text-gray-600 hover:text-indigo-600 transition-colors"
               >
@@ -84,13 +84,13 @@ export const CakeList = () => {
           <div className="flex flex-wrap gap-2">
             {flavorCats.map(cat => (
               <button
-                key={cat._id}
+                key={cat.id}
                 onClick={() => {
-                  if (selectedCategories.includes(cat._id)) setSelectedCategories(selectedCategories.filter(id => id !== cat._id));
-                  else setSelectedCategories([...selectedCategories, cat._id]);
+                  if (selectedCategories.includes(cat.id)) setSelectedCategories(selectedCategories.filter(id => id !== cat.id));
+                  else setSelectedCategories([...selectedCategories, cat.id]);
                 }}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold border-2 transition-all ${
-                  selectedCategories.includes(cat._id) 
+                  selectedCategories.includes(cat.id) 
                   ? 'border-indigo-600 bg-indigo-50 text-indigo-600' 
                   : 'border-gray-50 bg-gray-50 text-gray-400 hover:border-gray-200 hover:text-gray-600'
                 }`}
@@ -135,11 +135,11 @@ export const CakeList = () => {
           <div className="flex flex-col gap-2.5">
             {dietCats.map(cat => (
               <Checkbox 
-                key={cat._id} 
-                checked={selectedCategories.includes(cat._id)}
+                key={cat.id} 
+                checked={selectedCategories.includes(cat.id)}
                 onChange={(e) => {
-                  if (e.target.checked) setSelectedCategories([...selectedCategories, cat._id]);
-                  else setSelectedCategories(selectedCategories.filter(id => id !== cat._id));
+                  if (e.target.checked) setSelectedCategories([...selectedCategories, cat.id]);
+                  else setSelectedCategories(selectedCategories.filter(id => id !== cat.id));
                 }}
                 className="font-bold text-gray-600"
               >

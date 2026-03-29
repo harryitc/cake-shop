@@ -1,38 +1,33 @@
-export interface IOrderItem {
-  cake_id: {
-    _id: string;
-    name: string;
-    price: number;
-    image_url: string;
-    slug: string;
-  } | string | any;
-  variant_id?: string | null;
-  variant_size?: string;
-  quantity: number;
-  price_at_buy: number;
-}
-
 export interface IOrderDTO {
   _id: string;
-  status: string;
-  total_price: number;
-  coupon_code?: string;
-  discount_amount?: number;
-  final_price?: number;
-  address: string;
-  createdAt: string;
-  user_id?: { 
+  user_id: {
     _id: string;
+    full_name: string;
     email: string;
-    full_name?: string;
     phone?: string;
     avatar_url?: string;
   };
-  items?: IOrderItem[];
-  items_count?: number;
+  items: Array<{
+    cake_id: string;
+    name: string;
+    quantity: number;
+    price_at_buy: number;
+    image_url: string;
+  }>;
+  total_price: number;
+  final_price: number;
+  status: 'PENDING' | 'CONFIRMED' | 'DONE' | 'REJECTED';
+  address: string;
+  phone: string;
+  notes?: string;
+  coupon_code?: string;
+  discount_amount?: number;
   points_used?: number;
   points_discount_amount?: number;
   points_earned?: number;
+  items_count?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface IOrder {
@@ -48,7 +43,7 @@ export interface IOrder {
   userPhone: string;
   userAvatar?: string;
   itemsCount: number;
-  items: IOrderItem[];
+  items: any[];
   couponCode?: string;
   discountAmount?: number;
   finalPrice?: number;
@@ -57,6 +52,6 @@ export interface IOrder {
   pointsEarned?: number;
 }
 
-export interface IUpdateStatusPayload {
-  status: string;
+export interface IUpdateOrderPayload {
+  status: 'PENDING' | 'CONFIRMED' | 'DONE' | 'REJECTED';
 }

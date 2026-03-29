@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Table, Space, Button, Tag, Input, Select, Card, Typography, Tooltip, Avatar } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { 
@@ -10,25 +10,21 @@ import {
   UserOutlined,
   PhoneOutlined,
   ShoppingOutlined,
-  WalletOutlined,
   InfoCircleOutlined
 } from "@ant-design/icons";
-import { ICustomerDTO } from "../types";
-import { customersService } from "../api";
+import { useCustomersQuery } from "../hooks";
 import LoyaltyStats from "./LoyaltyStats";
 import CustomerDetailModal from "./CustomerDetailModal";
 import { getAvatarUrl } from "@/lib/utils";
+import { CustomerModel } from "../mapper";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 const formatPrice = (price: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price || 0);
 
 const CustomerTable: React.FC = () => {
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<ICustomerDTO[]>([]);
-  const [total, setTotal] = useState(0);
   const [params, setParams] = useState({
     page: 1,
     limit: 10,
@@ -36,25 +32,12 @@ const CustomerTable: React.FC = () => {
     rank: "",
   });
 
-  const [selectedUser, setSelectedUser] = useState<ICustomerDTO | null>(null);
+  const { data, isLoading } = useCustomersQuery(params.page, params.limit, params.search);
+  const customers = data?.items || [];
+  const total = data?.total || 0;
+
+  const [selectedUser, setSelectedUser] = useState<CustomerModel | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const result = await customersService.getCustomers(params);
-      setData(result.items);
-      setTotal(result.total);
-    } catch (error) {
-      console.error("Failed to fetch customers:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [params]);
 
   const handleSearch = (value: string) => {
     setParams((prev) => ({ ...prev, search: value, page: 1 }));
@@ -74,7 +57,7 @@ const CustomerTable: React.FC = () => {
     }
   };
 
-  const columns: ColumnsType<ICustomerDTO> = [
+  const columns: ColumnsType<CustomerModel> = [
     {
       title: "Khách hàng",
       key: "customer",
@@ -82,9 +65,9 @@ const CustomerTable: React.FC = () => {
       width: 220,
       render: (_, record) => (
         <Space>
-          <Avatar src={getAvatarUrl(record.avatar_url)} icon={<UserOutlined />} className="border border-gray-100" />
+          <Avatar src={getAvatarUrl(record.avatar)} icon={<UserOutlined />} className="border border-gray-100" />
           <Space direction="vertical" size={0}>
-            <Text strong className="block leading-tight">{record.full_name || "Chưa đặt tên"}</Text>
+            <Text strong className="block leading-tight">{record.name}</Text>
             <Text type="secondary" style={{ fontSize: "12px" }}>{record.email}</Text>
           </Space>
         </Space>
@@ -132,7 +115,7 @@ const CustomerTable: React.FC = () => {
       key: "transactions",
       align: 'right',
       width: 180,
-      render: (_, record) => (
+      render: (_, record: any) => (
         <div className="flex flex-col gap-0.5 text-right">
           <Text strong className="text-green-600 text-[14px]">
             {formatPrice(record.total_spent || 0)}
@@ -148,7 +131,7 @@ const CustomerTable: React.FC = () => {
           </div>
         </div>
       ),
-      sorter: (a, b) => (a.total_spent || 0) - (b.total_spent || 0),
+      sorter: (a: any, b: any) => (a.total_spent || 0) - (b.total_spent || 0),
     },
     {
       title: "",
@@ -207,9 +190,9 @@ const CustomerTable: React.FC = () => {
 
           <Table
             columns={columns}
-            dataSource={data}
-            rowKey="_id"
-            loading={loading}
+            dataSource={customers}
+            rowKey="id"
+            loading={isLoading}
             scroll={{ x: 800 }}
             className="customer-table"
             pagination={{
@@ -230,7 +213,6 @@ const CustomerTable: React.FC = () => {
         customer={selectedUser}
         open={detailModalOpen}
         onClose={() => setDetailModalOpen(false)}
-        onRefresh={fetchData}
       />
     </Space>
   );

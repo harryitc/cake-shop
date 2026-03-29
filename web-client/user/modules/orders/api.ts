@@ -8,6 +8,6 @@ export const orderApi = {
   getMyOrders: () => 
     httpClient.get<{ items: IOrderDTO[] }>("/orders") as any,
 
-  validateCoupon: (code: string, order_value: number) =>
-    httpClient.post<any>("/coupons/validate", { code, order_value }) as any,
+  validateCoupon: (code: string) =>
+    httpClient.post<any>("/coupons/validate", { code }) as any,
 };

@@ -4,17 +4,14 @@ import Link from "next/link";
 import { Badge, Dropdown, Avatar } from "antd";
 import { ShoppingCartOutlined, UserOutlined, ShopOutlined, HeartOutlined, StarOutlined, CrownOutlined } from "@ant-design/icons";
 import { useCartQuery } from "@/modules/cart/hooks";
-import { useLoyaltyQuery } from "@/modules/loyalty/hooks";
 import { useMeQuery } from "@/modules/auth/hooks";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { getAvatarUrl } from "@/lib/utils";
-import { ICartResponse } from "@/modules/cart/types";
 import { authStorage } from "@/lib/http";
 
 export const Header = () => {
   const { data: cart } = useCartQuery();
-  const { data: loyalty } = useLoyaltyQuery();
   const { data: user } = useMeQuery();
   const router = useRouter();
   const pathname = usePathname();
@@ -27,11 +24,11 @@ export const Header = () => {
 
   useEffect(() => {
     setToken(authStorage.getToken());
-    
+
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
-    
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -44,27 +41,27 @@ export const Header = () => {
 
   const getRankColor = (rank?: string) => {
     switch (rank) {
-      case "SILVER": return "#94a3b8"; // Slate 400
-      case "GOLD": return "#f59e0b";   // Amber 500
-      case "DIAMOND": return "#06b6d4"; // Cyan 500
-      default: return "#ea580c";       // Orange 600 (Bronze)
+      case "SILVER": return "#94a3b8";
+      case "GOLD": return "#f59e0b";
+      case "DIAMOND": return "#06b6d4";
+      default: return "#ea580c";
     }
   };
 
   const userMenuItems = [
-    { 
-      key: "loyalty-info", 
+    {
+      key: "loyalty-info",
       label: (
         <div className="px-1 py-2 border-b border-gray-50 min-w-[160px]">
           <div className="flex items-center gap-2 mb-1">
-            <CrownOutlined style={{ color: getRankColor(loyalty?.rank) }} />
-            <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: getRankColor(loyalty?.rank) }}>
-              Thành viên {loyalty?.rank || "BRONZE"}
+            <CrownOutlined style={{ color: getRankColor(user?.rank) }} />
+            <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: getRankColor(user?.rank) }}>
+              {user?.rank || "BRONZE"}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
             <StarOutlined className="text-amber-500 text-xs" />
-            <span className="text-xs font-bold text-gray-700">{(loyalty?.loyalty_points || 0).toLocaleString()} <span className="text-[9px] text-gray-400 font-normal uppercase">điểm</span></span>
+            <span className="text-xs font-bold text-gray-700">{(user?.loyalty_points || 0).toLocaleString()} <span className="text-[9px] text-gray-400 font-normal uppercase">điểm</span></span>
           </div>
         </div>
       ),
@@ -76,19 +73,17 @@ export const Header = () => {
     { key: "logout", label: "Đăng xuất", danger: true, onClick: handleLogout },
   ];
 
-  const cartLocal = (cart as ICartResponse) || { items: [], total: 0 };
-  const totalItems = cartLocal.items.reduce((acc, item) => acc + item.quantity, 0);
+  const totalItems = cart?.items?.reduce((acc, item) => acc + item.quantity, 0) || 0;
 
   // Header styles based on state
-  const headerClasses = `fixed top-0 left-0 w-full z-[100] transition-all duration-300 h-20 flex items-center ${
-    isTransparent ? "bg-transparent !text-white" : "bg-white shadow-md !text-gray-900"
-  }`;
+  const headerClasses = `fixed top-0 left-0 w-full z-[100] transition-all duration-300 h-20 flex items-center ${isTransparent ? "bg-transparent !text-white" : "bg-white shadow-md !text-gray-900"
+    }`;
 
   const logoClasses = isTransparent ? "!text-white" : "!text-[#533afd]";
   const navItemClasses = isTransparent ? "!text-white hover:opacity-80" : "text-gray-600 hover:text-[#533afd]";
   const iconClasses = isTransparent ? "!text-white" : "text-gray-600";
-  const loginBtnClasses = isTransparent 
-    ? "!text-white !border-white/30 hover:bg-white hover:text-[#533afd]" 
+  const loginBtnClasses = isTransparent
+    ? "!text-white !border-white/30 hover:bg-white hover:text-[#533afd]"
     : "text-[#533afd] border-[#533afd]/20 bg-[#533afd]/5 hover:bg-[#533afd] hover:text-white";
 
   return (
@@ -108,7 +103,7 @@ export const Header = () => {
             <Link href="/" className={`transition-colors ${navItemClasses}`}>Trang chủ</Link>
             <Link href="/cakes" className={`transition-colors ${navItemClasses}`}>Thực Đơn</Link>
           </nav>
-          
+
           <div className={`flex items-center gap-5 border-l ${isTransparent ? 'border-white/20' : 'border-gray-100'} pl-6`}>
             <Link href="/wishlist" className={`transition-all ${iconClasses} hover:!text-red-500`}>
               <HeartOutlined className="text-lg" />
@@ -121,10 +116,10 @@ export const Header = () => {
             {token ? (
               <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
                 <div className="cursor-pointer hover:opacity-80 transition-all">
-                  <Avatar 
-                    size="small" 
-                    src={getAvatarUrl(user?.avatar_url)} 
-                    icon={<UserOutlined />} 
+                  <Avatar
+                    size="small"
+                    src={getAvatarUrl(user?.avatar)}
+                    icon={<UserOutlined />}
                     className="border border-indigo-100 shadow-sm"
                   />
                 </div>

@@ -54,34 +54,39 @@ const getCart = async (userId) => {
 
 /**
  * Thêm sản phẩm vào giỏ hàng (tự động cộng dồn số lượng nếu đã tồn tại)
+ * Hỗ trợ thêm đơn lẻ hoặc mảng nhiều sản phẩm (phục vụ Mua lại ngay)
  * @param {string} userId 
- * @param {Object} payload - { cake_id, quantity, variant_id }
- * @returns {Object} updatedItem
+ * @param {Object|Array} payload - { cake_id, quantity, variant_id } hoặc [{...}]
+ * @returns {Object|Array} updatedItem(s)
  */
-const addItem = async (userId, { cake_id, quantity = 1, variant_id = null }) => {
-  // Check sản phẩm có tồn tại không
-  const cake = await Cake.findById(cake_id);
-  if (!cake) {
-    throw createError('Không tìm thấy sản phẩm bánh này', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
-  }
+const addItem = async (userId, payload) => {
+  const isArray = Array.isArray(payload);
+  const itemsToAdd = isArray ? payload : [payload];
 
-  // Nếu có variant_id, kiểm tra xem variant có tồn tại trong cake không
-  if (variant_id) {
-    const variantExists = cake.variants.find(v => v._id.toString() === variant_id.toString());
-    if (!variantExists) {
-      throw createError('Không tìm thấy biến thể cho sản phẩm này', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+  const results = await Promise.all(itemsToAdd.map(async ({ cake_id, quantity = 1, variant_id = null }) => {
+    // Check sản phẩm có tồn tại không
+    const cake = await Cake.findById(cake_id);
+    if (!cake) {
+      throw createError(`Không tìm thấy sản phẩm bánh: ${cake_id}`, HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
     }
-  }
 
-  // Dùng findOneAndUpdate với upsert: true để tiết kiệm câu query (hoặc insert hoặc update)
-  // Phải khớp cả cake_id và variant_id
-  const item = await CartItem.findOneAndUpdate(
-    { user_id: userId, cake_id: cake_id, variant_id: variant_id || null },
-    { $inc: { quantity: quantity } },
-    { new: true, upsert: true, setDefaultsOnInsert: true }
-  );
+    // Nếu có variant_id, kiểm tra xem variant có tồn tại trong cake không
+    if (variant_id) {
+      const variantExists = cake.variants.find(v => v._id.toString() === variant_id.toString());
+      if (!variantExists) {
+        throw createError(`Không tìm thấy biến thể cho sản phẩm: ${cake_id}`, HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+      }
+    }
 
-  return item;
+    // Dùng findOneAndUpdate với upsert: true
+    return await CartItem.findOneAndUpdate(
+      { user_id: userId, cake_id: cake_id, variant_id: variant_id || null },
+      { $inc: { quantity: Number(quantity) } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+  }));
+
+  return isArray ? results : results[0];
 };
 
 /**

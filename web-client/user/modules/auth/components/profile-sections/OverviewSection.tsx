@@ -33,6 +33,16 @@ const NEXT_TIER_THRESHOLDS = {
   DIAMOND: { next: null, min: 0 },
 };
 
+const GET_RANK_LABEL = (rank: string) => {
+  switch (rank) {
+    case "BRONZE": return "Đồng";
+    case "SILVER": return "Bạc";
+    case "GOLD": return "Vàng";
+    case "DIAMOND": return "Kim cương";
+    default: return rank;
+  }
+};
+
 export const OverviewSection = ({ 
   user, 
   profileControl, 
@@ -44,13 +54,13 @@ export const OverviewSection = ({
   updateProfileAvatar
 }: OverviewSectionProps) => {
   const { data: loyaltyData } = useLoyaltyQuery();
-  const rank = loyaltyData?.rank || "BRONZE";
-  const points = loyaltyData?.loyalty_points || 0;
-  const spent = loyaltyData?.total_spent || 0;
+  const rank = loyaltyData?.rank || user?.rank || "BRONZE";
+  const points = loyaltyData?.points ?? user?.loyalty_points ?? 0;
+  const spent = loyaltyData?.totalSpent ?? user?.total_spent ?? 0;
   
-  const nextTier = NEXT_TIER_THRESHOLDS[rank as keyof typeof NEXT_TIER_THRESHOLDS];
+  const nextTier = NEXT_TIER_THRESHOLDS[rank as keyof typeof NEXT_TIER_THRESHOLDS] || NEXT_TIER_THRESHOLDS.BRONZE;
   const percent = nextTier.next ? Math.min((spent / nextTier.min) * 100, 100) : 100;
-  const colors = RANK_COLORS[rank as keyof typeof RANK_COLORS];
+  const colors = RANK_COLORS[rank as keyof typeof RANK_COLORS] || RANK_COLORS.BRONZE;
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-5 duration-500">
@@ -69,7 +79,7 @@ export const OverviewSection = ({
               </div>
               <div>
                 <span className="text-white/70 uppercase text-[10px] font-black tracking-widest block mb-0.5">Hạng thành viên</span>
-                <h2 className="text-xl font-black m-0 tracking-tight italic">{rank}</h2>
+                <h2 className="text-xl font-black m-0 tracking-tight italic">{GET_RANK_LABEL(rank)}</h2>
               </div>
             </div>
             <div className="text-right">
@@ -84,7 +94,7 @@ export const OverviewSection = ({
           <div className="mt-8">
             <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider mb-2 items-end">
               <div className="flex flex-col gap-0.5">
-                <span className="text-white/60">Tới {nextTier.next || "MAX"}</span>
+                <span className="text-white/60">Tới {nextTier.next ? GET_RANK_LABEL(nextTier.next) : "MAX"}</span>
                 <span className="text-base font-black">{spent.toLocaleString()} đ</span>
               </div>
               <div className="text-right">
@@ -102,23 +112,24 @@ export const OverviewSection = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* User Stats/Avatar Card */}
-        <Card className="rounded-2xl shadow-lg shadow-gray-200/50 border-white/50 bg-white/90 backdrop-blur-sm overflow-hidden p-0 border-none">
-          <div className="bg-gradient-to-r from-gray-50 to-white p-6">
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative group cursor-pointer scale-90">
+      <div className="flex flex-col gap-6">
+        {/* Row 1: Profile & Identity + Basic Info Form */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* User Stats/Avatar Card */}
+          <Card className="lg:col-span-1 rounded-2xl shadow-lg shadow-gray-200/50 border-none bg-white/90 backdrop-blur-sm overflow-hidden p-0">
+            <div className="bg-gradient-to-br from-gray-50/50 to-white p-6 h-full flex flex-col items-center justify-center">
+              <div className="relative group cursor-pointer scale-90 mb-2">
                 <AvatarUpload 
-                  value={user?.avatar_url} 
+                  value={user?.avatar} 
                   onChange={updateProfileAvatar} 
                 />
               </div>
               <div className="text-center">
-                <h3 className="text-lg font-black text-gray-800 m-0">{user?.full_name}</h3>
+                <h3 className="text-lg font-black text-gray-800 m-0">{user?.name}</h3>
                 <span className="text-gray-400 text-xs font-bold block mt-0.5">{user?.email}</span>
-                <div className="mt-3 flex gap-1.5 justify-center">
+                <div className="mt-4 flex gap-1.5 justify-center flex-wrap">
                    <div className="px-3 py-1 bg-[#D4AF37]/10 text-[#D4AF37] rounded-full text-[9px] font-black uppercase tracking-wider border border-[#D4AF37]/20">
-                     {rank}
+                     {GET_RANK_LABEL(rank)}
                    </div>
                    <div className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[9px] font-black uppercase tracking-wider border border-indigo-100">
                      {user?.role}
@@ -126,21 +137,19 @@ export const OverviewSection = ({
                 </div>
               </div>
             </div>
-          </div>
-        </Card>
+          </Card>
 
-        {/* Basic Info Summary */}
-        <div className="flex flex-col gap-4">
-          <Card className="rounded-2xl shadow-lg shadow-gray-200/50 border-none bg-white/90 backdrop-blur-sm" title={<span className="font-black text-base text-gray-800">Thông tin tài khoản</span>}>
+          {/* Account Info Form Section */}
+          <Card className="lg:col-span-2 rounded-2xl shadow-lg shadow-gray-200/50 border-none bg-white/90 backdrop-blur-sm" title={<span className="font-black text-base text-gray-800">Thông tin tài khoản</span>}>
             <Form layout="vertical" onFinish={handleProfileSubmit(onUpdateProfile)} className="flex flex-col gap-1.5">
               <Form.Item label={<span className="font-bold text-gray-400 uppercase text-[9px] tracking-widest">Họ và Tên</span>} className="mb-2">
                 <Controller
-                  name="full_name"
+                  name="name"
                   control={profileControl}
                   render={({ field }) => <Input {...field} size="middle" prefix={<UserOutlined className="text-gray-300" />} placeholder="Họ tên" className="h-10 rounded-xl bg-gray-50 border-none focus:bg-white transition-all shadow-sm font-bold text-sm" />}
                 />
               </Form.Item>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <Form.Item label={<span className="font-bold text-gray-400 uppercase text-[9px] tracking-widest">Số điện thoại</span>} className="mb-2">
                     <Controller
                       name="phone"
@@ -157,38 +166,52 @@ export const OverviewSection = ({
                   </Form.Item>
               </div>
 
-              <Button 
-                type="primary" 
-                htmlType="submit" 
-                loading={isUpdating} 
-                disabled={!isProfileDirty || !isProfileValid}
-                className="bg-gray-800 hover:bg-black border-none font-black h-10 rounded-xl mt-2 text-xs"
-              >
-                Lưu cập nhật
-              </Button>
+              <div className="flex justify-end mt-2">
+                <Button 
+                  type="primary" 
+                  htmlType="submit" 
+                  loading={isUpdating} 
+                  disabled={!isProfileDirty || !isProfileValid}
+                  className="bg-gray-800 hover:bg-black border-none font-black h-10 px-8 rounded-xl text-xs"
+                >
+                  Lưu cập nhật
+                </Button>
+              </div>
             </Form>
           </Card>
-
-          <Card className="rounded-2xl shadow-lg shadow-gray-200/50 border-none bg-white/90 backdrop-blur-sm" title={<span className="font-black text-base text-gray-800 flex items-center gap-2 font-bold"><StarOutlined className="text-amber-500" /> Điểm thưởng mới nhất</span>}>
-             <div className="flex flex-col gap-2">
-                {loyaltyData?.history?.slice(0, 2).map((item: any, idx: number) => (
-                   <div key={idx} className="flex justify-between items-center bg-gray-50/50 p-3 rounded-xl border border-gray-50 transition-all hover:bg-white">
-                      <div className="flex flex-col">
-                         <span className="font-bold text-gray-800 text-xs truncate max-w-[120px]">{item.reason}</span>
-                         <span className="text-[9px] text-gray-400 font-bold uppercase">{dayjs(item.createdAt).format("DD/MM/YYYY")}</span>
-                      </div>
-                      <div className={cn(
-                        "px-2 py-0.5 rounded-full font-black text-xs",
-                        item.type === "PLUS" ? "text-green-600 bg-green-50" : "text-red-600 bg-red-50"
-                      )}>
-                        {item.type === "PLUS" ? "+" : ""}{item.points_change}
-                      </div>
-                   </div>
-                ))}
-                <Button type="link" onClick={() => (window as any).location.search = '?tab=rewards'} className="text-[#D4AF37] font-black uppercase text-[10px] tracking-widest mt-1 p-0 h-auto self-end">Xem tất cả</Button>
-             </div>
-          </Card>
         </div>
+
+        {/* Row 2: Reward Points History - Full Width Row */}
+        <Card 
+          className="rounded-2xl shadow-lg shadow-gray-200/50 border-none bg-white/90 backdrop-blur-sm" 
+          title={<span className="font-black text-base text-gray-800 flex items-center gap-2 font-bold"><StarOutlined className="text-amber-500" /> Điểm thưởng mới nhất</span>}
+          extra={<Button type="link" onClick={() => (window as any).location.search = '?tab=rewards'} className="text-[#D4AF37] font-black uppercase text-[10px] tracking-widest p-0 h-auto">Xem tất cả</Button>}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {loyaltyData?.history?.slice(0, 3).map((item: any) => (
+              <div key={item.id} className="flex justify-between items-center bg-gray-50/50 p-4 rounded-xl border border-gray-50/80 transition-all hover:bg-white hover:shadow-md hover:border-[#D4AF37]/20 group">
+                <div className="flex flex-col gap-1">
+                    <span className="font-bold text-gray-800 text-sm group-hover:text-black transition-colors">{item.reason}</span>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase flex items-center gap-1.5">
+                      <div className="w-1 h-1 rounded-full bg-gray-300" />
+                      {dayjs(item.createdAt).format("DD/MM/YYYY")}
+                    </span>
+                </div>
+                <div className={cn(
+                  "px-3 py-1 rounded-full font-black text-sm shadow-sm",
+                  item.type === "PLUS" ? "text-green-600 bg-green-50/80 border border-green-100" : "text-red-600 bg-red-50/80 border border-red-100"
+                )}>
+                  {item.type === "PLUS" ? "+" : "-"}{item.points.toLocaleString()}
+                </div>
+              </div>
+            ))}
+            {!loyaltyData?.history?.length && (
+              <div className="col-span-full text-center py-6 text-gray-400 text-xs italic font-medium bg-gray-50/30 rounded-xl border border-dashed border-gray-200">
+                Chưa có biến động điểm thưởng
+              </div>
+            )}
+          </div>
+        </Card>
       </div>
     </div>
   );

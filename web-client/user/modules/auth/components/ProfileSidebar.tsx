@@ -37,13 +37,13 @@ export const ProfileSidebar = ({ activeTab, onTabChange, user }: ProfileSidebarP
         <div className="relative p-1 bg-gradient-to-tr from-[#D4AF37] to-[#F1B24A] rounded-full shadow-lg">
            <Avatar 
              size={100} 
-             src={getAvatarUrl(user?.avatar_url)} 
+             src={getAvatarUrl(user?.avatar)} 
              className="border-4 border-white"
              icon={<UserOutlined />}
            />
         </div>
 
-        <h3 className="mt-3 font-black text-lg text-gray-800 tracking-tight">{user?.full_name || "Khách hàng"}</h3>
+        <h3 className="mt-3 font-black text-lg text-gray-800 tracking-tight">{user?.name || "Khách hàng"}</h3>
         <span className="text-gray-400 text-xs font-semibold">{user?.email}</span>
       </div>
 

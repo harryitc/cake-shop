@@ -4,7 +4,7 @@ const { sendSuccess, createError } = require('../utils/response.utils');
 const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
 
 // --- Schemas Validate ---
-const addItemSchema = Joi.object({
+const itemObject = Joi.object({
   cake_id: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
     'string.pattern.base': 'Cake ID không hợp lệ',
     'any.required': 'Vui lòng cung cấp cake_id',
@@ -12,6 +12,11 @@ const addItemSchema = Joi.object({
   variant_id: Joi.string().regex(/^[0-9a-fA-F]{24}$/).allow(null, '').optional(),
   quantity: Joi.number().min(1).default(1),
 });
+
+const addItemSchema = Joi.alternatives().try(
+  itemObject,
+  Joi.array().items(itemObject).min(1)
+);
 
 const itemIdParamSchema = Joi.object({
   id: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({

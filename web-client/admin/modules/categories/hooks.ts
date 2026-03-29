@@ -7,7 +7,7 @@ export const useCategoriesQuery = () => {
     queryKey: ["categories"],
     queryFn: async () => {
       const data = await categoryApi.getAll();
-      return data.map(mapCategoryToModel);
+      return (data || []).map(mapCategoryToModel);
     },
   });
 };

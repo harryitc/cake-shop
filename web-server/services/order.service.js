@@ -36,7 +36,7 @@ const createOrder = async (userId, address, couponCode = null, pointsToUse = 0) 
 
     let total_price = 0;
     const items = [];
-    
+
     // Kiểm tra tồn kho trước khi tính toán
     for (const item of cartItems) {
       if (!item.cake_id) {
@@ -72,7 +72,7 @@ const createOrder = async (userId, address, couponCode = null, pointsToUse = 0) 
         price_at_buy: price_at_buy,
       });
     }
-    
+
     // Trừ tồn kho
     for (const item of items) {
       if (item.variant_id) {
@@ -96,7 +96,7 @@ const createOrder = async (userId, address, couponCode = null, pointsToUse = 0) 
       validatedCoupon = couponResult.coupon;
       discount_amount = couponResult.discountAmount;
       final_price = couponResult.finalPrice;
-      
+
       // Tăng số lần sử dụng mã
       await CouponService.incrementUsedCount(couponCode, session);
     }
@@ -104,13 +104,13 @@ const createOrder = async (userId, address, couponCode = null, pointsToUse = 0) 
     // Xử lý dùng điểm (Points Redemption)
     let points_discount_amount = 0;
     let points_used = 0;
+    const loyaltyConfig = await LoyaltyService.getConfig();
 
     if (pointsToUse > 0) {
       if (user.loyalty_points < pointsToUse) {
         throw createError('Số dư điểm không đủ', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
       }
 
-      const loyaltyConfig = await LoyaltyService.getConfig();
       const maxDiscountPercent = loyaltyConfig.max_point_discount_percentage / 100;
       const pointToVndRatio = loyaltyConfig.point_to_vnd_ratio;
 
@@ -118,19 +118,23 @@ const createOrder = async (userId, address, couponCode = null, pointsToUse = 0) 
       const maxPointsDiscount = Math.floor(final_price * maxDiscountPercent);
       points_used = Math.min(pointsToUse, Math.floor(maxPointsDiscount / pointToVndRatio));
       points_discount_amount = points_used * pointToVndRatio;
-      
+
       final_price -= points_discount_amount;
-      
+
       // Trừ điểm của người dùng
       await LoyaltyService.addPoints(
-        userId, 
-        -points_used, 
-        `Dùng điểm cho đơn hàng #${userId}_${Date.now()}`, 
-        null, 
+        userId,
+        -points_used,
+        `Dùng điểm cho đơn hàng #${userId}_${Date.now()}`,
+        null,
         null,
         session
       );
     }
+
+    // Tính toán số điểm sẽ tích lũy được (points_earned)
+    const earnRatio = loyaltyConfig.point_ratios[user.rank] || 0.01;
+    const points_earned = Math.floor(final_price * earnRatio);
 
     const newOrders = await Order.create(
       [
@@ -141,6 +145,7 @@ const createOrder = async (userId, address, couponCode = null, pointsToUse = 0) 
           discount_amount,
           points_used,
           points_discount_amount,
+          points_earned, // Lưu số điểm sẽ tích lũy được
           final_price,
           status: ORDER_STATUS.PENDING,
           address,
@@ -166,17 +171,16 @@ const createOrder = async (userId, address, couponCode = null, pointsToUse = 0) 
 
     await session.commitTransaction();
 
-    // Gửi email xác nhận (không chạy trong transaction để tránh làm chậm, 
-    // và gửi sau khi commit thành công)
-    const orderWithPopulatedData = await Order.findById(order._id)
-      .populate('user_id', 'email')
-      .populate('items.cake_id', 'name');
-    
-    if (orderWithPopulatedData && orderWithPopulatedData.user_id.email) {
-      sendOrderConfirmationEmail(orderWithPopulatedData.user_id.email, orderWithPopulatedData);
+    // Trả về order đã được populate đầy đủ để frontend mapper hoạt động chính xác
+    const finalOrder = await Order.findById(order._id)
+      .populate('user_id', 'email full_name phone avatar_url')
+      .populate('items.cake_id', 'name price image_url slug');
+
+    if (finalOrder && finalOrder.user_id.email) {
+      sendOrderConfirmationEmail(finalOrder.user_id.email, finalOrder);
     }
 
-    return order;
+    return finalOrder;
   } catch (error) {
     await session.abortTransaction();
     throw error;
@@ -199,7 +203,7 @@ const getOrders = async (userId, role) => {
     .populate('user_id', 'email full_name phone avatar_url')
     .populate('items.cake_id', 'name price image_url slug')
     .sort({ createdAt: -1 });
-  
+
   const formattedOrders = orders.map((order) => {
     const orderObj = order.toObject();
     orderObj.items_count = order.items.length;
@@ -258,7 +262,7 @@ const updateStatus = async (orderId, newStatus) => {
 
     order.status = newStatus;
     await order.save({ session });
-    
+
     // Xử lý Loyalty (Tích điểm/Thăng hạng hoặc Hoàn điểm)
     if (newStatus === ORDER_STATUS.DONE) {
       await LoyaltyService.processOrderCompletion(orderId, session);

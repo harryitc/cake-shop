@@ -104,7 +104,7 @@ class ReviewService {
 
     const [items, total] = await Promise.all([
       Review.find()
-        .populate('user', 'name email full_name')
+        .populate('user', 'name email full_name avatar_url')
         .populate('cake', 'name slug image_url')
         .sort({ createdAt: -1 })
         .skip(skip)

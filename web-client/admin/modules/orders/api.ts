@@ -2,9 +2,9 @@ import { httpClient } from "@/lib/http";
 import { IOrderDTO, IUpdateOrderPayload } from "./types";
 
 export const orderApi = {
-  getAll: (page: number = 1, limit: number = 10, search?: string) => {
+  getAll: (params?: { page?: number; limit?: number; search?: string; userId?: string }) => {
     return httpClient.get<{ items: IOrderDTO[]; total: number }>("/orders", {
-      params: { page, limit, search }
+      params
     }) as any;
   },
   

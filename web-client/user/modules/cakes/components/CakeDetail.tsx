@@ -2,7 +2,7 @@
 
 import { useCakeQuery, useCakeReviewsQuery } from "../hooks";
 import { AddToCartBtn } from "../../cart/components/AddToCartBtn";
-import { Skeleton, Breadcrumb, Rate, Avatar, List, Empty, Pagination, Tag, Divider, Radio, Space, Button, message } from "antd";
+import { Skeleton, Breadcrumb, Rate, Avatar, Empty, Pagination, Tag, Divider, Radio, Space, Button, message, Flex } from "antd";
 import Link from "next/link";
 import { ArrowLeftOutlined, UserOutlined, InfoCircleOutlined, HeartOutlined, HeartFilled, StarOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
@@ -240,43 +240,35 @@ export const CakeDetail = ({ id }: { id: string }) => {
               <Skeleton active paragraph={{ rows: 6 }} />
             ) : reviewsData?.items && reviewsData.items.length > 0 ? (
               <>
-                <List
-                  itemLayout="horizontal"
-                  dataSource={reviewsData.items}
-                  renderItem={(review: any) => (
-                    <List.Item className="border-b border-gray-50 last:border-none py-8 group">
-                      <List.Item.Meta
-                        avatar={
-                          <div className="relative">
-                            <Avatar 
-                              size={64} 
-                              icon={<UserOutlined />} 
-                              className="border-2 border-indigo-50 shadow-sm"
-                              src={getAvatarUrl(review.user.avatar_url)}
-                            />
-                            <div className="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-white shadow-sm"></div>
+                <Flex vertical gap={0}>
+                  {reviewsData.items.map((review: any) => (
+                    <div key={review.id} className="border-b border-gray-50 last:border-none py-8 group flex items-start gap-4 sm:gap-6">
+                      <div className="relative flex-shrink-0">
+                        <Avatar 
+                          size={64} 
+                          icon={<UserOutlined />} 
+                          className="border-2 border-indigo-50 shadow-sm"
+                          src={review.userAvatar}
+                        />
+                        <div className="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-white shadow-sm"></div>
+                      </div>
+                      <div className="flex-grow">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                          <span className="font-black text-gray-800 text-[16px]">{review.userName}</span>
+                          <div className="flex items-center gap-2">
+                            <Rate disabled value={review.rating} className="text-[10px]" />
                           </div>
-                        }
-                        title={
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                            <span className="font-black text-gray-800 text-[16px]">{review.user.full_name || "Khách hàng thân thiết"}</span>
-                            <div className="flex items-center gap-2">
-                              <Rate disabled value={review.rating} className="text-[10px]" />
-                            </div>
-                            <span className="text-gray-400 text-xs font-medium sm:ml-auto">
-                              {new Date(review.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: 'long', year: 'numeric' })}
-                            </span>
-                          </div>
-                        }
-                        description={
-                          <div className="mt-4 text-gray-600 text-[16px] leading-relaxed bg-gray-50/50 p-4 rounded-2xl border border-gray-50 group-hover:bg-white group-hover:shadow-md transition-all duration-300">
-                            {review.comment || "Khách hàng không để lại bình luận."}
-                          </div>
-                        }
-                      />
-                    </List.Item>
-                  )}
-                />
+                          <span className="text-gray-400 text-xs font-medium sm:ml-auto">
+                            {new Date(review.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: 'long', year: 'numeric' })}
+                          </span>
+                        </div>
+                        <div className="mt-4 text-gray-600 text-[16px] leading-relaxed bg-gray-50/50 p-4 rounded-2xl border border-gray-50 group-hover:bg-white group-hover:shadow-md transition-all duration-300">
+                          {review.comment || "Khách hàng không để lại bình luận."}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </Flex>
                 {reviewsData.total > reviewsData.limit && (
                   <div className="mt-12 flex justify-center">
                     <Pagination 

@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Modal, Form, Select, Switch, message } from "antd";
-import { IRankOverridePayload } from "../types";
-import { customersService } from "../api";
+import React, { useEffect } from "react";
+import { Modal, Form, Select, Switch, App } from "antd";
+import { useOverrideRankMutation } from "../hooks";
 
 interface OverrideRankModalProps {
   userId: string;
@@ -12,7 +11,7 @@ interface OverrideRankModalProps {
   currentLock: boolean;
   open: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
 const { Option } = Select;
@@ -26,8 +25,9 @@ const OverrideRankModal: React.FC<OverrideRankModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { message: msg } = App.useApp();
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
+  const overrideMutation = useOverrideRankMutation();
 
   useEffect(() => {
     if (open) {
@@ -41,16 +41,17 @@ const OverrideRankModal: React.FC<OverrideRankModalProps> = ({
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      setLoading(true);
-      await customersService.overrideRank(userId, values as IRankOverridePayload);
-      message.success(`Đã cập nhật hạng cho ${userName}`);
-      onSuccess();
+      await overrideMutation.mutateAsync({ 
+        userId, 
+        data: values 
+      });
+      msg.success(`Đã cập nhật hạng cho ${userName}`);
+      onSuccess?.();
       onClose();
-    } catch (error) {
-      console.error("Failed to override rank:", error);
-      message.error("Cập nhật hạng thất bại");
-    } finally {
-      setLoading(false);
+    } catch (error: any) {
+      if (error?.message) {
+        msg.error(error.message);
+      }
     }
   };
 
@@ -60,8 +61,10 @@ const OverrideRankModal: React.FC<OverrideRankModalProps> = ({
       open={open}
       onOk={handleOk}
       onCancel={onClose}
-      confirmLoading={loading}
+      confirmLoading={overrideMutation.isPending}
       destroyOnClose
+      okText="Cập nhật"
+      cancelText="Hủy"
     >
       <Form form={form} layout="vertical">
         <Form.Item

@@ -8,8 +8,8 @@ export const useCustomersQuery = (page: number = 1, limit: number = 10, search?:
     queryFn: async () => {
       const data = await customersService.getAll(page, limit, search);
       return {
-        items: data.items.map(mapCustomerToModel),
-        total: data.total
+        items: (data.items || []).map(mapCustomerToModel),
+        total: data.total || 0
       };
     },
   });
@@ -19,10 +19,10 @@ export const useCustomerPointHistoryQuery = (userId: string, page: number = 1, l
   return useQuery({
     queryKey: ["customer-points", userId, page, limit],
     queryFn: async () => {
-      const data = await customersService.getPointHistory(userId, page, limit);
+      const data = await customersService.getPointHistory(userId, { page, limit });
       return {
-        items: data.items.map(mapPointHistoryToModel),
-        total: data.total
+        items: (data.items || []).map(mapPointHistoryToModel),
+        total: data.total || 0
       };
     },
     enabled: !!userId,
@@ -54,6 +54,18 @@ export const useToggleRankLockMutation = () => {
     mutationFn: ({ userId, rank_lock }: { userId: string; rank_lock: boolean }) =>
       customersService.toggleRankLock(userId, rank_lock),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["customers"] }),
+  });
+};
+
+export const useOverrideRankMutation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, data }: { userId: string; data: any }) =>
+      customersService.overrideRank(userId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["customers"] });
+      qc.invalidateQueries({ queryKey: ["loyalty-stats"] });
+    },
   });
 };
 

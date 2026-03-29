@@ -18,7 +18,7 @@ export const useMyOrdersQuery = () => {
     queryKey: ["orders"],
     queryFn: async () => {
       const res = await orderApi.getMyOrders();
-      return res.items.map(mapOrderToModel);
+      return (res.items || []).map(mapOrderToModel);
     },
   });
 };

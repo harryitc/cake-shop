@@ -1,16 +1,17 @@
 import { ILoyaltyInfo } from "./types";
 
-export const mapLoyaltyToModel = (dto: ILoyaltyInfo) => {
+export const mapLoyaltyToModel = (dto: any) => {
   return {
-    points: dto.points,
-    rank: dto.rank,
-    nextRankPoints: dto.nextRankPoints,
-    history: dto.history.map(h => ({
-      id: h._id,
-      points: h.points,
-      type: h.type,
-      reason: h.reason,
-      createdAt: h.createdAt,
+    points: dto.loyalty_points || 0,
+    rank: dto.rank || "BRONZE",
+    nextRankPoints: dto.nextRankPoints || 0,
+    totalSpent: dto.total_spent || 0,
+    history: (dto.history || []).map((h: any) => ({
+      id: h._id || "",
+      points: h.points_change || 0,
+      type: h.type || "EARN",
+      reason: h.reason || "Không xác định",
+      createdAt: h.createdAt || new Date().toISOString(),
     })),
   };
 };

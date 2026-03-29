@@ -92,7 +92,7 @@ export const OrderList = ({ hideHeader = false }: { hideHeader?: boolean }) => {
               </div>
 
               <div className="md:col-span-1 text-xs font-bold text-gray-400">
-                {new Date(order.createdAt).toLocaleDateString("vi-VN")}
+                {order.formattedDate.split(' ')[0]}
               </div>
 
               <div className="md:col-span-1 text-xs font-bold text-gray-400">

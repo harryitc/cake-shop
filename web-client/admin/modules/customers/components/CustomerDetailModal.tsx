@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { 
   Modal, 
   Tabs, 
@@ -15,8 +15,7 @@ import {
   Statistic, 
   Progress, 
   Button, 
-  Space,
-  message
+  Space
 } from "antd";
 import { 
   UserOutlined, 
@@ -32,88 +31,51 @@ import {
   StarOutlined,
   InfoCircleOutlined
 } from "@ant-design/icons";
-import { ICustomerDTO, IPointHistoryDTO, ILoyaltyConfig } from "../types";
-import { customersService } from "../api";
-import { orderApi } from "../../orders/api";
-import { IOrderDTO } from "../../orders/types";
+import { useCustomerPointHistoryQuery, useLoyaltyConfigQuery } from "../hooks";
+import { useOrdersQuery } from "../../orders/hooks";
 import AdjustPointsModal from "./AdjustPointsModal";
 import OverrideRankModal from "./OverrideRankModal";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { getAvatarUrl } from "@/lib/utils";
+import { CustomerModel } from "../mapper";
 
 const { Title, Text } = Typography;
 
 const formatPrice = (price: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price || 0);
 
 interface CustomerDetailModalProps {
-  customer: ICustomerDTO | null;
+  customer: CustomerModel | null;
   open: boolean;
   onClose: () => void;
-  onRefresh?: () => void;
 }
 
 const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
   customer,
   open,
   onClose,
-  onRefresh,
 }) => {
   const [activeTab, setActiveTab] = useState("overview");
-  const [orders, setOrders] = useState<IOrderDTO[]>([]);
-  const [pointHistory, setPointHistory] = useState<IPointHistoryDTO[]>([]);
-  const [loyaltyConfig, setLoyaltyConfig] = useState<ILoyaltyConfig | null>(null);
-  const [loadingOrders, setLoadingOrders] = useState(false);
-  const [loadingPoints, setLoadingPoints] = useState(false);
   
+  const { data: loyaltyConfig } = useLoyaltyConfigQuery();
+  const { data: ordersData, isLoading: loadingOrders } = useOrdersQuery({ 
+    userId: customer?.id, 
+    limit: 100 
+  });
+  const { data: pointsData, isLoading: loadingPoints } = useCustomerPointHistoryQuery(
+    customer?.id || "", 
+    1, 
+    100
+  );
+
   const [adjustModalOpen, setAdjustModalOpen] = useState(false);
   const [overrideModalOpen, setOverrideModalOpen] = useState(false);
 
-  useEffect(() => {
-    if (open && customer) {
-      fetchLoyaltyConfig();
-      if (activeTab === "orders") fetchOrders();
-      if (activeTab === "points") fetchPoints();
-    }
-  }, [open, customer, activeTab]);
-
-  const fetchLoyaltyConfig = async () => {
-    try {
-      const config = await customersService.getLoyaltyConfig();
-      setLoyaltyConfig(config);
-    } catch (error) {
-      console.error("Failed to fetch loyalty config:", error);
-    }
-  };
-
-  const fetchOrders = async () => {
-    if (!customer) return;
-    setLoadingOrders(true);
-    try {
-      const result = await orderApi.getAll({ userId: customer._id });
-      setOrders(result.items);
-    } catch (error) {
-      console.error("Failed to fetch orders:", error);
-    } finally {
-      setLoadingOrders(false);
-    }
-  };
-
-  const fetchPoints = async () => {
-    if (!customer) return;
-    setLoadingPoints(true);
-    try {
-      const result = await customersService.getPointHistory(customer._id);
-      setPointHistory(result.items);
-    } catch (error) {
-      console.error("Failed to fetch point history:", error);
-    } finally {
-      setLoadingPoints(false);
-    }
-  };
-
   if (!customer) return null;
+
+  const orders = ordersData?.items || [];
+  const pointHistory = pointsData?.items || [];
 
   const getRankColor = (rank: string) => {
     switch (rank) {
@@ -133,16 +95,17 @@ const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
     if (currentIndex === -1 || currentIndex === ranks.length - 1) return null;
 
     const nextRank = ranks[currentIndex + 1];
-    const threshold = loyaltyConfig.tier_thresholds[nextRank];
+    const threshold = (loyaltyConfig as any).tier_thresholds?.[nextRank];
     if (!threshold) return null;
 
-    const progress = Math.min(100, Math.floor((customer.total_spent / threshold) * 100));
+    const spent = customer.total_spent;
+    const progress = Math.min(100, Math.floor((spent / threshold) * 100));
     
     return {
       nextRank,
       threshold,
       progress,
-      remaining: Math.max(0, threshold - customer.total_spent)
+      remaining: Math.max(0, threshold - spent)
     };
   };
 
@@ -152,7 +115,7 @@ const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
     try {
       return format(new Date(dateStr), "dd/MM/yyyy HH:mm", { locale: vi });
     } catch (e) {
-      return dateStr;
+      return dateStr || "N/A";
     }
   };
 
@@ -161,7 +124,7 @@ const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
       title={
         <Space>
           <UserOutlined />
-          <span>Chi tiết khách hàng: {customer.full_name || customer.email}</span>
+          <span>Chi tiết khách hàng: {customer.name}</span>
         </Space>
       }
       open={open}
@@ -187,12 +150,12 @@ const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
           <div style={{ textAlign: "center", marginBottom: 32 }}>
             <Avatar 
               size={120} 
-              src={getAvatarUrl(customer.avatar_url)} 
+              src={getAvatarUrl(customer.avatar)} 
               icon={<UserOutlined />} 
               style={{ border: "4px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
             />
             <Title level={4} style={{ marginTop: 16, marginBottom: 8 }}>
-              {customer.full_name || "N/A"}
+              {customer.name}
             </Title>
             <Tag color={getRankColor(customer.rank)} style={{ fontSize: "14px", padding: "4px 12px", borderRadius: "12px" }}>
               {customer.rank}
@@ -251,7 +214,7 @@ const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                         <Card bordered={false} style={{ backgroundColor: "#f9f0ff" }}>
                           <Statistic 
                             title="Đơn hàng" 
-                            value={orders.length} 
+                            value={customer.total_orders} 
                             prefix={<ShoppingOutlined style={{ color: "#722ed1" }} />}
                           />
                         </Card>
@@ -327,7 +290,7 @@ const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                           />
                           <div className="mt-1 pt-1 border-t border-green-100">
                             <Text className="text-[11px] text-green-600 font-bold">
-                              {formatPrice(orders.filter(o => o.status === 'DONE').reduce((sum, o) => sum + (o.final_price || 0), 0))}
+                              {formatPrice(orders.filter(o => o.status === 'DONE').reduce((sum, o) => sum + (o.finalPrice || 0), 0))}
                             </Text>
                           </div>
                         </Card>
@@ -342,7 +305,7 @@ const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                           />
                           <div className="mt-1 pt-1 border-t border-orange-100">
                             <Text className="text-[11px] text-orange-600 font-bold">
-                              {formatPrice(orders.filter(o => ['PENDING', 'CONFIRMED'].includes(o.status)).reduce((sum, o) => sum + (o.final_price || 0), 0))}
+                              {formatPrice(orders.filter(o => ['PENDING', 'CONFIRMED'].includes(o.status)).reduce((sum, o) => sum + (o.finalPrice || 0), 0))}
                             </Text>
                           </div>
                         </Card>
@@ -361,23 +324,22 @@ const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                     <Table
                       dataSource={orders}
                       loading={loadingOrders}
-                      rowKey="_id"
+                      rowKey="id"
                       size="small"
                       columns={[
                         { 
                           title: "Mã đơn", 
-                          dataIndex: "_id", 
+                          dataIndex: "id", 
                           render: (id) => <Text copyable={{ text: id }}>#{id.slice(-6).toUpperCase()}</Text> 
                         },
                         { 
                           title: "Ngày đặt", 
-                          dataIndex: "createdAt", 
-                          render: (date) => formatDate(date) 
+                          dataIndex: "formattedDate", 
                         },
                         { 
                           title: "Tổng tiền", 
-                          dataIndex: "final_price", 
-                          render: (price) => <Text strong>{price?.toLocaleString()}đ</Text> 
+                          dataIndex: "formattedTotal", 
+                          render: (total) => <Text strong>{total}</Text> 
                         },
                         { 
                           title: "Trạng thái", 
@@ -403,7 +365,7 @@ const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                   <Table
                     dataSource={pointHistory}
                     loading={loadingPoints}
-                    rowKey="_id"
+                    rowKey="id"
                     size="small"
                     columns={[
                       { 
@@ -413,10 +375,10 @@ const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                       },
                       { 
                         title: "Thay đổi", 
-                        dataIndex: "points_change", 
-                        render: (points) => (
-                          <Text strong type={points > 0 ? "success" : "danger"}>
-                            {points > 0 ? `+${points}` : points}
+                        dataIndex: "points", 
+                        render: (pts) => (
+                          <Text strong type={pts > 0 ? "success" : "danger"}>
+                            {pts > 0 ? `+${pts}` : pts}
                           </Text>
                         ) 
                       },
@@ -464,27 +426,18 @@ const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
 
       {/* Sub-modals */}
       <AdjustPointsModal
-        userId={customer._id}
-        userName={customer.full_name || customer.email}
+        userId={customer.id}
+        userName={customer.name}
         open={adjustModalOpen}
         onClose={() => setAdjustModalOpen(false)}
-        onSuccess={() => {
-          onRefresh?.();
-          fetchPoints();
-          message.success("Cập nhật điểm thành công");
-        }}
       />
       <OverrideRankModal
-        userId={customer._id}
-        userName={customer.full_name || customer.email}
+        userId={customer.id}
+        userName={customer.name}
         currentRank={customer.rank}
         currentLock={customer.rank_lock}
         open={overrideModalOpen}
         onClose={() => setOverrideModalOpen(false)}
-        onSuccess={() => {
-          onRefresh?.();
-          message.success("Cập nhật hạng thành công");
-        }}
       />
     </Modal>
   );

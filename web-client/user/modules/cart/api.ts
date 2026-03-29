@@ -4,7 +4,7 @@ import { ICartResponse } from "./types";
 export const cartApi = {
   getCart: () => httpClient.get<ICartResponse>("/cart") as any,
   
-  addItem: (payload: { cake_id: string; quantity: number }) =>
+  addItem: (payload: { cake_id: string; quantity: number; variant_id?: string | null } | Array<{ cake_id: string; quantity: number; variant_id?: string | null }>) =>
     httpClient.post("/cart/items", payload) as any,
     
   removeItem: (id: string) =>

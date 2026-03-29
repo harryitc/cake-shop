@@ -42,14 +42,33 @@ class CouponController {
 
   async validate(req, res, next) {
     try {
-      const { code, order_total, cart_items } = req.body;
-      const userId = req.user ? req.user.id : null;
+      const { code } = req.body;
+      const userId = req.user ? req.user.userId : null;
 
-      if (!code || !order_total) {
-        throw createError('Vui lòng cung cấp mã và tổng tiền', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
+      if (!code) {
+        throw createError('Vui lòng cung cấp mã giảm giá', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
       }
 
-      const result = await couponService.validateCoupon(code, order_total, userId, cart_items || []);
+      if (!userId) {
+        throw createError('Bạn cần đăng nhập để sử dụng mã giảm giá', HTTP_STATUS.UNAUTHORIZED, ERROR_CODES.UNAUTHORIZED);
+      }
+
+      // Tự động lấy giỏ hàng từ DB để đảm bảo tính chính xác và bảo mật
+      const cartService = require('../services/cart.service');
+      const cart = await cartService.getCart(userId);
+
+      if (!cart.items || cart.items.length === 0) {
+        throw createError('Giỏ hàng của bạn đang trống', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
+      }
+
+      // Map cart items sang định dạng service mong muốn
+      const cartItemsForService = cart.items.map(item => ({
+        cake_id: item.cake ? item.cake._id : null,
+        quantity: item.quantity,
+        price_at_buy: item.price
+      }));
+
+      const result = await couponService.validateCoupon(code, cart.total, userId, cartItemsForService);
       return sendSuccess(res, result, 'Mã giảm giá hợp lệ');
     } catch (err) {
       next(err);

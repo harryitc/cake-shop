@@ -16,10 +16,10 @@ import { RewardsSection } from "./profile-sections/RewardsSection";
 import { AddressSection } from "./profile-sections/AddressSection";
 
 const profileSchema = z.object({
-  full_name: z.string().min(1, "Vui lòng nhập họ tên"),
+  name: z.string().min(1, "Vui lòng nhập họ tên"),
   phone: z.string().optional(),
   address: z.string().optional(),
-  avatar_url: z.string().optional(),
+  avatar: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -48,11 +48,12 @@ export const ProfileContent = () => {
     control: profileControl, 
     handleSubmit: handleProfileSubmit, 
     reset: resetProfile, 
+    getValues,
     formState: { isDirty: isProfileDirty, isValid: isProfileValid } 
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     mode: "onChange",
-    defaultValues: { full_name: "", phone: "", address: "", avatar_url: "" }
+    defaultValues: { name: "", phone: "", address: "", avatar: "" }
   });
 
   const { 
@@ -69,16 +70,22 @@ export const ProfileContent = () => {
   useEffect(() => {
     if (user) {
       resetProfile({
-        full_name: user.full_name || "",
+        name: user.name || "",
         phone: user.phone || "",
         address: user.address || "",
-        avatar_url: user.avatar_url || "",
+        avatar: user.avatar || "",
       });
     }
   }, [user, resetProfile]);
 
   const onUpdateProfile = (values: ProfileFormValues) => {
-    updateProfile(values, {
+    const payload = {
+      full_name: values.name,
+      phone: values.phone,
+      address: values.address,
+      avatar_url: values.avatar
+    };
+    updateProfile(payload, {
       onSuccess: () => {
         message.success("Cập nhật thông tin thành công");
         resetProfile(values);
@@ -100,6 +107,22 @@ export const ProfileContent = () => {
     });
   };
 
+  const handleUpdateAvatar = (path: string) => {
+    updateProfile({ avatar_url: path }, {
+      onSuccess: () => {
+        message.success("Cập nhật ảnh đại diện thành công");
+        // Reset form để lấy avatar mới vào state của react-hook-form
+        if (user) {
+          resetProfile({
+            ...getValues(),
+            avatar: path
+          });
+        }
+      },
+      onError: (err: any) => message.error(err.message || "Lỗi cập nhật ảnh"),
+    });
+  };
+
   if (isLoading) return <div className="flex justify-center p-20 min-h-screen items-center bg-gray-50/30"><Spin size="large" /></div>;
 
   const renderSection = () => {
@@ -114,7 +137,7 @@ export const ProfileContent = () => {
             isUpdating={isUpdating}
             isProfileDirty={isProfileDirty}
             isProfileValid={isProfileValid}
-            updateProfileAvatar={(path) => updateProfile({ avatar_url: path })}
+            updateProfileAvatar={handleUpdateAvatar}
           />
         );
       case "orders":

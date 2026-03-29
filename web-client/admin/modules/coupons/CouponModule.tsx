@@ -22,7 +22,8 @@ const couponSchema = z.object({
   max_discount_value: z.number().optional(),
   start_date: z.any(),
   end_date: z.any(),
-  usage_limit: z.number().min(1, 'Giới hạn sử dụng phải ít nhất là 1'),
+  usage_limit: z.number({ required_error: "Vui lòng nhập tổng lượt dùng", invalid_type_error: "Vui lòng nhập số"}).min(1, 'Giới hạn sử dụng phải ít nhất là 1'),
+  usage_limit_per_user: z.number({ required_error: "Vui lòng nhập giới hạn cho mỗi người dùng", invalid_type_error: "Vui lòng nhập số"}).min(1, 'Giới hạn mỗi người dùng phải ít nhất là 1'),
   applicable_categories: z.array(z.string()).optional(),
   is_active: z.boolean().default(true),
 });
@@ -41,13 +42,14 @@ const CouponModule: React.FC = () => {
   const deleteMutation = useDeleteCouponMutation();
 
   const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<CouponFormValues>({
-    resolver: zodResolver(couponSchema),
+    resolver: zodResolver(couponSchema) as any,
     defaultValues: {
       code: '',
       discount_type: 'PERCENTAGE',
       discount_value: 0,
       min_order_value: 0,
       usage_limit: 100,
+      usage_limit_per_user: 1,
       applicable_categories: [],
       is_active: true,
     }
@@ -70,6 +72,7 @@ const CouponModule: React.FC = () => {
           discount_value: 0,
           min_order_value: 0,
           usage_limit: 100,
+          usage_limit_per_user: 1,
           applicable_categories: [],
           is_active: true,
           start_date: dayjs(),
@@ -103,9 +106,15 @@ const CouponModule: React.FC = () => {
   const onSubmit = async (values: CouponFormValues) => {
     const formattedValues = {
       ...values,
+      type: values.discount_type === 'PERCENTAGE' ? 'PERCENT' : 'FIXED',
+      value: values.discount_value,
       start_date: values.start_date.toISOString(),
       end_date: values.end_date.toISOString(),
     };
+
+    // Remove UI-only fields before sending to API
+    delete (formattedValues as any).discount_type;
+    delete (formattedValues as any).discount_value;
 
     try {
       if (editingCoupon) {
@@ -134,11 +143,14 @@ const CouponModule: React.FC = () => {
       title: 'Loại giảm',
       dataIndex: 'discount_type',
       key: 'discount_type',
-      render: (type: string, record: any) => (
-        <span>
-          {type === 'PERCENTAGE' ? `${record.discount_value}%` : `${record.discount_value.toLocaleString()}đ`}
-        </span>
-      ),
+      render: (type: string, record: any) => {
+        const val = record.discount_value || 0;
+        return (
+          <span>
+            {type === 'PERCENTAGE' ? `${val}%` : `${val.toLocaleString()}đ`}
+          </span>
+        );
+      },
     },
     {
       title: 'Đã dùng',
@@ -261,7 +273,7 @@ const CouponModule: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item label="Đơn hàng tối thiểu" required>
+            <Form.Item label="Đơn hàng tối thiểu" required help={errors.min_order_value?.message} validateStatus={errors.min_order_value ? 'error' : ''}>
               <Controller
                 name="min_order_value"
                 control={control}
@@ -269,11 +281,34 @@ const CouponModule: React.FC = () => {
               />
             </Form.Item>
 
-            <Form.Item label="Tổng lượt dùng" required>
+            <Form.Item label="Tổng lượt dùng" required help={errors.usage_limit?.message || "Số lượng mã phát ra (VD: 100 người đầu tiên)"} validateStatus={errors.usage_limit ? 'error' : ''}>
               <Controller
                 name="usage_limit"
                 control={control}
                 render={({ field }) => <InputNumber {...field} min={1} className="w-full" size="large" />}
+              />
+            </Form.Item>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Form.Item label="Giới hạn mỗi người dùng" required help={errors.usage_limit_per_user?.message || "Một người được dùng mã này bao nhiêu lần?"} validateStatus={errors.usage_limit_per_user ? 'error' : ''}>
+              <Controller
+                name="usage_limit_per_user"
+                control={control}
+                render={({ field }) => <InputNumber {...field} min={1} className="w-full" size="large" />}
+              />
+            </Form.Item>
+
+            <Form.Item label="Trạng thái kích hoạt">
+              <Controller
+                name="is_active"
+                control={control}
+                render={({ field }) => (
+                  <div className="h-[40px] flex items-center">
+                    <Switch checked={field.value} onChange={field.onChange} />
+                    <span className="ml-2 text-gray-500 text-xs">{field.value ? 'Đang bật' : 'Đang tắt'}</span>
+                  </div>
+                )}
               />
             </Form.Item>
           </div>
@@ -310,19 +345,11 @@ const CouponModule: React.FC = () => {
             />
           </Form.Item>
 
-          <Form.Item label="Mô tả" help={errors.description?.message}>
+          <Form.Item label="Mô tả" help={errors.description?.message} className="mb-0">
             <Controller
               name="description"
               control={control}
               render={({ field }) => <Input.TextArea {...field} rows={2} placeholder="Mô tả ngắn gọn về ưu đãi" />}
-            />
-          </Form.Item>
-
-          <Form.Item label="Trạng thái kích hoạt">
-            <Controller
-              name="is_active"
-              control={control}
-              render={({ field }) => <Switch checked={field.value} onChange={field.onChange} />}
             />
           </Form.Item>
         </Form>

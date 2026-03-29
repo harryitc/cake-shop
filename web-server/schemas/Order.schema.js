@@ -58,6 +58,10 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    points_earned: {
+      type: Number,
+      default: 0,
+    },
     final_price: {
       type: Number,
       required: true, // total_price - discount_amount - points_discount_amount

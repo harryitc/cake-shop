@@ -3,20 +3,20 @@ import { ICustomerDTO, IPointHistoryDTO, ILoyaltyStats, ILoyaltyConfig, IRankOve
 
 export const customersService = {
   getCustomers: (params: { page?: number; limit?: number; search?: string; rank?: string }) => {
-    return httpClient.get<{ items: ICustomerDTO[]; total: number }>("/users", {
+    return httpClient.get<{ items: ICustomerDTO[]; total: number }>("/loyalty/admin/customers", {
       params
     }) as any;
   },
 
   getAll: (page: number = 1, limit: number = 10, search?: string) => {
-    return httpClient.get<{ items: ICustomerDTO[]; total: number }>("/users", {
+    return httpClient.get<{ items: ICustomerDTO[]; total: number }>("/loyalty/admin/customers", {
       params: { page, limit, search }
     }) as any;
   },
 
-  getPointHistory: (userId: string, page: number = 1, limit: number = 10) => {
+  getPointHistory: (userId: string, params?: { page?: number; limit?: number }) => {
     return httpClient.get<{ items: IPointHistoryDTO[]; total: number }>(`/loyalty/admin/history/${userId}`, {
-      params: { page, limit }
+      params
     }) as any;
   },
 

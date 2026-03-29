@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Card, Row, Col, Statistic, Spin, Tooltip } from "antd";
 import { 
   TeamOutlined, 
@@ -9,29 +9,12 @@ import {
   RocketOutlined,
   InfoCircleOutlined
 } from "@ant-design/icons";
-import { ILoyaltyStats } from "../types";
-import { customersService } from "../api";
+import { useLoyaltyStatsQuery } from "../hooks";
 
 const LoyaltyStats: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<ILoyaltyStats | null>(null);
+  const { data: stats, isLoading } = useLoyaltyStatsQuery();
 
-  const fetchStats = async () => {
-    try {
-      const result = await customersService.getLoyaltyStats();
-      setStats(result);
-    } catch (error) {
-      console.error("Failed to fetch loyalty stats:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return <div style={{ textAlign: "center", padding: "20px" }}><Spin /></div>;
   }
 

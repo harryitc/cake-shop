@@ -23,7 +23,7 @@ export const RewardsSection = () => {
            <div className="relative z-10 flex flex-col justify-between h-full">
               <div>
                  <h3 className="text-2xl font-black text-white m-0">Ưu đãi hiện có</h3>
-                 <p className="text-indigo-100 font-medium m-0 mt-2 italic shadow-sm">Bạn đang có {data?.loyalty_points?.toLocaleString()} điểm tích lũy</p>
+                 <p className="text-indigo-100 font-medium m-0 mt-2 italic shadow-sm">Bạn đang có {(data?.points ?? 0).toLocaleString()} điểm tích lũy</p>
               </div>
               <div className="mt-12 bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/20 shadow-inner">
                  <p className="text-white font-black text-xs uppercase tracking-widest mb-1">Mẹo nhỏ:</p>
@@ -47,7 +47,7 @@ export const RewardsSection = () => {
       >
         <Table 
           dataSource={data?.history || []}
-          rowKey="_id"
+          rowKey="id"
           pagination={{ pageSize: 5 }}
           className="custom-table"
           columns={[
@@ -68,9 +68,9 @@ export const RewardsSection = () => {
             },
             {
               title: <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Số điểm</span>,
-              dataIndex: "points_change",
+              dataIndex: "points",
               align: "right",
-              render: (points, record) => (
+              render: (pts, record) => (
                 <div className="flex flex-col items-end">
                   <div className={cn(
                     "px-3 py-1 rounded-full font-black text-sm border-2",
@@ -78,7 +78,7 @@ export const RewardsSection = () => {
                       ? "bg-green-50 text-green-600 border-green-100" 
                       : "bg-red-50 text-red-600 border-red-100"
                   )}>
-                    {record.type === "PLUS" ? "+" : "-"}{points.toLocaleString()}
+                    {record.type === "PLUS" ? "+" : "-"}{(pts ?? 0).toLocaleString()}
                   </div>
                 </div>
               ),

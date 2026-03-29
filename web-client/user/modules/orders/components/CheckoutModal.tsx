@@ -112,7 +112,7 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
 
     setCouponLoading(true);
     try {
-      const result = await orderApi.validateCoupon(code, totalPrice);
+      const result = await orderApi.validateCoupon(code);
       setAppliedCoupon({
         code: result.coupon.code,
         discountAmount: result.discountAmount,
@@ -176,13 +176,13 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
         <div className="bg-gray-50/80 p-4 rounded-xl mb-6 border border-gray-100 flex items-center gap-4">
            <Avatar 
              size={54} 
-             src={me?.avatar_url ? (me.avatar_url.startsWith('http') ? me.avatar_url : `${API_DOMAIN}${me.avatar_url}`) : undefined}
+             src={me?.avatar}
              icon={<UserOutlined />}
              className="bg-indigo-100 text-indigo-600 border-2 border-white shadow-sm shrink-0"
            />
            <div className="flex-grow">
               <div className="flex items-center gap-2">
-                <div className="font-bold text-gray-800 text-base">{me?.full_name || "Khách hàng"}</div>
+                <div className="font-bold text-gray-800 text-base">{me?.name || "Khách hàng"}</div>
                 <Tag className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase flex items-center gap-1 border ${getRankColor(currentRank)}`}>
                   <CrownOutlined /> {getRankLabel(currentRank)}
                 </Tag>
@@ -206,7 +206,7 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
                 <div className="flex gap-3">
                   <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 shrink-0">
                     <img 
-                      src={item.cake.image_url ? (item.cake.image_url.startsWith('http') ? item.cake.image_url : `${API_DOMAIN}${item.cake.image_url}`) : "https://placehold.co/100x100"} 
+                      src={item.cake.imageUrl || "https://placehold.co/100x100?text=No+Img"} 
                       className="w-full h-full object-cover" 
                       alt={item.cake.name} 
                     />
@@ -224,7 +224,7 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-gray-700 text-[13px]">{formatPrice((item.price || item.cake.price) * item.quantity)}</div>
+                  <div className="font-bold text-gray-700 text-[13px]">{formatPrice(item.price * item.quantity)}</div>
                 </div>
               </div>
             ))}
@@ -258,11 +258,11 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
            <div className="mt-4 pt-3 border-t border-indigo-100/20 text-[11px] text-gray-400 italic leading-relaxed">
               <MailOutlined className="text-indigo-300 mr-1.5" /> 
               Email xác nhận đơn hàng sẽ được gửi đến <b>{me?.email}</b> sau khi đặt hàng thành công.
-              {expectedPoints > 0 && (
+              {expectedPoints > 0 ? (
                 <div className="mt-1 text-green-600 font-medium flex items-center gap-1">
                   <StarOutlined className="text-[10px]" /> Bạn sẽ nhận được khoảng <b>{expectedPoints.toLocaleString()}</b> điểm sau khi đơn hàng hoàn thành.
                 </div>
-              )}
+              ) : null}
            </div>
         </div>
 

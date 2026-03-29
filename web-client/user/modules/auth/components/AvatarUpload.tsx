@@ -11,7 +11,7 @@ interface AvatarUploadProps {
   onChange?: (path: string) => void;
 }
 
-import { getImageUrl } from "@/lib/utils";
+import { getAvatarUrl } from "@/lib/utils";
 
 
 export const AvatarUpload = ({ value, onChange }: AvatarUploadProps) => {
@@ -35,7 +35,7 @@ export const AvatarUpload = ({ value, onChange }: AvatarUploadProps) => {
     return false;
   };
 
-  const imageUrl = getImageUrl(value);
+  const imageUrl = getAvatarUrl(value);
 
   return (
     <div className="flex flex-col items-center gap-4">

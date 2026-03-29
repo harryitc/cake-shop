@@ -15,7 +15,7 @@ class LoyaltyService {
    */
   async getConfig() {
     if (this.config) return this.config;
-    
+
     let config = await LoyaltyConfig.findOne({ key: 'default_config' });
     if (!config) {
       config = await LoyaltyConfig.create({ key: 'default_config' });
@@ -47,18 +47,22 @@ class LoyaltyService {
 
     const user = order.user_id;
     const amount = order.final_price;
+    
+    // Ưu tiên dùng points_earned đã lưu, nếu không có (đơn cũ) thì tính lại theo hạng hiện tại
+    let pointsEarned = order.points_earned;
+    if (pointsEarned === undefined || pointsEarned === null) {
+      const earnRatio = config.point_ratios[user.rank] || 0.01;
+      pointsEarned = Math.floor(amount * earnRatio);
+    }
 
-    // 1. Tính điểm thưởng dựa trên hạng hiện tại
-    const earnRatio = config.point_ratios[user.rank] || 0.01;
-    const pointsEarned = Math.floor(amount * earnRatio);
-
-    // 2. Cập nhật User (Sử dụng atomic update $inc)
+    // 1. Cập nhật User tổng chi tiêu (Sử dụng atomic update $inc)
     await User.updateOne(
       { _id: user._id },
       { $inc: { total_spent: amount } },
       { session }
     );
 
+    // 2. Cộng điểm
     if (pointsEarned > 0) {
       await this.addPoints(
         user._id,
@@ -79,7 +83,7 @@ class LoyaltyService {
    */
   async addPoints(userId, points, reason, orderId = null, adminId = null, session = null) {
     const type = points >= 0 ? POINT_TYPES.PLUS : POINT_TYPES.MINUS;
-    
+
     // Tạo lịch sử
     const history = new PointHistory({
       user: userId,
@@ -105,7 +109,7 @@ class LoyaltyService {
       await User.updateOne({ _id: userId }, { $set: { loyalty_points: 0 } }, { session });
       updatedUser.loyalty_points = 0;
     }
-    
+
     return updatedUser;
   }
 
@@ -162,7 +166,7 @@ class LoyaltyService {
    */
   async getLoyaltyStats() {
     const config = await this.getConfig();
-    
+
     const aggregationResult = await User.aggregate([
       { $match: { role: 'user' } },
       {
@@ -241,6 +245,7 @@ class LoyaltyService {
           email: 1,
           full_name: 1,
           phone: 1,
+          address: 1,
           loyalty_points: 1,
           total_spent: 1,
           rank: 1,

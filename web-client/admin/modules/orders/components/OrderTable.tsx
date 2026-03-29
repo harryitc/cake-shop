@@ -11,7 +11,7 @@ import { CakeDetailDrawer } from "../../cakes/components/CakeDetailDrawer";
 export const OrderTable = () => {
   const [selectedCakeId, setSelectedCakeId] = useState<string | null>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
-  
+
   const { data, isLoading, isError } = useOrdersQuery();
   const { mutate: updateStatus, isPending } = useUpdateOrderStatusMutation();
 
@@ -78,12 +78,12 @@ export const OrderTable = () => {
           <span className="font-black text-indigo-600 text-[15px]">{record.formattedTotal}</span>
           {Number(record.discountAmount) > 0 && (
             <span className="text-[10px] text-green-500 font-bold">
-               Mã giảm: -{new Intl.NumberFormat("vi-VN").format(record.discountAmount!)}đ ({record.couponCode})
+              Mã giảm: -{new Intl.NumberFormat("vi-VN").format(record.discountAmount!)}đ ({record.couponCode})
             </span>
           )}
           {Number(record.pointsDiscountAmount) > 0 && (
             <span className="text-[10px] text-orange-500 font-bold">
-               Dùng điểm: -{new Intl.NumberFormat("vi-VN").format(record.pointsDiscountAmount!)}đ ({record.pointsUsed} pts)
+              Dùng điểm: -{new Intl.NumberFormat("vi-VN").format(record.pointsDiscountAmount!)}đ ({record.pointsUsed} pts)
             </span>
           )}
         </div>
@@ -122,34 +122,34 @@ export const OrderTable = () => {
       </div>
 
       <div className="overflow-x-auto">
-        <Table 
-          dataSource={data?.items || []} 
-          columns={columns} 
-          rowKey="id" 
+        <Table
+          dataSource={data?.items || []}
+          columns={columns}
+          rowKey="id"
           pagination={{ pageSize: 15 }}
           className="custom-admin-table"
           expandable={{
             expandedRowRender: (record: IOrder) => (
-              <div className="bg-slate-50/50 p-6 rounded-2xl border border-slate-100 ml-12 mr-8 mb-4 shadow-sm">
+              <div className="">
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                   {/* Left Column: Product Details (2/3 width) */}
                   <div className="xl:col-span-2 space-y-3">
                     <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-2">
-                       Chi tiết sản phẩm ({record.itemsCount})
+                      Chi tiết sản phẩm ({record.itemsCount})
                     </h4>
-                    
+
                     <div className="space-y-2">
                       {record.items.map((item, idx) => (
-                        <div 
-                          key={idx} 
+                        <div
+                          key={idx}
                           className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-100 cursor-pointer hover:border-indigo-400 transition-all group"
                           onClick={() => item.cake_id?._id && handleShowCakeDetail(item.cake_id._id)}
                         >
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-lg overflow-hidden border border-slate-100 bg-slate-50 group-hover:shadow-sm transition-all">
-                              <img 
-                                src={item.cake_id?.image_url ? (item.cake_id.image_url.startsWith('http') ? item.cake_id.image_url : `${API_DOMAIN}${item.cake_id.image_url}`) : "https://placehold.co/100x100?text=Cake"} 
-                                alt={item.cake_id?.name} 
+                              <img
+                                src={item.cake_id?.image_url ? (item.cake_id.image_url.startsWith('http') ? item.cake_id.image_url : `${API_DOMAIN}${item.cake_id.image_url}`) : "https://placehold.co/100x100?text=Cake"}
+                                alt={item.cake_id?.name}
                                 className="w-full h-full object-cover"
                               />
                             </div>
@@ -194,11 +194,11 @@ export const OrderTable = () => {
                       </div>
                       <div className="space-y-1.5 pt-2 border-t border-slate-50 text-[11px]">
                         <p className="flex justify-between m-0">
-                          <span className="text-slate-400">SĐT:</span> 
+                          <span className="text-slate-400">SĐT:</span>
                           <span className="font-bold text-slate-600">{record.userPhone}</span>
                         </p>
                         <p className="flex flex-col gap-0.5 m-0">
-                          <span className="text-slate-400">Địa chỉ:</span> 
+                          <span className="text-slate-400">Địa chỉ:</span>
                           <span className="font-medium text-slate-500 line-clamp-2">{record.address}</span>
                         </p>
                       </div>
@@ -211,28 +211,28 @@ export const OrderTable = () => {
                         <span className="text-slate-400">Tạm tính:</span>
                         <span className="font-medium text-slate-600">{new Intl.NumberFormat("vi-VN").format(record.totalPrice)}đ</span>
                       </div>
-                      
+
                       {Number(record.discountAmount) > 0 && (
                         <div className="flex justify-between items-center text-[12px]">
                           <span className="text-emerald-500 font-medium">Mã giảm:</span>
                           <span className="font-bold text-emerald-600">-{new Intl.NumberFormat("vi-VN").format(record.discountAmount!)}đ</span>
                         </div>
                       )}
-                      
+
                       {Number(record.pointsDiscountAmount) > 0 && (
                         <div className="flex justify-between items-center text-[12px]">
                           <span className="text-orange-500 font-medium">Dùng điểm:</span>
                           <span className="font-bold text-orange-600">-{new Intl.NumberFormat("vi-VN").format(record.pointsDiscountAmount!)}đ</span>
                         </div>
                       )}
-                      
+
                       <Divider className="my-1 border-slate-50" />
-                      
+
                       <div className="flex justify-between items-baseline">
                         <span className="text-slate-800 font-black text-[12px]">Tổng cộng:</span>
                         <span className="text-[18px] font-black text-indigo-600">{record.formattedTotal}</span>
                       </div>
-                      
+
                       <div className="mt-2 bg-indigo-50/50 p-2 rounded-lg border border-indigo-100 flex justify-between items-center">
                         <span className="text-[10px] text-indigo-400 uppercase font-black tracking-tight">Tích điểm</span>
                         <span className="text-indigo-600 font-black text-[13px]">+{record.pointsEarned || 0} pts</span>
@@ -246,10 +246,10 @@ export const OrderTable = () => {
         />
       </div>
 
-      <CakeDetailDrawer 
-        cakeId={selectedCakeId} 
-        visible={drawerVisible} 
-        onClose={() => setDrawerVisible(false)} 
+      <CakeDetailDrawer
+        cakeId={selectedCakeId}
+        visible={drawerVisible}
+        onClose={() => setDrawerVisible(false)}
       />
     </div>
   );
