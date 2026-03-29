@@ -1,7 +1,7 @@
 ---
 title: Kiến trúc Hệ thống Xử lý Lỗi (Error Handling Architecture)
 status: Approved
-version: 1.3.0
+version: 1.3.1
 date: 2026-03-29
 author: Gemini CLI
 prd_ref: "docs/_harryitc/2_prd/prd_v6_error_handling.md"
@@ -73,6 +73,27 @@ Lỗi được chia thành 2 loại chính:
 - **409**: Xung đột dữ liệu.
 
 **Hành động**: Interceptor thực hiện ném lỗi (Throw Error), Component thực hiện bắt lỗi (Catch) để hiển thị thông báo/giao diện cục bộ.
+
+### 3.2 Sơ đồ Luồng xử lý Frontend
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│                    AXIOS INTERCEPTOR                    │
+└──────────────┬───────────────────────────┬──────────────┘
+               │                           │
+       [Lỗi Hệ Thống]                 [Lỗi Logic]
+       (500, 403, Net)              (422, 400, 409)
+               │                           │
+┌──────────────▼──────────────┐   ┌────────▼──────────────┐
+│   UI GLOBAL NOTIFICATION    │   │      THROW ERROR      │
+│ (notification.error - antd) │   │ (Cần Catch tại Comp)  │
+└─────────────────────────────┘   └────────┬──────────────┘
+                                           │
+                                  ┌────────▼──────────────┐
+                                  │   LOCAL COMPONENT     │
+                                  │ (Show Inline/Message) │
+                                  └───────────────────────┘
+```
 
 ---
 
