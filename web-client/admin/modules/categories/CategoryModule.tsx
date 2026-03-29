@@ -40,7 +40,7 @@ const CategoryModule = () => {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const data = await httpClient<Category[]>('/categories');
+      const data = await httpClient.get<Category[]>('/categories');
       setCategories(data);
     } catch (error: any) {
       message.error(error.message || 'Lỗi khi tải danh sách danh mục');
@@ -79,7 +79,7 @@ const CategoryModule = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      await httpClient(`/categories/${id}`, { method: 'DELETE' });
+      await httpClient.delete(`/categories/${id}`);
       message.success('Xóa danh mục thành công');
       fetchCategories();
     } catch (error: any) {
@@ -91,16 +91,10 @@ const CategoryModule = () => {
     setIsSubmitting(true);
     try {
       if (editingCategory) {
-        await httpClient(`/categories/${editingCategory._id}`, {
-          method: 'PUT',
-          body: JSON.stringify(values),
-        });
+        await httpClient.put(`/categories/${editingCategory._id}`, values);
         message.success('Cập nhật danh mục thành công');
       } else {
-        await httpClient('/categories', {
-          method: 'POST',
-          body: JSON.stringify(values),
-        });
+        await httpClient.post('/categories', values);
         message.success('Tạo danh mục thành công');
       }
       setIsModalVisible(false);

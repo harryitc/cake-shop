@@ -1,14 +1,13 @@
 import { httpClient } from "@/lib/http";
-import { IOrderDTO, IUpdateStatusPayload } from "./types";
+import { IOrderDTO, IUpdateOrderPayload } from "./types";
 
 export const orderApi = {
-  getAll: (params?: { userId?: string }) => {
-    let url = "/orders";
-    if (params?.userId) {
-      url += `?userId=${params.userId}`;
-    }
-    return httpClient<{ items: IOrderDTO[]; total: number }>(url, { method: "GET" });
+  getAll: (page: number = 1, limit: number = 10, search?: string) => {
+    return httpClient.get<{ items: IOrderDTO[]; total: number }>("/orders", {
+      params: { page, limit, search }
+    });
   },
-  updateStatus: ({ id, payload }: { id: string; payload: IUpdateStatusPayload }) =>
-    httpClient(`/orders/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
+  
+  updateStatus: (id: string, payload: IUpdateOrderPayload) =>
+    httpClient.put(`/orders/${id}`, payload),
 };

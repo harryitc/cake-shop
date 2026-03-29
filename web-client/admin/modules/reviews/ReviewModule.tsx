@@ -42,7 +42,9 @@ const ReviewModule = () => {
   const fetchReviews = async (page = 1) => {
     setLoading(true);
     try {
-      const data = await httpClient<any>(`/reviews/admin?page=${page}&limit=${pagination.pageSize}`);
+      const data = await httpClient.get<any>(`/reviews/admin`, {
+        params: { page, limit: pagination.pageSize }
+      });
       setReviews(data.items);
       setPagination({ ...pagination, current: data.page, total: data.total });
     } catch (error: any) {
@@ -58,10 +60,7 @@ const ReviewModule = () => {
 
   const handleToggleStatus = async (id: string, currentStatus: boolean) => {
     try {
-      await httpClient(`/reviews/admin/${id}/status`, {
-        method: 'PUT',
-        body: JSON.stringify({ is_approved: !currentStatus }),
-      });
+      await httpClient.put(`/reviews/admin/${id}/status`, { is_approved: !currentStatus });
       message.success(currentStatus ? 'Đã ẩn đánh giá' : 'Đã duyệt đánh giá');
       fetchReviews(pagination.current);
     } catch (error: any) {
@@ -79,10 +78,7 @@ const ReviewModule = () => {
     if (!replyingReview) return;
     setSubmitting(true);
     try {
-      await httpClient(`/reviews/admin/${replyingReview._id}/reply`, {
-        method: 'PUT',
-        body: JSON.stringify(values),
-      });
+      await httpClient.put(`/reviews/admin/${replyingReview._id}/reply`, values);
       message.success('Gửi phản hồi thành công');
       setReplyModalVisible(false);
       fetchReviews(pagination.current);

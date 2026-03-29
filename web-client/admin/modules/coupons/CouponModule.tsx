@@ -80,7 +80,7 @@ const CouponModule = () => {
   const fetchCoupons = async () => {
     setLoading(true);
     try {
-      const data = await httpClient<Coupon[]>('/coupons');
+      const data = await httpClient.get<Coupon[]>('/coupons');
       setCoupons(data);
     } catch (error: any) {
       message.error(error.message || 'Lỗi khi tải danh sách mã giảm giá');
@@ -91,7 +91,7 @@ const CouponModule = () => {
 
   const fetchCategories = async () => {
     try {
-      const data = await httpClient<Category[]>('/categories');
+      const data = await httpClient.get<Category[]>('/categories');
       setCategories(data);
     } catch (error: any) {
       console.error('Lỗi khi tải danh mục:', error);
@@ -151,7 +151,7 @@ const CouponModule = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      await httpClient(`/coupons/${id}`, { method: 'DELETE' });
+      await httpClient.delete(`/coupons/${id}`);
       message.success('Xóa mã giảm giá thành công');
       fetchCoupons();
     } catch (error: any) {
@@ -169,16 +169,10 @@ const CouponModule = () => {
       };
 
       if (editingCoupon) {
-        await httpClient(`/coupons/${editingCoupon._id}`, {
-          method: 'PUT',
-          body: JSON.stringify(formattedValues),
-        });
+        await httpClient.put(`/coupons/${editingCoupon._id}`, formattedValues);
         message.success('Cập nhật mã giảm giá thành công');
       } else {
-        await httpClient('/coupons', {
-          method: 'POST',
-          body: JSON.stringify(formattedValues),
-        });
+        await httpClient.post('/coupons', formattedValues);
         message.success('Tạo mã giảm giá thành công');
       }
       setIsModalVisible(false);

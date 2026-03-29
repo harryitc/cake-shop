@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Modal, Steps, Upload, Radio, Button, Progress, Result, Typography, Space, message, Table, Tag } from "antd";
 import { InboxOutlined, FileExcelOutlined, CheckCircleOutlined, ExclamationCircleOutlined, WarningOutlined } from "@ant-design/icons";
+import { importApi } from "../../modules/import/api";
 
 const { Dragger } = Upload;
 const { Text, Title, Link } = Typography;
@@ -95,17 +96,7 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
   const downloadErrorReport = async () => {
     if (!result?.historyId) return;
     try {
-      const token = localStorage.getItem("access_token");
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-      const response = await fetch(`${API_URL}/import/errors/${result.historyId}`, {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) throw new Error("Không thể tải báo cáo lỗi");
-      
-      const blob = await response.blob();
+      const blob = await importApi.downloadErrorReport(result.historyId);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

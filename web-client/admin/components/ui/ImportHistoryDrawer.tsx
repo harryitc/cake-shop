@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Drawer, Table, Tag, Space, Button, Typography, Pagination, message, Tooltip, Divider } from "antd";
 import { HistoryOutlined, FileExcelOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined, InfoCircleOutlined } from "@ant-design/icons";
-import { useQuery } from "@tanstack/react-query";
+import { importApi } from "../../modules/import/api";
 
 const { Text, Title } = Typography;
 
@@ -19,37 +19,13 @@ const ImportHistoryDrawer: React.FC<ImportHistoryDrawerProps> = ({ open, onClose
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["import-history", entityType, page],
-    queryFn: async () => {
-      const token = localStorage.getItem("access_token");
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-      const url = `${API_URL}/import/history?page=${page}&limit=${pageSize}${entityType ? `&entityType=${entityType}` : ""}`;
-      
-      const response = await fetch(url, {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) throw new Error("Không thể tải lịch sử");
-      const payload = await response.json();
-      return payload.data;
-    },
+    queryFn: () => importApi.getHistory(page, pageSize, entityType),
     enabled: open
   });
 
   const downloadErrors = async (historyId: string) => {
     try {
-      const token = localStorage.getItem("access_token");
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-      const response = await fetch(`${API_URL}/import/errors/${historyId}`, {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) throw new Error("Không thể tải báo cáo lỗi");
-      
-      const blob = await response.blob();
+      const blob = await importApi.downloadErrorReport(historyId);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

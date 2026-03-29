@@ -28,8 +28,9 @@ export const useCakeReviewsQuery = (cakeId: string, page: number = 1) => {
   return useQuery({
     queryKey: ["cake-reviews", cakeId, page],
     queryFn: async () => {
-      const res = await httpClient<{ items: any[]; total: number; limit: number }>(`/reviews/cake/${cakeId}?page=${page}`, { method: "GET" });
-      return res;
+      return httpClient.get<{ items: any[]; total: number; limit: number }>(`/reviews/cake/${cakeId}`, {
+        params: { page }
+      });
     },
     enabled: !!cakeId,
   });

@@ -1,9 +1,10 @@
 import { httpClient } from "@/lib/http";
-import { ICreateOrderPayload, IOrderDTO } from "./types";
+import { IOrderDTO, ICreateOrderPayload } from "./types";
 
 export const orderApi = {
-  create: (payload: ICreateOrderPayload) => 
-    httpClient<{ order: IOrderDTO }>("/orders", { method: "POST", body: JSON.stringify(payload) }),
-  getAll: () => 
-    httpClient<{ items: IOrderDTO[] }>("/orders", { method: "GET" }),
+  create: (payload: ICreateOrderPayload) =>
+    httpClient.post<{ order: IOrderDTO }>("/orders", payload),
+    
+  getMyOrders: () => 
+    httpClient.get<{ items: IOrderDTO[] }>("/orders"),
 };

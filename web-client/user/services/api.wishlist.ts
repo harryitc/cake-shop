@@ -1,15 +1,7 @@
 import { httpClient } from "../lib/http";
-import type { Cake } from "../types";
-
-export interface Wishlist {
-  user_id: string;
-  cakes: Cake[];
-}
+import { Wishlist } from "../types/wishlist";
 
 export const wishlistService = {
-  getWishlist: () => httpClient<Wishlist>("/wishlist"),
-  toggleWishlist: (cake_id: string) => httpClient<Wishlist>("/wishlist/toggle", {
-    method: "POST",
-    body: JSON.stringify({ cake_id }),
-  }),
+  getWishlist: () => httpClient.get<Wishlist>("/wishlist"),
+  toggleWishlist: (cake_id: string) => httpClient.post<Wishlist>("/wishlist/toggle", { cake_id }),
 };

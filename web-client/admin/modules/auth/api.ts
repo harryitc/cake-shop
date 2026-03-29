@@ -1,19 +1,25 @@
 import { httpClient } from "@/lib/http";
-import { ILoginResponse, IUpdateProfilePayload, IUser } from "./types";
+import { ILoginPayload, ILoginResponse, IRegisterPayload, IUser, IChangePasswordPayload, IUpdateProfilePayload } from "./types";
 
 export const authApi = {
-  login: (payload: any) => 
-    httpClient<ILoginResponse>("/auth/login", { method: "POST", body: JSON.stringify(payload) }),
-  register: (payload: any) => 
-    httpClient<ILoginResponse>("/auth/register", { method: "POST", body: JSON.stringify(payload) }),
+  login: (payload: ILoginPayload) =>
+    httpClient.post<ILoginResponse>("/auth/login", payload),
+    
+  register: (payload: IRegisterPayload) =>
+    httpClient.post<ILoginResponse>("/auth/register", payload),
+    
   getMe: () => 
-    httpClient<IUser>("/auth/me", { method: "GET" }),
-  updateProfile: (payload: IUpdateProfilePayload) => 
-    httpClient<IUser>("/auth/profile", { method: "PUT", body: JSON.stringify(payload) }),
-  changePassword: (payload: any) => 
-    httpClient("/auth/change-password", { method: "PUT", body: JSON.stringify(payload) }),
-  forgotPassword: (email: string) => 
-    httpClient("/auth/forgot-password", { method: "POST", body: JSON.stringify({ email }) }),
-  resetPassword: (token: string, password: string) => 
-    httpClient(`/auth/reset-password/${token}`, { method: "POST", body: JSON.stringify({ password }) }),
+    httpClient.get<IUser>("/auth/me"),
+    
+  updateProfile: (payload: IUpdateProfilePayload) =>
+    httpClient.put<IUser>("/auth/profile", payload),
+    
+  changePassword: (payload: IChangePasswordPayload) =>
+    httpClient.put("/auth/change-password", payload),
+    
+  forgotPassword: (email: string) =>
+    httpClient.post("/auth/forgot-password", { email }),
+    
+  resetPassword: (token: string, password: string) =>
+    httpClient.post(`/auth/reset-password/${token}`, { password }),
 };

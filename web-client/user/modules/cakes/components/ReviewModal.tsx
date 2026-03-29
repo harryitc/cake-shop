@@ -18,17 +18,13 @@ export const ReviewModal = ({ open, onCancel, cakeId, orderId, cakeName }: Revie
   const [form] = Form.useForm();
 
   const { mutate: submitReview, isPending } = useMutation({
-    mutationFn: async (values: { rating: number; comment: string }) => {
-      return await httpClient("/reviews", {
-        method: "POST",
-        body: JSON.stringify({
-          cake_id: cakeId,
-          order_id: orderId,
-          rating: values.rating,
-          comment: values.comment,
-        }),
-      });
-    },
+    mutationFn: (values: { rating: number; comment: string }) =>
+      httpClient.post("/reviews", {
+        cake_id: cakeId,
+        order_id: orderId,
+        rating: values.rating,
+        comment: values.comment,
+      }),
     onSuccess: () => {
       message.success("Cảm ơn bạn đã đánh giá sản phẩm!");
       queryClient.invalidateQueries({ queryKey: ["cake-reviews", cakeId] });
