@@ -1,7 +1,7 @@
 "use client";
 
 import { Tag, Button, Empty, Skeleton, Space } from "antd";
-import { useOrdersQuery } from "../hooks";
+import { useMyOrdersQuery } from "../hooks";
 import { ReviewModal } from "../../cakes/components/ReviewModal";
 import { OrderDetailDrawer } from "./OrderDetailDrawer";
 import { useState } from "react";
@@ -9,7 +9,7 @@ import { IOrder } from "../types";
 import { StarOutlined, EyeOutlined, ShoppingOutlined } from "@ant-design/icons";
 
 export const OrderList = ({ hideHeader = false }: { hideHeader?: boolean }) => {
-  const { data: orders, isLoading, isError } = useOrdersQuery();
+  const { data: orders, isLoading, isError } = useMyOrdersQuery();
   const [selectedItemForReview, setSelectedItemForReview] = useState<{ cakeId: string, orderId: string, cakeName: string } | null>(null);
   
   const [selectedOrder, setSelectedOrder] = useState<IOrder | null>(null);

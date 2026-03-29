@@ -1,22 +1,28 @@
 export interface IUser {
-  id: string;
+  _id: string;
   email: string;
-  role: 'user' | 'admin';
   full_name?: string;
+  role: 'user' | 'admin';
   phone?: string;
-  address?: string;
   avatar_url?: string;
+  address?: string;
   createdAt: string;
-  updatedAt: string;
 }
 
-export interface ILoginResponse {
-  token: string;
-  user: {
-    id: string;
-    email: string;
-    role: string;
-  };
+export interface ILoginPayload {
+  email: string;
+  password?: string;
+}
+
+export interface IRegisterPayload {
+  email: string;
+  password?: string;
+  full_name?: string;
+}
+
+export interface IChangePasswordPayload {
+  oldPassword?: string;
+  newPassword?: string;
 }
 
 export interface IUpdateProfilePayload {
@@ -24,4 +30,9 @@ export interface IUpdateProfilePayload {
   phone?: string;
   address?: string;
   avatar_url?: string;
+}
+
+export interface ILoginResponse {
+  token: string;
+  user: IUser;
 }

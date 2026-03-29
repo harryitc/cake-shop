@@ -7,7 +7,6 @@ import { Form, Input, Button, App } from "antd";
 import { useLoginMutation } from "../hooks";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useSyncCartMutation } from "../../cart/hooks";
 import { Suspense } from "react";
 
 const loginSchema = z.object({
@@ -24,7 +23,6 @@ const LoginFormContent = ({ mode = "user" }: { mode?: "user" | "admin" }) => {
   const redirect = searchParams.get("redirect");
 
   const { mutate: login, isPending } = useLoginMutation();
-  const { mutate: syncCart } = useSyncCartMutation();
 
   const { control, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -36,11 +34,6 @@ const LoginFormContent = ({ mode = "user" }: { mode?: "user" | "admin" }) => {
       onSuccess: (res) => {
         localStorage.setItem("access_token", res.token);
         message.success("Đăng nhập thành công");
-
-        // Sync giỏ hàng local lên server nếu là user
-        if (res.user.role === "user") {
-          syncCart();
-        }
 
         // Kiểm tra quyền đối với trang admin
         if (mode === "admin" && res.user.role === "admin") {

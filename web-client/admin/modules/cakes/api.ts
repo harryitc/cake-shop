@@ -5,20 +5,20 @@ export const cakeApi = {
   getAll: (search?: string) => {
     return httpClient.get<{ items: ICakeDTO[]; total: number }>("/cakes", {
       params: { search }
-    });
+    }) as any;
   },
   
   getById: (id: string) => 
-    httpClient.get<ICakeDTO>(`/cakes/${id}`),
+    httpClient.get<ICakeDTO>(`/cakes/${id}`) as any,
     
   create: (payload: ICreateCakePayload) => 
-    httpClient.post("/cakes", payload),
+    httpClient.post("/cakes", payload) as any,
     
   update: ({ id, payload }: { id: string; payload: IUpdateCakePayload }) => 
-    httpClient.put(`/cakes/${id}`, payload),
+    httpClient.put(`/cakes/${id}`, payload) as any,
     
   delete: (id: string) => 
-    httpClient.delete(`/cakes/${id}`),
+    httpClient.delete(`/cakes/${id}`) as any,
     
   import: (file: File, mode: string = "UPSERT") => {
     const formData = new FormData();
@@ -28,7 +28,7 @@ export const cakeApi = {
       headers: {
         "Content-Type": "multipart/form-data",
       }
-    });
+    }) as any;
   },
   
   uploadImage: (file: File) => {
@@ -38,6 +38,6 @@ export const cakeApi = {
       headers: {
         "Content-Type": "multipart/form-data",
       }
-    });
+    }) as any;
   },
 };

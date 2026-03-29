@@ -2,7 +2,7 @@
 
 import { Table, Button, Skeleton, Empty, Popconfirm, App, InputNumber } from "antd";
 import { DeleteOutlined, MinusOutlined, PlusOutlined } from "@ant-design/icons";
-import { useCartQuery, useRemoveCartItemMutation, useUpdateCartItemQuantityMutation } from "../hooks";
+import { useCartQuery, useRemoveFromCartMutation, useUpdateCartQuantityMutation } from "../hooks";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -91,8 +91,8 @@ export const CartTable = () => {
   const { message } = App.useApp();
   const router = useRouter();
   const { data: rawCart, isLoading, isError } = useCartQuery();
-  const { mutate: removeItem, isPending } = useRemoveCartItemMutation();
-  const { mutate: updateQuantity } = useUpdateCartItemQuantityMutation();
+  const { mutate: removeItem, isPending } = useRemoveFromCartMutation();
+  const { mutate: updateQuantity } = useUpdateCartQuantityMutation();
   const [modalOpen, setModalOpen] = useState(false);
 
   if (isLoading) return <div className="p-8"><Skeleton active paragraph={{ rows: 6 }} /></div>;

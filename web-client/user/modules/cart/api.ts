@@ -2,14 +2,14 @@ import { httpClient } from "@/lib/http";
 import { ICartResponse } from "./types";
 
 export const cartApi = {
-  getCart: () => httpClient.get<ICartResponse>("/cart"),
+  getCart: () => httpClient.get<ICartResponse>("/cart") as any,
   
   addItem: (payload: { cake_id: string; quantity: number }) =>
-    httpClient.post("/cart/items", payload),
+    httpClient.post("/cart/items", payload) as any,
     
   removeItem: (id: string) =>
-    httpClient.delete(`/cart/items/${id}`),
+    httpClient.delete(`/cart/items/${id}`) as any,
     
   updateQuantity: (id: string, quantity: number) =>
-    httpClient.put(`/cart/items/${id}`, { quantity }),
+    httpClient.put(`/cart/items/${id}`, { quantity }) as any,
 };

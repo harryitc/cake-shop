@@ -14,7 +14,7 @@ import {
   InfoCircleOutlined
 } from "@ant-design/icons";
 import { ICustomerDTO } from "../types";
-import { customersService } from "../services/customers.service";
+import { customersService } from "../api";
 import LoyaltyStats from "./LoyaltyStats";
 import CustomerDetailModal from "./CustomerDetailModal";
 import { getAvatarUrl } from "@/lib/utils";

@@ -22,7 +22,7 @@ export const AvatarUpload = ({ value, onChange }: AvatarUploadProps) => {
   const handleUpload = (file: File) => {
     setLoading(true);
     uploadImage(file, {
-      onSuccess: (data) => {
+      onSuccess: (data: any) => {
         if (onChange) onChange(data.path);
         message.success("Cập nhật ảnh đại diện thành công");
         setLoading(false);

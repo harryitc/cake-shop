@@ -10,7 +10,7 @@ import {
   InfoCircleOutlined
 } from "@ant-design/icons";
 import { ILoyaltyStats } from "../types";
-import { customersService } from "../services/customers.service";
+import { customersService } from "../api";
 
 const LoyaltyStats: React.FC = () => {
   const [loading, setLoading] = useState(true);

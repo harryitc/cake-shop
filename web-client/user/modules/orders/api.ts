@@ -3,11 +3,11 @@ import { IOrderDTO, ICreateOrderPayload } from "./types";
 
 export const orderApi = {
   create: (payload: ICreateOrderPayload) =>
-    httpClient.post<{ order: IOrderDTO }>("/orders", payload),
+    httpClient.post<{ order: IOrderDTO }>("/orders", payload) as any,
     
   getMyOrders: () => 
-    httpClient.get<{ items: IOrderDTO[] }>("/orders"),
+    httpClient.get<{ items: IOrderDTO[] }>("/orders") as any,
 
   validateCoupon: (code: string, order_value: number) =>
-    httpClient.post<any>("/coupons/validate", { code, order_value }),
+    httpClient.post<any>("/coupons/validate", { code, order_value }) as any,
 };

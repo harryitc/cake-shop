@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Modal, Table, List, Typography, Tag, Space } from "antd";
 import { format } from "date-fns";
-import { customersService } from "../services/customers.service";
+import { customersService } from "../api";
 import { IPointHistoryDTO } from "../types";
 
 const { Text } = Typography;

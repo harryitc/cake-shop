@@ -31,11 +31,11 @@ export const AdminHeader = () => {
         <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
           <div className="h-11 px-4 flex items-center gap-3 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-100 transition-colors cursor-pointer">
             <Avatar 
-              src={getAvatarUrl(user?.avatar_url)} 
+              src={getAvatarUrl(user?.avatar)} 
               icon={<UserOutlined />} 
               className="bg-indigo-100 text-indigo-600 border border-indigo-200"
             />
-            <span className="font-bold text-indigo-700">{user?.full_name || "Admin"}</span>
+            <span className="font-bold text-indigo-700">{user?.name || "Admin"}</span>
           </div>
         </Dropdown>
       </div>

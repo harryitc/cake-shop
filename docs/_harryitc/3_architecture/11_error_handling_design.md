@@ -1,7 +1,7 @@
 ---
 title: Kiến trúc Hệ thống Xử lý Lỗi (Error Handling Architecture)
 status: Approved
-version: 1.2.0
+version: 1.3.0
 date: 2026-03-29
 author: Gemini CLI
 prd_ref: "docs/_harryitc/2_prd/prd_v6_error_handling.md"
@@ -51,53 +51,48 @@ Mọi phản hồi lỗi từ Backend **BẮT BUỘC** phải tuân thủ địn
 
 ## 3. Kiến trúc Frontend (web-client)
 
-Hệ thống Frontend sử dụng **Axios Interceptor** làm trung tâm điều phối lỗi (Error Dispatcher).
+Hệ thống Frontend sử dụng **Axios Interceptor** làm trung tâm điều phối lỗi (Error Dispatcher) và quản lý hiệu năng.
 
 ### 3.1 Phân loại lỗi (Error Classification)
 
 Lỗi được chia thành 2 loại chính:
 
 #### A. Lỗi Hệ thống (Global Errors)
-Đây là các lỗi nghiêm trọng, do hệ thống hoặc hạ tầng, cần thông báo ngay lập tức cho người dùng qua UI Notification.
+Đây là các lỗi nghiêm trọng, do hệ thống hoặc hạ tầng.
 - **Network Error**: Mất kết nối, DNS lỗi.
 - **5xx**: Server sập hoặc lỗi logic nghiêm trọng.
 - **403**: Truy cập trái phép vào tài nguyên bị cấm.
 - **404 (API)**: Endpoint không tồn tại.
 
-**Hành động**: Tự động hiển thị Notification Global thông qua Interceptor.
+**Hành động**: Tự động hiển thị Notification Global thông qua Interceptor. **Áp dụng cơ chế Chống lặp (Throttling)** để tránh tràn màn hình.
 
 #### B. Lỗi Logic (Local Errors)
-Đây là các lỗi phát sinh từ hành vi của người dùng hoặc logic nghiệp vụ từ server, cần được xử lý cụ thể tại từng Component.
-- **422**: **Lỗi trọng tâm (Sai quy tắc nghiệp vụ, Logic chi tiết).**
+Đây là các lỗi phát sinh từ hành vi của người dùng hoặc logic nghiệp vụ từ server.
+- **422**: Lỗi trọng tâm (Sai quy tắc nghiệp vụ).
 - **400**: Sai định dạng gửi lên.
 - **409**: Xung đột dữ liệu.
 
 **Hành động**: Interceptor thực hiện ném lỗi (Throw Error), Component thực hiện bắt lỗi (Catch) để hiển thị thông báo/giao diện cục bộ.
 
-### 3.2 Sơ đồ Luồng xử lý Frontend
+---
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│                    AXIOS INTERCEPTOR                    │
-└──────────────┬───────────────────────────┬──────────────┘
-               │                           │
-       [Lỗi Hệ Thống]                 [Lỗi Logic]
-       (500, 403, Net)              (422, 400, 409)
-               │                           │
-┌──────────────▼──────────────┐   ┌────────▼──────────────┐
-│   UI GLOBAL NOTIFICATION    │   │      THROW ERROR      │
-│ (notification.error - antd) │   │ (Cần Catch tại Comp)  │
-└─────────────────────────────┘   └────────┬──────────────┘
-                                           │
-                                  ┌────────▼──────────────┐
-                                  │   LOCAL COMPONENT     │
-                                  │ (Show Inline/Message) │
-                                  └───────────────────────┘
-```
+## 4. Cơ chế Nâng cao (Advanced UI/UX Mechanisms)
 
-1. **Tại Backend**: Sử dụng `createError(message, status, code)` để ném lỗi từ Controller/Service. Tuyệt đối không dùng `res.status(500).send()` trực tiếp.
-2. **Tại Frontend Interceptor**: Ưu tiên bóc tách `error.response.data.error.message` để hiển thị. Luôn `Promise.reject(error)` để không làm gãy luồng xử lý của Component.
-3. **Phân cấp Thông báo**:
-   - Lỗi Hệ thống: Thông báo phải có tiêu đề "Lỗi Hệ Thống" và mô tả ngắn gọn qua Notification.
-   - Lỗi Logic: Thông báo phải chỉ rõ người dùng cần sửa gì (Toast hoặc Inline error).
-4. **Bảo mật**: Tuyệt đối không để lộ thông tin kỹ thuật nhạy cảm trong thuộc tính `message` ở môi trường Production.
+### 4.1 Phản hồi Hiệu năng (Performance Feedback)
+- **Cảnh báo Request chậm**: Nếu một request mất hơn **4 giây** để phản hồi, Interceptor sẽ hiển thị một `message.loading` với nội dung "Hệ thống đang xử lý, vui lòng đợi...".
+- **Tự động dọn dẹp**: Thông báo sẽ biến mất ngay lập tức (`message.destroy`) khi request kết thúc (thành công hoặc thất bại).
+
+### 4.2 Chống lặp Thông báo (Notification Throttling)
+Để tránh tình trạng nhiều thông báo lỗi cùng nội dung xuất hiện đồng thời (ví dụ khi nhiều request song song cùng lỗi 500):
+- **Cơ chế**: Sử dụng một `Set` toàn cục lưu trữ các chuỗi thông báo lỗi đang hiển thị.
+- **Thời gian chờ (Cooldown)**: **5 giây**. Sau 5 giây, nội dung lỗi sẽ được xóa khỏi `Set` để có thể hiển thị lại nếu người dùng tiếp tục thao tác gây lỗi.
+
+---
+
+## 5. Quy định Thực thi (Best Practices)
+
+1. **Tại Backend**: Sử dụng `createError(message, status, code)` để ném lỗi.
+2. **Tại Frontend**: 
+   - Không gọi `notification.error` trực tiếp tại Component cho các lỗi hệ thống (để Interceptor lo).
+   - Luôn sử dụng `httpClient` thay vì `axios` thuần để được hưởng các cơ chế xử lý lỗi và hiệu năng tập trung.
+3. **Bảo mật**: Không để lộ stack trace hoặc thông tin DB nhạy cảm trong thuộc tính `message` ở môi trường Production.

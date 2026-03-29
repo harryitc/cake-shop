@@ -15,7 +15,7 @@ import {
 } from "antd";
 import { SaveOutlined, ReloadOutlined } from "@ant-design/icons";
 import { ILoyaltyConfig } from "../types";
-import { customersService } from "../services/customers.service";
+import { customersService } from "../api";
 
 const { Title, Text } = Typography;
 

@@ -37,7 +37,7 @@ export const LoginForm = () => {
 
   const onSubmit = (values: LoginFormValues) => {
     login(values, {
-      onSuccess: (res) => {
+      onSuccess: (res: any) => {
         if (res.user.role !== "admin") {
           message.error("Tài khoản không có quyền Admin!");
           return;

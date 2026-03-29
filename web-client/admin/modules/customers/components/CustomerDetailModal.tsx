@@ -33,7 +33,7 @@ import {
   InfoCircleOutlined
 } from "@ant-design/icons";
 import { ICustomerDTO, IPointHistoryDTO, ILoyaltyConfig } from "../types";
-import { customersService } from "../services/customers.service";
+import { customersService } from "../api";
 import { orderApi } from "../../orders/api";
 import { IOrderDTO } from "../../orders/types";
 import AdjustPointsModal from "./AdjustPointsModal";

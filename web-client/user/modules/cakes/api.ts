@@ -19,11 +19,11 @@ export const cakeApi = {
         limit: params.limit ?? 100,
         page: params.page ?? 1,
       }
-    });
+    }) as any;
   },
   
   getById: (id: string): Promise<ICakeDTO> => {
-    return httpClient.get(`/cakes/${id}`);
+    return httpClient.get(`/cakes/${id}`) as any;
   },
   
   uploadImage: (file: File) => {
@@ -33,9 +33,9 @@ export const cakeApi = {
       headers: {
         "Content-Type": "multipart/form-data",
       },
-    });
+    }) as any;
   },
 
   createReview: (payload: { cake_id: string; order_id: string; rating: number; comment: string }) =>
-    httpClient.post("/reviews", payload),
+    httpClient.post("/reviews", payload) as any,
 };

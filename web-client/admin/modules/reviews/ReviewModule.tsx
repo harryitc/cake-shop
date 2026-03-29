@@ -63,7 +63,7 @@ const ReviewModule: React.FC = () => {
       key: 'cake',
       render: (_: any, record: any) => (
         <Space>
-          <Avatar shape="square" src={record.cake.image} icon={<CakeOutlined />} />
+          <Avatar shape="square" src={record.cake.image} icon={<CoffeeOutlined />} />
           <div className="text-xs max-w-[150px] truncate">{record.cake.name}</div>
         </Space>
       ),

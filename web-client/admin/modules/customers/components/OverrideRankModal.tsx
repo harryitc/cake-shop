@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Form, Select, Switch, message } from "antd";
 import { IRankOverridePayload } from "../types";
-import { customersService } from "../services/customers.service";
+import { customersService } from "../api";
 
 interface OverrideRankModalProps {
   userId: string;

@@ -5,9 +5,9 @@ export const orderApi = {
   getAll: (page: number = 1, limit: number = 10, search?: string) => {
     return httpClient.get<{ items: IOrderDTO[]; total: number }>("/orders", {
       params: { page, limit, search }
-    });
+    }) as any;
   },
   
   updateStatus: (id: string, payload: IUpdateOrderPayload) =>
-    httpClient.put(`/orders/${id}`, payload),
+    httpClient.put(`/orders/${id}`, payload) as any,
 };

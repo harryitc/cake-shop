@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Modal, Form, InputNumber, Input, message } from "antd";
-import { customersService } from "../services/customers.service";
+import { customersService } from "../api";
 
 interface AdjustPointsModalProps {
   userId: string;
@@ -26,7 +26,7 @@ const AdjustPointsModal: React.FC<AdjustPointsModalProps> = ({
     try {
       const values = await form.validateFields();
       setLoading(true);
-      await customersService.adjustPoints(userId, values);
+      await customersService.adjustPoints(userId, values.points, values.reason);
       message.success("Điều chỉnh điểm thành công");
       form.resetFields();
       onSuccess();

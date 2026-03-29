@@ -3,5 +3,5 @@ import { ILoyaltyInfo } from "./types";
 
 export const loyaltyApi = {
   getLoyaltyMe: () => 
-    httpClient.get<ILoyaltyInfo>("/loyalty/me"),
+    httpClient.get<ILoyaltyInfo>("/loyalty/me") as any,
 };

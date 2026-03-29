@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "./api";
-import { mapUserToModel } from "./mapper";
+import { mapUserToModel, UserModel } from "./mapper";
 
 export const useLoginMutation = () => {
   return useMutation({
@@ -14,14 +14,15 @@ export const useRegisterMutation = () => {
   });
 };
 
-export const useMeQuery = () => {
-  return useQuery({
+export const useMeQuery = (options?: any) => {
+  return useQuery<UserModel>({
     queryKey: ["me"],
     queryFn: async () => {
       const data = await authApi.getMe();
-      return mapUserToModel(data);
+      return mapUserToModel(data as any);
     },
     retry: false,
+    ...options
   });
 };
 

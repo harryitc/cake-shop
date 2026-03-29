@@ -2,13 +2,10 @@ import { IUser } from "./types";
 
 export const mapUserToModel = (dto: IUser) => {
   return {
+    ...dto,
     id: dto._id,
-    email: dto.email,
-    name: dto.name,
-    role: dto.role,
-    phone: dto.phone,
-    avatar: dto.avatar,
-    createdAt: dto.createdAt,
+    name: dto.full_name || "N/A",
+    avatar: dto.avatar_url,
   };
 };
 

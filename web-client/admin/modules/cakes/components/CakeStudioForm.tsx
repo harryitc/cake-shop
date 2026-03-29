@@ -14,7 +14,7 @@ import {
   TagsOutlined,
   EyeOutlined,
   LeftOutlined,
-  CakeOutlined
+  CoffeeOutlined
 } from "@ant-design/icons";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useCreateCakeMutation, useUpdateCakeMutation, useUploadImageMutation } from "../hooks";
@@ -231,11 +231,11 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
 
   const handleUpload = (file: File) => {
     uploadImage(file, {
-      onSuccess: (data) => {
+      onSuccess: (data: any) => {
         setValue("image_url", data.path, { shouldDirty: true });
         message.success("Upload ảnh thành công");
       },
-      onError: (err) => {
+      onError: (err: any) => {
         if (err.statuscode === 422) message.error(err.message);
       },
     });
@@ -251,7 +251,7 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
           message.success("Cập nhật bánh thành công");
           router.push("/admin/cakes");
         },
-        onError: (err) => {
+        onError: (err: any) => {
           if (err.statuscode === 422) message.error(err.message);
         },
       });
@@ -261,7 +261,7 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
           message.success("Thêm bánh mới thành công");
           router.push("/admin/cakes");
         },
-        onError: (err) => {
+        onError: (err: any) => {
           if (err.statuscode === 422) message.error(err.message);
         },
       });
@@ -359,12 +359,12 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
                     <div className="grid grid-cols-2 gap-6">
                       <Form.Item label={<span className="font-bold text-gray-700 text-[12px] px-1 tracking-tight">DANH MỤC CỐT LÕI</span>} validateStatus={errors.category ? "error" : ""} help={errors.category?.message} required className="mb-0">
                         <Controller name="category" control={control} render={({ field }) => (
-                          <Select {...field} placeholder="Chọn danh mục" size="large" className="rounded-lg w-full h-10 custom-studio-select-v4" options={categories.map(c => ({ label: c.name, value: c.id }))} />
+                          <Select {...field} placeholder="Chọn danh mục" size="large" className="rounded-lg w-full h-10 custom-studio-select-v4" options={categories.map((c: any) => ({ label: c.name, value: c.id }))} />
                         )} />
                       </Form.Item>
                       <Form.Item label={<span className="font-bold text-gray-700 text-[12px] px-1 tracking-tight">DANH MỤC LIÊN QUAN</span>} className="mb-0">
                         <Controller name="categories" control={control} render={({ field }) => (
-                          <Select {...field} mode="multiple" placeholder="Gắn nhãn phụ" size="large" className="rounded-lg w-full h-10 custom-studio-select-v4" options={categories.map(c => ({ label: c.name, value: c.id }))} />
+                          <Select {...field} mode="multiple" placeholder="Gắn nhãn phụ" size="large" className="rounded-lg w-full h-10 custom-studio-select-v4" options={categories.map((c: any) => ({ label: c.name, value: c.id }))} />
                         )} />
                       </Form.Item>
                     </div>
