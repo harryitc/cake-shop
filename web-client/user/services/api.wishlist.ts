@@ -1,5 +1,5 @@
 import { httpClient } from "../lib/http";
-import { Wishlist } from "../types/wishlist";
+import { Wishlist } from "../types";
 
 export const wishlistService = {
   getWishlist: () => httpClient.get<Wishlist>("/wishlist"),

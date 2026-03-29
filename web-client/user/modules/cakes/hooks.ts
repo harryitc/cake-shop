@@ -28,7 +28,7 @@ export const useCakeReviewsQuery = (cakeId: string, page: number = 1) => {
   return useQuery({
     queryKey: ["cake-reviews", cakeId, page],
     queryFn: async () => {
-      const res = await httpClient.get<{ items: any[]; total: number; limit: number }>(`/reviews/cake/${cakeId}`, {
+      const res: any = await httpClient.get<{ items: any[]; total: number; limit: number }>(`/reviews/cake/${cakeId}`, {
         params: { page }
       });
       return {
@@ -45,7 +45,7 @@ export const useCategoriesQuery = () => {
   return useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const items = await httpClient.get<any[]>("/categories");
+      const items: any = await httpClient.get<any[]>("/categories");
       return (items || []).map(mapCategoryToModel);
     },
   });

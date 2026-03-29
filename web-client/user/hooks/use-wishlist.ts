@@ -10,7 +10,7 @@ export const useWishlist = () => {
 
   const { data: wishlist, isLoading } = useQuery({
     queryKey: ["wishlist"],
-    queryFn: () => wishlistService.getWishlist(),
+    queryFn: () => wishlistService.getWishlist() as any,
     enabled: !!user, // Chỉ gọi khi đã đăng nhập
   });
 

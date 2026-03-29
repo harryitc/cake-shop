@@ -40,27 +40,27 @@ export const ProfileContent = () => {
   const { data: user, isLoading } = useMeQuery();
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfileMutation();
   const { mutate: changePassword, isPending: isChangingPass } = useChangePasswordMutation();
-  
+
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
-  const { 
-    control: profileControl, 
-    handleSubmit: handleProfileSubmit, 
-    reset: resetProfile, 
+  const {
+    control: profileControl,
+    handleSubmit: handleProfileSubmit,
+    reset: resetProfile,
     getValues,
-    formState: { isDirty: isProfileDirty, isValid: isProfileValid } 
+    formState: { isDirty: isProfileDirty, isValid: isProfileValid }
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     mode: "onChange",
     defaultValues: { name: "", phone: "", address: "", avatar: "" }
   });
 
-  const { 
-    control: passControl, 
-    handleSubmit: handlePassSubmit, 
-    reset: resetPass, 
-    formState: { errors: passErrors, isDirty: isPassDirty, isValid: isPassValid } 
+  const {
+    control: passControl,
+    handleSubmit: handlePassSubmit,
+    reset: resetPass,
+    formState: { errors: passErrors, isDirty: isPassDirty, isValid: isPassValid }
   } = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
     mode: "onChange",
@@ -95,7 +95,7 @@ export const ProfileContent = () => {
   };
 
   const onChangePassword = (values: PasswordFormValues) => {
-    changePassword(values, {
+    changePassword(values as any, {
       onSuccess: () => {
         message.success("Đổi mật khẩu thành công. Vui lòng đăng nhập lại.");
         setIsPassModalOpen(false);
@@ -129,7 +129,7 @@ export const ProfileContent = () => {
     switch (activeTab) {
       case "overview":
         return (
-          <OverviewSection 
+          <OverviewSection
             user={user}
             profileControl={profileControl}
             handleProfileSubmit={handleProfileSubmit}
@@ -144,7 +144,7 @@ export const ProfileContent = () => {
         return <OrdersSection />;
       case "address":
         return (
-          <AddressSection 
+          <AddressSection
             profileControl={profileControl}
             handleProfileSubmit={handleProfileSubmit}
             onUpdateProfile={onUpdateProfile}
@@ -157,7 +157,7 @@ export const ProfileContent = () => {
         return <RewardsSection />;
       case "security":
         return (
-          <SecuritySection 
+          <SecuritySection
             passControl={passControl}
             handlePassSubmit={handlePassSubmit}
             onChangePassword={onChangePassword}

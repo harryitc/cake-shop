@@ -1,15 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "./api";
 import { mapUserToModel } from "./mapper";
+import { ILoginResponse } from "./types";
 
 export const useLoginMutation = () => {
-  return useMutation({
+  return useMutation<ILoginResponse, Error, any>({
     mutationFn: authApi.login,
   });
 };
 
 export const useRegisterMutation = () => {
-  return useMutation({
+  return useMutation<any, Error, any>({
     mutationFn: authApi.register,
   });
 };
@@ -48,7 +49,7 @@ export const useForgotPasswordMutation = () => {
 
 export const useResetPasswordMutation = () => {
   return useMutation({
-    mutationFn: ({ token, password }: { token: string; password: string }) => 
+    mutationFn: ({ token, password }: { token: string; password: string }) =>
       authApi.resetPassword(token, password),
   });
 };

@@ -10,13 +10,14 @@ import { useLoyaltyQuery } from "../../loyalty/hooks";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { orderApi } from "../api";
-import { 
-  EnvironmentOutlined, 
-  ShoppingOutlined, 
+import {
+  EnvironmentOutlined,
+  ShoppingOutlined,
   ArrowLeftOutlined,
   TagOutlined,
   CreditCardOutlined
 } from "@ant-design/icons";
+import _ from "lodash";
 
 const checkoutSchema = z.object({
   address: z.string().min(5, "Vui lòng nhập địa chỉ giao hàng cụ thể"),
@@ -30,7 +31,7 @@ interface CheckoutPageContentProps {
   items: any[];
 }
 
-const formatPrice = (price: number) => 
+const formatPrice = (price: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
 
 export const CheckoutPageContent = ({ totalPrice, items }: CheckoutPageContentProps) => {
@@ -39,7 +40,7 @@ export const CheckoutPageContent = ({ totalPrice, items }: CheckoutPageContentPr
   const { mutate, isPending } = useCreateOrderMutation();
   const { data: me } = useMeQuery();
   const { data: loyaltyData } = useLoyaltyQuery();
-  
+
   const [couponLoading, setCouponLoading] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<{
     code: string;
@@ -56,15 +57,15 @@ export const CheckoutPageContent = ({ totalPrice, items }: CheckoutPageContentPr
     defaultValues: { address: "", coupon_code: "" },
   });
 
-  const currentPoints = loyaltyData?.loyalty_points ?? me?.loyalty_points ?? 0;
-  
+  const currentPoints = loyaltyData?.points ?? me?.loyalty_points ?? 0;
+
   const pointToVndRatio = 1;
   const maxDiscountPercentage = 20;
-  
+
   const currentTotal = appliedCoupon ? appliedCoupon.finalPrice : totalPrice;
   const maxDiscountFromPoints = Math.floor(currentTotal * (maxDiscountPercentage / 100));
   const maxPointsAvailable = Math.min(currentPoints, Math.floor(maxDiscountFromPoints / pointToVndRatio));
-  
+
   // Logic tính điểm mới
   let pointsToUse = 0;
   if (usePoints) {
@@ -131,7 +132,7 @@ export const CheckoutPageContent = ({ totalPrice, items }: CheckoutPageContentPr
             <EnvironmentOutlined className="text-gray-400" />
             <h2 className="text-sm font-bold uppercase tracking-wider m-0">Địa chỉ giao hàng</h2>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="p-3 bg-gray-50 rounded border border-gray-100">
               <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">Người nhận</div>
@@ -153,10 +154,10 @@ export const CheckoutPageContent = ({ totalPrice, items }: CheckoutPageContentPr
                 name="address"
                 control={control}
                 render={({ field }) => (
-                  <Input.TextArea 
-                    {...field} 
+                  <Input.TextArea
+                    {...field}
                     rows={3}
-                    placeholder="Nhập địa chỉ nhận bánh chi tiết..." 
+                    placeholder="Nhập địa chỉ nhận bánh chi tiết..."
                     className="rounded border-gray-200 focus:border-indigo-500"
                   />
                 )}
@@ -195,10 +196,10 @@ export const CheckoutPageContent = ({ totalPrice, items }: CheckoutPageContentPr
                       {isCustomizingPoints ? 'Hủy tùy chỉnh' : 'Tùy chỉnh số điểm'}
                     </Button>
                     {isCustomizingPoints && (
-                       <Button size="small" type="primary" ghost onClick={() => setCustomPoints(maxPointsAvailable)}>Dùng tối đa</Button>
+                      <Button size="small" type="primary" ghost onClick={() => setCustomPoints(maxPointsAvailable)}>Dùng tối đa</Button>
                     )}
                   </div>
-                
+
                   {isCustomizingPoints && (
                     <div className="mt-2">
                       <InputNumber
@@ -209,7 +210,7 @@ export const CheckoutPageContent = ({ totalPrice, items }: CheckoutPageContentPr
                         placeholder="Nhập số điểm muốn dùng"
                         className="w-full"
                         formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+                        parser={(value) => _.parseInt(value!.replace(/\$\s?|(,*)/g, ''))}
                       />
                       <div className="text-[11px] text-indigo-400 mt-1">
                         * Tối đa {maxPointsAvailable.toLocaleString()} điểm cho đơn hàng này.
@@ -226,9 +227,9 @@ export const CheckoutPageContent = ({ totalPrice, items }: CheckoutPageContentPr
                 name="coupon_code"
                 control={control}
                 render={({ field }) => (
-                  <Input 
-                    {...field} 
-                    placeholder="Mã giảm giá (nếu có)" 
+                  <Input
+                    {...field}
+                    placeholder="Mã giảm giá (nếu có)"
                     className="rounded uppercase h-10"
                     disabled={!!appliedCoupon}
                   />
@@ -253,7 +254,7 @@ export const CheckoutPageContent = ({ totalPrice, items }: CheckoutPageContentPr
             </h3>
             <Button type="link" size="small" onClick={() => router.push("/cart")} className="p-0 text-xs">Sửa</Button>
           </div>
-          
+
           <div className="p-4 max-h-[250px] overflow-y-auto space-y-3 border-b border-gray-100">
             {items.map((item, idx) => (
               <div key={idx} className="flex justify-between gap-3">
@@ -294,10 +295,10 @@ export const CheckoutPageContent = ({ totalPrice, items }: CheckoutPageContentPr
           </div>
 
           <div className="p-4 pt-0">
-            <Button 
-              type="primary" 
-              block 
-              size="large" 
+            <Button
+              type="primary"
+              block
+              size="large"
               icon={<CreditCardOutlined />}
               onClick={() => handleSubmit(onSubmit)()}
               loading={isPending}
@@ -305,8 +306,8 @@ export const CheckoutPageContent = ({ totalPrice, items }: CheckoutPageContentPr
             >
               Đặt hàng ngay
             </Button>
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               block
               className="mt-2 text-gray-400 text-xs"
               onClick={() => router.push("/cart")}

@@ -25,22 +25,22 @@ export const LoyaltyCard = () => {
   if (isLoading) return <Card loading />;
 
   const rank = data?.rank || "BRONZE";
-  const points = data?.loyalty_points || 0;
-  const spent = data?.total_spent || 0;
-  
+  const points = data?.points || 0;
+  const spent = data?.totalSpent || 0;
+
   const nextTier = NEXT_TIER_THRESHOLDS[rank as keyof typeof NEXT_TIER_THRESHOLDS];
   const percent = nextTier.next ? Math.min((spent / nextTier.min) * 100, 100) : 100;
 
   return (
     <div className="flex flex-col gap-6">
-      <Card 
+      <Card
         className="rounded-2xl shadow-sm border-none overflow-hidden"
         bodyStyle={{ padding: 0 }}
       >
-        <div 
-          className="p-6 text-white" 
-          style={{ 
-            background: `linear-gradient(135deg, ${RANK_COLORS[rank as keyof typeof RANK_COLORS]}, #2c3e50)` 
+        <div
+          className="p-6 text-white"
+          style={{
+            background: `linear-gradient(135deg, ${RANK_COLORS[rank as keyof typeof RANK_COLORS]}, #2c3e50)`
           }}
         >
           <div className="flex justify-between items-start">
@@ -55,16 +55,16 @@ export const LoyaltyCard = () => {
               <Title level={3} className="!text-white !m-0 !mt-1">{points.toLocaleString()} pts</Title>
             </div>
           </div>
-          
+
           <div className="mt-8">
             <div className="flex justify-between text-xs mb-2">
               <Text className="text-white/90 font-medium">Tiến trình lên hạng {nextTier.next || "MAX"}</Text>
               <Text className="text-white/90">{spent.toLocaleString()} / {nextTier.min.toLocaleString()} VNĐ</Text>
             </div>
-            <Progress 
-              percent={percent} 
-              showInfo={false} 
-              strokeColor="#fff" 
+            <Progress
+              percent={percent}
+              showInfo={false}
+              strokeColor="#fff"
               trailColor="rgba(255,255,255,0.2)"
               strokeWidth={8}
             />
@@ -72,11 +72,11 @@ export const LoyaltyCard = () => {
         </div>
       </Card>
 
-      <Card 
-        className="rounded-2xl shadow-sm border-gray-100" 
+      <Card
+        className="rounded-2xl shadow-sm border-gray-100"
         title={<span className="font-bold flex items-center gap-2"><HistoryOutlined /> Lịch sử điểm thưởng</span>}
       >
-        <Table 
+        <Table
           dataSource={data?.history || []}
           rowKey="_id"
           pagination={false}
@@ -94,7 +94,7 @@ export const LoyaltyCard = () => {
             {
               title: "Điểm",
               dataIndex: "points_change",
-              render: (points, record) => (
+              render: (points, record: any) => (
                 <Text type={record.type === "PLUS" ? "success" : "danger"} className="font-bold">
                   {record.type === "PLUS" ? "+" : ""}{points.toLocaleString()}
                 </Text>

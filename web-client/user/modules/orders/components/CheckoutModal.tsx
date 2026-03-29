@@ -28,7 +28,7 @@ interface CheckoutModalProps {
   items: any[];
 }
 
-const formatPrice = (price: number) => 
+const formatPrice = (price: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
 
 export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutModalProps) => {
@@ -37,7 +37,7 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
   const { mutate, isPending } = useCreateOrderMutation();
   const { data: me } = useMeQuery({ enabled: open });
   const { data: loyaltyData } = useLoyaltyQuery();
-  
+
   const [couponLoading, setCouponLoading] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<{
     code: string;
@@ -48,18 +48,18 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
   const [usePoints, setUsePoints] = useState(false);
 
   // Use latest loyalty data from separate API
-  const currentPoints = loyaltyData?.loyalty_points ?? me?.loyalty_points ?? 0;
-  const currentRank = loyaltyData?.rank ?? me?.rank ?? "BRONZE";
+  const currentPoints = loyaltyData?.points;
+  const currentRank = loyaltyData?.rank;
 
   // Calculate points usage
   // Default logic: 1 point = 1 VND, max 20% discount
   const pointToVndRatio = 1;
   const maxDiscountPercentage = 20;
-  
+
   const currentTotal = appliedCoupon ? appliedCoupon.finalPrice : totalPrice;
   const maxDiscountFromPoints = Math.floor(currentTotal * (maxDiscountPercentage / 100));
   const maxPointsAvailable = Math.min(currentPoints, Math.floor(maxDiscountFromPoints / pointToVndRatio));
-  
+
   const pointsDiscountAmount = usePoints ? maxPointsAvailable * pointToVndRatio : 0;
   const finalOrderPrice = currentTotal - pointsDiscountAmount;
 
@@ -174,28 +174,28 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
         {/* Customer Information Section */}
         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Thông tin người mua</h4>
         <div className="bg-gray-50/80 p-4 rounded-xl mb-6 border border-gray-100 flex items-center gap-4">
-           <Avatar 
-             size={54} 
-             src={me?.avatar}
-             icon={<UserOutlined />}
-             className="bg-indigo-100 text-indigo-600 border-2 border-white shadow-sm shrink-0"
-           />
-           <div className="flex-grow">
-              <div className="flex items-center gap-2">
-                <div className="font-bold text-gray-800 text-base">{me?.name || "Khách hàng"}</div>
-                <Tag className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase flex items-center gap-1 border ${getRankColor(currentRank)}`}>
-                  <CrownOutlined /> {getRankLabel(currentRank)}
-                </Tag>
-              </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
-                 <span className="text-xs text-gray-500 flex items-center gap-1.5 whitespace-nowrap">
-                    <UserOutlined className="text-[10px]" /> {me?.email}
-                 </span>
-                 <span className="text-xs text-gray-500 flex items-center gap-1.5 whitespace-nowrap">
-                    <PhoneOutlined className="text-[10px]" /> {me?.phone || "Chưa cập nhật SĐT"}
-                 </span>
-              </div>
-           </div>
+          <Avatar
+            size={54}
+            src={me?.avatar}
+            icon={<UserOutlined />}
+            className="bg-indigo-100 text-indigo-600 border-2 border-white shadow-sm shrink-0"
+          />
+          <div className="flex-grow">
+            <div className="flex items-center gap-2">
+              <div className="font-bold text-gray-800 text-base">{me?.name || "Khách hàng"}</div>
+              <Tag className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase flex items-center gap-1 border ${getRankColor(currentRank)}`}>
+                <CrownOutlined /> {getRankLabel(currentRank)}
+              </Tag>
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+              <span className="text-xs text-gray-500 flex items-center gap-1.5 whitespace-nowrap">
+                <UserOutlined className="text-[10px]" /> {me?.email}
+              </span>
+              <span className="text-xs text-gray-500 flex items-center gap-1.5 whitespace-nowrap">
+                <PhoneOutlined className="text-[10px]" /> {me?.phone || "Chưa cập nhật SĐT"}
+              </span>
+            </div>
+          </div>
         </div>
 
         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Tóm tắt đơn hàng</h4>
@@ -205,21 +205,21 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
               <div key={idx} className="flex justify-between items-start gap-4">
                 <div className="flex gap-3">
                   <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 shrink-0">
-                    <img 
-                      src={item.cake.imageUrl || "https://placehold.co/100x100?text=No+Img"} 
-                      className="w-full h-full object-cover" 
-                      alt={item.cake.name} 
+                    <img
+                      src={item.cake.imageUrl || "https://placehold.co/100x100?text=No+Img"}
+                      className="w-full h-full object-cover"
+                      alt={item.cake.name}
                     />
                   </div>
                   <div>
                     <div className="font-bold text-gray-800 text-[13px] line-clamp-1">{item.cake.name}</div>
                     <div className="flex items-center gap-2 mt-0.5">
-                       {item.variant ? (
-                         <span className="text-[9px] font-black text-indigo-500 bg-indigo-50/50 px-1.5 py-0.5 rounded border border-indigo-100/30 uppercase">Size: {item.variant.size}</span>
-                       ) : (
-                         <span className="text-[9px] font-medium text-gray-400">Standard</span>
-                       )}
-                       <span className="text-xs text-gray-400 font-medium">x{item.quantity}</span>
+                      {item.variant ? (
+                        <span className="text-[9px] font-black text-indigo-500 bg-indigo-50/50 px-1.5 py-0.5 rounded border border-indigo-100/30 uppercase">Size: {item.variant.size}</span>
+                      ) : (
+                        <span className="text-[9px] font-medium text-gray-400">Standard</span>
+                      )}
+                      <span className="text-xs text-gray-400 font-medium">x{item.quantity}</span>
                     </div>
                   </div>
                 </div>
@@ -232,38 +232,38 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
         </div>
 
         <div className="bg-gradient-to-br from-indigo-50/80 to-white p-4 rounded-xl mb-8 border border-indigo-100/50 shadow-sm relative overflow-hidden">
-           <div className="flex justify-between mb-2">
-              <span className="text-gray-500">Tạm tính ({items.length} món):</span>
-              <span className="font-semibold text-gray-700">{formatPrice(totalPrice)}</span>
-           </div>
-           {appliedCoupon && (
-             <div className="flex justify-between mb-2 text-green-600">
-                <span className="flex items-center gap-1 font-medium"><CheckCircleOutlined /> Giảm giá ({appliedCoupon.code}):</span>
-                <span className="font-semibold">-{formatPrice(appliedCoupon.discountAmount)}</span>
-             </div>
-           )}
-           {usePoints && (
-             <div className="flex justify-between mb-2 text-indigo-600">
-                <span className="flex items-center gap-1 font-medium"><StarOutlined /> Dùng điểm tích lũy:</span>
-                <span className="font-semibold">-{formatPrice(pointsDiscountAmount)}</span>
-             </div>
-           )}
-           <Divider className="my-3 border-indigo-100/30" />
-           <div className="flex justify-between text-lg">
-              <span className="font-bold text-gray-800">Tổng thanh toán:</span>
-              <span className="font-black text-indigo-600 text-2xl drop-shadow-sm">
-                {formatPrice(finalOrderPrice)}
-              </span>
-           </div>
-           <div className="mt-4 pt-3 border-t border-indigo-100/20 text-[11px] text-gray-400 italic leading-relaxed">
-              <MailOutlined className="text-indigo-300 mr-1.5" /> 
-              Email xác nhận đơn hàng sẽ được gửi đến <b>{me?.email}</b> sau khi đặt hàng thành công.
-              {expectedPoints > 0 ? (
-                <div className="mt-1 text-green-600 font-medium flex items-center gap-1">
-                  <StarOutlined className="text-[10px]" /> Bạn sẽ nhận được khoảng <b>{expectedPoints.toLocaleString()}</b> điểm sau khi đơn hàng hoàn thành.
-                </div>
-              ) : null}
-           </div>
+          <div className="flex justify-between mb-2">
+            <span className="text-gray-500">Tạm tính ({items.length} món):</span>
+            <span className="font-semibold text-gray-700">{formatPrice(totalPrice)}</span>
+          </div>
+          {appliedCoupon && (
+            <div className="flex justify-between mb-2 text-green-600">
+              <span className="flex items-center gap-1 font-medium"><CheckCircleOutlined /> Giảm giá ({appliedCoupon.code}):</span>
+              <span className="font-semibold">-{formatPrice(appliedCoupon.discountAmount)}</span>
+            </div>
+          )}
+          {usePoints && (
+            <div className="flex justify-between mb-2 text-indigo-600">
+              <span className="flex items-center gap-1 font-medium"><StarOutlined /> Dùng điểm tích lũy:</span>
+              <span className="font-semibold">-{formatPrice(pointsDiscountAmount)}</span>
+            </div>
+          )}
+          <Divider className="my-3 border-indigo-100/30" />
+          <div className="flex justify-between text-lg">
+            <span className="font-bold text-gray-800">Tổng thanh toán:</span>
+            <span className="font-black text-indigo-600 text-2xl drop-shadow-sm">
+              {formatPrice(finalOrderPrice)}
+            </span>
+          </div>
+          <div className="mt-4 pt-3 border-t border-indigo-100/20 text-[11px] text-gray-400 italic leading-relaxed">
+            <MailOutlined className="text-indigo-300 mr-1.5" />
+            Email xác nhận đơn hàng sẽ được gửi đến <b>{me?.email}</b> sau khi đặt hàng thành công.
+            {expectedPoints > 0 ? (
+              <div className="mt-1 text-green-600 font-medium flex items-center gap-1">
+                <StarOutlined className="text-[10px]" /> Bạn sẽ nhận được khoảng <b>{expectedPoints.toLocaleString()}</b> điểm sau khi đơn hàng hoàn thành.
+              </div>
+            ) : null}
+          </div>
         </div>
 
         <Form layout="vertical">
@@ -276,14 +276,14 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
                 <div>
                   <div className="text-sm font-bold text-gray-800">Dùng điểm Cake Rewards</div>
                   <div className="text-[11px] text-gray-500">
-                    Bạn có <span className="font-bold text-indigo-600">{currentPoints.toLocaleString()}</span> điểm. 
+                    Bạn có <span className="font-bold text-indigo-600">{currentPoints.toLocaleString()}</span> điểm.
                     Tối đa giảm 20% đơn hàng.
                   </div>
                 </div>
               </div>
-              <Switch 
-                checked={usePoints} 
-                onChange={setUsePoints} 
+              <Switch
+                checked={usePoints}
+                onChange={setUsePoints}
                 disabled={!currentPoints || currentPoints === 0}
               />
             </div>
@@ -306,10 +306,10 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
               name="address"
               control={control}
               render={({ field }) => (
-                <Input.TextArea 
-                  {...field} 
-                  autoSize={{ minRows: 2, maxRows: 4 }} 
-                  placeholder="Ví dụ: 12 Đường ABC, Quận 1, TP HCM" 
+                <Input.TextArea
+                  {...field}
+                  autoSize={{ minRows: 2, maxRows: 4 }}
+                  placeholder="Ví dụ: 12 Đường ABC, Quận 1, TP HCM"
                   className="rounded-xl shadow-sm border-gray-200 focus:border-indigo-500 py-3"
                 />
               )}
@@ -322,10 +322,10 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
                 name="coupon_code"
                 control={control}
                 render={({ field }) => (
-                  <Input 
-                    {...field} 
+                  <Input
+                    {...field}
                     prefix={<GiftOutlined className="text-gray-400" />}
-                    placeholder="Nhập mã ưu đãi..." 
+                    placeholder="Nhập mã ưu đãi..."
                     className="rounded-lg uppercase font-mono"
                     disabled={!!appliedCoupon}
                   />
@@ -337,9 +337,9 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
                   setValue("coupon_code", "");
                 }}>Hủy mã</Button>
               ) : (
-                <Button 
-                  type="primary" 
-                  onClick={handleApplyCoupon} 
+                <Button
+                  type="primary"
+                  onClick={handleApplyCoupon}
                   loading={couponLoading}
                   className="bg-black hover:!bg-gray-800"
                 >

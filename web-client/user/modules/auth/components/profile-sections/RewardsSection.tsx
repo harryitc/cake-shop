@@ -54,7 +54,7 @@ export const RewardsSection = () => {
             {
               title: <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Thời gian</span>,
               dataIndex: "createdAt",
-              render: (date) => (
+              render: (date: any) => (
                 <div className="flex flex-col">
                   <span className="font-bold text-gray-800 text-sm">{dayjs(date).format("DD/MM/YYYY")}</span>
                   <span className="text-xs text-gray-400 font-medium">{dayjs(date).format("HH:mm")}</span>
@@ -64,13 +64,13 @@ export const RewardsSection = () => {
             {
               title: <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Nội dung</span>,
               dataIndex: "reason",
-              render: (text) => <span className="font-bold text-gray-700">{text}</span>
+              render: (text: any) => <span className="font-bold text-gray-700">{text}</span>
             },
             {
               title: <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Số điểm</span>,
               dataIndex: "points",
               align: "right",
-              render: (pts, record) => (
+              render: (pts: any, record: any) => (
                 <div className="flex flex-col items-end">
                   <div className={cn(
                     "px-3 py-1 rounded-full font-black text-sm border-2",
