@@ -18,12 +18,18 @@ export const mapOrderToModel = (dto: IOrderDTO): IOrder => {
   // Xử lý items một cách an toàn (Hỗ trợ cả trường hợp cake_id chưa được populate)
   const items: IOrderItem[] = (dto.items || []).map(item => {
     const isPopulated = item.cake_id && typeof item.cake_id === 'object';
-    const rawCake = isPopulated ? item.cake_id : {};
-    
-    const imageUrl = rawCake.image_url 
+    const rawCake = isPopulated ? item.cake_id : {
+      _id: "",
+      name: "",
+      price: 0,
+      image_url: "",
+      slug: "",
+    };
+
+    const imageUrl = rawCake.image_url
       ? (rawCake.image_url.startsWith('http') ? rawCake.image_url : `${API_DOMAIN}${rawCake.image_url}`)
       : "https://placehold.co/100x100?text=No+Img";
-    
+
     const totalPrice = (item.price_at_buy || 0) * (item.quantity || 0);
 
     return {

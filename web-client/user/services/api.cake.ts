@@ -1,5 +1,5 @@
 import { httpClient } from "../lib/http";
-import { Cake } from "../types/cake";
+import { Cake } from "../types";
 
 export const cakeService = {
   getAll: () => httpClient.get<Cake[]>("/cakes"),
