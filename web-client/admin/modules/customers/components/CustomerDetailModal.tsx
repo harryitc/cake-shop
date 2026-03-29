@@ -39,6 +39,7 @@ import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { getAvatarUrl } from "@/lib/utils";
 import { CustomerModel } from "../mapper";
+import { IOrder } from "../../orders/types";
 
 const { Title, Text } = Typography;
 
@@ -74,7 +75,7 @@ const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
 
   if (!customer) return null;
 
-  const orders = ordersData?.items || [];
+  const orders: IOrder[] = ordersData?.items || [];
   const pointHistory = pointsData?.items || [];
 
   const getRankColor = (rank: string) => {
@@ -284,13 +285,13 @@ const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                         <Card size="small" bodyStyle={{ padding: '12px' }} className="border-gray-100 bg-green-50">
                           <Statistic 
                             title={<span className="text-[11px] font-bold uppercase text-green-600">Thành công</span>} 
-                            value={orders.filter(o => o.status === 'DONE').length} 
+                            value={orders.filter((o: IOrder) => o.status === 'DONE').length} 
                             suffix={<span className="text-[10px] text-green-500 font-normal">đơn</span>}
                             valueStyle={{ fontSize: '18px', fontWeight: '800', color: '#52c41a' }}
                           />
                           <div className="mt-1 pt-1 border-t border-green-100">
                             <Text className="text-[11px] text-green-600 font-bold">
-                              {formatPrice(orders.filter(o => o.status === 'DONE').reduce((sum, o) => sum + (o.finalPrice || 0), 0))}
+                              {formatPrice(orders.filter((o: IOrder) => o.status === 'DONE').reduce((sum: number, o: IOrder) => sum + (o.finalPrice || 0), 0))}
                             </Text>
                           </div>
                         </Card>
@@ -299,13 +300,13 @@ const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                         <Card size="small" bodyStyle={{ padding: '12px' }} className="border-gray-100 bg-orange-50">
                           <Statistic 
                             title={<span className="text-[11px] font-bold uppercase text-orange-500">Đang xử lý</span>} 
-                            value={orders.filter(o => ['PENDING', 'CONFIRMED'].includes(o.status)).length} 
+                            value={orders.filter((o: IOrder) => ['PENDING', 'CONFIRMED'].includes(o.status)).length} 
                             suffix={<span className="text-[10px] text-orange-400 font-normal">đơn</span>}
                             valueStyle={{ fontSize: '18px', fontWeight: '800', color: '#faad14' }}
                           />
                           <div className="mt-1 pt-1 border-t border-orange-100">
                             <Text className="text-[11px] text-orange-600 font-bold">
-                              {formatPrice(orders.filter(o => ['PENDING', 'CONFIRMED'].includes(o.status)).reduce((sum, o) => sum + (o.finalPrice || 0), 0))}
+                              {formatPrice(orders.filter((o: IOrder) => ['PENDING', 'CONFIRMED'].includes(o.status)).reduce((sum: number, o: IOrder) => sum + (o.finalPrice || 0), 0))}
                             </Text>
                           </div>
                         </Card>
@@ -314,7 +315,7 @@ const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                         <Card size="small" bodyStyle={{ padding: '12px' }} className="border-gray-100 bg-red-50">
                           <Statistic 
                             title={<span className="text-[11px] font-bold uppercase text-red-500">Đã hủy</span>} 
-                            value={orders.filter(o => o.status === 'REJECTED').length} 
+                            value={orders.filter((o: IOrder) => o.status === 'REJECTED').length} 
                             valueStyle={{ fontSize: '18px', fontWeight: '800', color: '#f5222d' }}
                           />
                         </Card>

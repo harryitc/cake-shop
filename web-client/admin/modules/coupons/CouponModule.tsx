@@ -22,8 +22,8 @@ const couponSchema = z.object({
   max_discount_value: z.number().optional(),
   start_date: z.any(),
   end_date: z.any(),
-  usage_limit: z.number({ required_error: "Vui lòng nhập tổng lượt dùng", invalid_type_error: "Vui lòng nhập số"}).min(1, 'Giới hạn sử dụng phải ít nhất là 1'),
-  usage_limit_per_user: z.number({ required_error: "Vui lòng nhập giới hạn cho mỗi người dùng", invalid_type_error: "Vui lòng nhập số"}).min(1, 'Giới hạn mỗi người dùng phải ít nhất là 1'),
+  usage_limit: z.number().min(1, 'Giới hạn sử dụng phải ít nhất là 1'),
+  usage_limit_per_user: z.number().min(1, 'Giới hạn mỗi người dùng phải ít nhất là 1'),
   applicable_categories: z.array(z.string()).optional(),
   is_active: z.boolean().default(true),
 });
@@ -36,7 +36,7 @@ const CouponModule: React.FC = () => {
 
   const { data: coupons, isLoading } = useCouponsQuery();
   const { data: categories } = useCategoriesQuery();
-  
+
   const createMutation = useCreateCouponMutation();
   const updateMutation = useUpdateCouponMutation();
   const deleteMutation = useDeleteCouponMutation();
@@ -199,9 +199,9 @@ const CouponModule: React.FC = () => {
             </Title>
             <Text type="secondary">Quản lý mã khuyến mãi và ưu đãi khách hàng</Text>
           </div>
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
             onClick={handleAdd}
             size="large"
             className="rounded-lg h-11 px-6 bg-black hover:bg-gray-800 border-none"
@@ -212,10 +212,10 @@ const CouponModule: React.FC = () => {
 
         <Divider className="my-4" />
 
-        <Table 
-          columns={columns} 
-          dataSource={coupons} 
-          rowKey="id" 
+        <Table
+          columns={columns}
+          dataSource={coupons}
+          rowKey="id"
           loading={isLoading}
           pagination={{ pageSize: 10 }}
         />

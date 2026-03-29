@@ -32,7 +32,7 @@ const CategoryModule: React.FC = () => {
   const deleteMutation = useDeleteCategoryMutation();
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm<CategoryFormValues>({
-    resolver: zodResolver(categorySchema),
+    resolver: zodResolver(categorySchema) as any,
     defaultValues: { name: '', description: '', image_url: '', type: 'OTHER', is_featured: false }
   });
 
@@ -122,13 +122,13 @@ const CategoryModule: React.FC = () => {
       dataIndex: 'image_url',
       key: 'image_url',
       render: (url: string) => (
-        <Image 
-          src={getImageUrl(url)} 
+        <Image
+          src={getImageUrl(url)}
           fallback="https://placehold.co/100x100?text=No+Img"
-          alt="category" 
-          width={40} 
-          height={40} 
-          className="rounded-lg object-cover border border-gray-100" 
+          alt="category"
+          width={40}
+          height={40}
+          className="rounded-lg object-cover border border-gray-100"
         />
       ),
     },
@@ -145,9 +145,9 @@ const CategoryModule: React.FC = () => {
       align: 'right' as const,
       render: (_: any, record: any) => (
         <Space size="middle">
-          <Button 
-            type="text" 
-            icon={<EditOutlined style={{ color: '#1890ff' }} />} 
+          <Button
+            type="text"
+            icon={<EditOutlined style={{ color: '#1890ff' }} />}
             onClick={() => handleEdit(record)}
             className="hover:bg-blue-50"
           />
@@ -158,10 +158,10 @@ const CategoryModule: React.FC = () => {
             cancelText="Hủy"
             okButtonProps={{ danger: true }}
           >
-            <Button 
-              type="text" 
-              danger 
-              icon={<DeleteOutlined />} 
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined />}
               className="hover:bg-red-50"
             />
           </Popconfirm>
@@ -181,9 +181,9 @@ const CategoryModule: React.FC = () => {
             </Title>
             <Text type="secondary" className="font-medium text-gray-400">Quản lý các nhóm sản phẩm bánh của cửa hàng</Text>
           </div>
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
             onClick={handleAdd}
             size="large"
             className="rounded-xl h-11 px-6 bg-black hover:bg-gray-800 border-none shadow-lg shadow-gray-200"
@@ -194,10 +194,10 @@ const CategoryModule: React.FC = () => {
 
         <Divider className="my-4 border-gray-50" />
 
-        <Table 
-          columns={columns} 
-          dataSource={categories} 
-          rowKey="id" 
+        <Table
+          columns={columns}
+          dataSource={categories}
+          rowKey="id"
           loading={isLoading}
           pagination={{ pageSize: 10 }}
           className="ant-table-custom"
