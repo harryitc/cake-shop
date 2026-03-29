@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Input, Skeleton, Empty, Select, Checkbox, Slider, Tag, Badge, Divider, Button, Space } from "antd";
-import { useCakesQuery } from "../hooks";
+import { useState } from "react";
+import { Input, Skeleton, Empty, Select, Checkbox, Slider, Divider, Button } from "antd";
+import { useCakesQuery, useCategoriesQuery } from "../hooks";
 import { CakeCard } from "./CakeCard";
-import { httpClient } from "@/lib/http";
 import { FilterOutlined, CloseOutlined, SearchOutlined, RocketOutlined } from "@ant-design/icons";
 import { useDebounce } from "../../../hooks/use-debounce";
 
@@ -20,20 +19,10 @@ export const CakeList = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000000]);
   const [selectedSort, setSelectedSort] = useState("newest");
-  const [categories, setCategories] = useState<Category[]>([]);
   const [showMobileFilter, setShowMobileFilter] = useState(false);
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const data = await httpClient<Category[]>('/categories');
-        setCategories(data);
-      } catch (err) {
-        console.error('Lỗi khi tải danh mục:', err);
-      }
-    };
-    fetchCategories();
-  }, []);
+  const { data: categoriesData } = useCategoriesQuery();
+  const categories: Category[] = categoriesData || [];
 
   const { data, isLoading, isError } = useCakesQuery({
     search: debouncedSearch,
@@ -176,12 +165,10 @@ export const CakeList = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
-        {/* Sidebar for Desktop */}
         <aside className="hidden lg:block lg:col-span-1">
           {renderFilterSidebar()}
         </aside>
 
-        {/* Main Content */}
         <main className="lg:col-span-3">
           <div className="mb-10 flex flex-col sm:flex-row justify-between items-center gap-6">
             <div className="w-full sm:w-auto">
@@ -211,7 +198,6 @@ export const CakeList = () => {
                    { value: 'rating', label: <span className="font-bold text-gray-700">Đánh giá cao</span> },
                  ]}
                />
-               {/* Nút này chỉ hiện trên Mobile/Tablet (< 1024px) */}
                <div className="lg:hidden flex items-center">
                  <Button 
                   icon={<FilterOutlined />} 
@@ -246,7 +232,6 @@ export const CakeList = () => {
         </main>
       </div>
 
-      {/* Mobile Filter Modal */}
       {showMobileFilter && (
         <div className="fixed inset-0 z-50 lg:hidden flex flex-col bg-white">
           <div className="p-4 flex justify-between items-center border-b">

@@ -6,24 +6,20 @@ import * as z from "zod";
 import { Form, Input, InputNumber, App, Upload, Button, Select, Divider, Tag, Modal, Skeleton } from "antd";
 import { 
   PlusOutlined, 
-  UploadOutlined, 
   LoadingOutlined, 
   MinusCircleOutlined, 
-  BulbOutlined, 
-  ThunderboltOutlined,
-  CloseOutlined,
   InfoCircleOutlined,
   DollarCircleOutlined,
   PictureOutlined,
   TagsOutlined,
   EyeOutlined,
-  ArrowRightOutlined,
-  LeftOutlined
+  LeftOutlined,
+  CakeOutlined
 } from "@ant-design/icons";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useCreateCakeMutation, useUpdateCakeMutation, useUploadImageMutation } from "../hooks";
+import { useCategoriesQuery } from "../../categories/hooks";
 import { ICake } from "../types";
-import { httpClient } from "@/lib/http";
 import { API_DOMAIN } from "@/lib/configs";
 import { useRouter } from "next/navigation";
 
@@ -107,11 +103,6 @@ const QUICK_PHRASES = [
   "Không chất bảo quản."
 ];
 
-interface Category {
-  _id: string;
-  name: string;
-}
-
 interface CakeStudioFormProps {
   initialData?: ICake | null;
   loading?: boolean;
@@ -129,11 +120,13 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
   const { message } = App.useApp();
   const isEditing = !!initialData;
   const [activeSection, setActiveSection] = useState('section-basic');
-  const [categories, setCategories] = useState<Category[]>([]);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isScrollingRef = useRef(false);
+
+  const { data: categoriesData, isLoading: categoriesLoading } = useCategoriesQuery();
+  const categories = categoriesData || [];
 
   const { mutate: createCake, isPending: isCreating } = useCreateCakeMutation();
   const { mutate: updateCake, isPending: isUpdating } = useUpdateCakeMutation();
@@ -177,7 +170,7 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
     if (isScrollingRef.current || !scrollContainerRef.current) return;
 
     const container = scrollContainerRef.current;
-    const scrollPos = container.scrollTop + 100; // offset
+    const scrollPos = container.scrollTop + 100;
 
     for (const section of SECTIONS) {
       const element = document.getElementById(section.id);
@@ -205,18 +198,6 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
   };
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const data = await httpClient<Category[]>('/categories');
-        setCategories(data);
-      } catch (err) {
-        console.error('Lỗi khi tải danh mục:', err);
-      }
-    };
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
       if (initialData) {
         const path = (initialData.imageUrl || "").startsWith("http") && !initialData.imageUrl.includes(API_DOMAIN)
           ? initialData.imageUrl
@@ -226,8 +207,8 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
 
         reset({
           name: initialData.name,
-          category: (initialData as any).category?._id || (initialData as any).category || "",
-          categories: (initialData.categories || []).map(c => typeof c === 'object' ? (c as any)._id : c),
+          category: (initialData as any).category?.id || (initialData as any).category?._id || (initialData as any).category || "",
+          categories: (initialData.categories || []).map(c => typeof c === 'object' ? (c as any).id || (c as any)._id : c),
           description: initialData.description || "",
           price: initialData.price,
           stock: initialData.stock || 0,
@@ -254,7 +235,9 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
         setValue("image_url", data.path, { shouldDirty: true });
         message.success("Upload ảnh thành công");
       },
-      onError: (err) => message.error(err.message || "Upload ảnh thất bại"),
+      onError: (err) => {
+        if (err.statuscode === 422) message.error(err.message);
+      },
     });
     return false;
   };
@@ -268,7 +251,9 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
           message.success("Cập nhật bánh thành công");
           router.push("/admin/cakes");
         },
-        onError: (err) => message.error(err.message || "Lỗi cập nhật"),
+        onError: (err) => {
+          if (err.statuscode === 422) message.error(err.message);
+        },
       });
     } else {
       createCake(payload as any, {
@@ -276,16 +261,17 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
           message.success("Thêm bánh mới thành công");
           router.push("/admin/cakes");
         },
-        onError: (err) => message.error(err.message || "Lỗi thêm mới"),
+        onError: (err) => {
+          if (err.statuscode === 422) message.error(err.message);
+        },
       });
     }
   };
 
-  if (loading) return <div className="bg-white p-20 rounded-2xl"><Skeleton active paragraph={{ rows: 20 }} /></div>;
+  if (loading || categoriesLoading) return <div className="bg-white p-20 rounded-2xl"><Skeleton active paragraph={{ rows: 20 }} /></div>;
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 overflow-hidden font-sans">
-      {/* Page Header */}
       <header className="h-14 bg-white border-b border-gray-100 flex items-center justify-between px-6 shrink-0 shadow-sm z-10 transition-all">
         <div className="flex items-center gap-4">
           <Button 
@@ -317,7 +303,6 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
       </header>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar Nav */}
         <aside className="w-60 bg-white border-r border-gray-100 p-4 flex flex-col gap-1 shrink-0 overflow-y-auto">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 px-2">Phân đoạn thiết kế</p>
           {SECTIONS.map(s => (
@@ -337,7 +322,6 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
           ))}
         </aside>
 
-        {/* Content Area */}
         <main 
             ref={scrollContainerRef}
             onScroll={handleScroll}
@@ -345,7 +329,6 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
         >
           <div className="max-w-2xl mx-auto pb-96">
             <Form layout="vertical">
-              {/* SECTION: BASIC INFO */}
               <div id="section-basic" className="scroll-mt-6 mb-24">
                   <div className={`p-8 rounded-[24px] border transition-all duration-500 bg-white ${activeSection === 'section-basic' ? 'border-indigo-200 shadow-xl shadow-indigo-500/5' : 'border-transparent shadow-sm'}`}>
                     <div className="flex justify-between items-start mb-8">
@@ -376,19 +359,18 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
                     <div className="grid grid-cols-2 gap-6">
                       <Form.Item label={<span className="font-bold text-gray-700 text-[12px] px-1 tracking-tight">DANH MỤC CỐT LÕI</span>} validateStatus={errors.category ? "error" : ""} help={errors.category?.message} required className="mb-0">
                         <Controller name="category" control={control} render={({ field }) => (
-                          <Select {...field} placeholder="Chọn danh mục" size="large" className="rounded-lg w-full h-10 custom-studio-select-v4" options={categories.map(c => ({ label: c.name, value: c._id }))} />
+                          <Select {...field} placeholder="Chọn danh mục" size="large" className="rounded-lg w-full h-10 custom-studio-select-v4" options={categories.map(c => ({ label: c.name, value: c.id }))} />
                         )} />
                       </Form.Item>
                       <Form.Item label={<span className="font-bold text-gray-700 text-[12px] px-1 tracking-tight">DANH MỤC LIÊN QUAN</span>} className="mb-0">
                         <Controller name="categories" control={control} render={({ field }) => (
-                          <Select {...field} mode="multiple" placeholder="Gắn nhãn phụ" size="large" className="rounded-lg w-full h-10 custom-studio-select-v4" options={categories.map(c => ({ label: c.name, value: c._id }))} />
+                          <Select {...field} mode="multiple" placeholder="Gắn nhãn phụ" size="large" className="rounded-lg w-full h-10 custom-studio-select-v4" options={categories.map(c => ({ label: c.name, value: c.id }))} />
                         )} />
                       </Form.Item>
                     </div>
                   </div>
               </div>
 
-              {/* SECTION: PRICING */}
               <div id="section-pricing" className="scroll-mt-6 mb-24">
                   <div className={`p-8 rounded-[24px] border transition-all duration-500 bg-white ${activeSection === 'section-pricing' ? 'border-emerald-200 shadow-xl shadow-emerald-500/5' : 'border-transparent shadow-sm'}`}>
                     <h2 className="text-lg font-bold text-gray-900 mb-8">02. Thiết lập Giá & Tồn kho</h2>
@@ -420,7 +402,6 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
                   </div>
               </div>
 
-              {/* SECTION: MEDIA */}
               <div id="section-media" className="scroll-mt-6 mb-24">
                   <div className={`p-8 rounded-[24px] border transition-all duration-500 bg-white ${activeSection === 'section-media' ? 'border-amber-200 shadow-xl shadow-amber-500/5' : 'border-transparent shadow-sm'}`}>
                     <h2 className="text-lg font-bold text-gray-900 mb-8">03. Nội dung & Hình ảnh</h2>
@@ -436,7 +417,7 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
                         )}
                       </Upload>
                       <div className="flex-1 space-y-4">
-                        <Form.Item label={<span className="font-bold text-gray-700 text-[12px] px-1 tracking-tight">LIÊN KẾT HÌNH ẢNH DỰ PHÒNG</span>} className="mb-0">
+                        <Form.Item label={<span className="font-bold text-gray-700 text-[12px] px-1 tracking-tight">LIÊN KẾT HÌNH ÁNH DỰ PHÒNG</span>} className="mb-0">
                           <Controller name="image_url" control={control} render={({ field }) => <Input {...field} placeholder="https://cloud.com/image.jpg" className="rounded-lg h-9 bg-gray-50 border-gray-100 text-[11px] font-bold shadow-none focus:bg-white" />} />
                         </Form.Item>
                         <p className="text-[10px] text-gray-400 font-bold italic leading-relaxed">Ghi chú: Ảnh chính là yếu tố tiên quyết thu hút ánh nhìn đầu tiên của khách hàng.</p>
@@ -466,7 +447,6 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
                   </div>
               </div>
 
-              {/* SECTION: ATTRIBUTES */}
               <div id="section-attributes" className="scroll-mt-6">
                   <div className={`p-8 rounded-[24px] border transition-all duration-500 bg-white ${activeSection === 'section-attributes' ? 'border-purple-200 shadow-xl shadow-purple-500/5' : 'border-transparent shadow-sm'}`}>
                     <h2 className="text-lg font-bold text-gray-900 mb-8">04. Thông số kỹ thuật & Thẻ</h2>
@@ -497,7 +477,6 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
           </div>
         </main>
 
-        {/* Preview Panel */}
         <aside className="w-80 bg-white border-l border-gray-100 p-6 flex flex-col items-center shrink-0 overflow-y-auto">
           <div className="w-full flex justify-between items-center mb-8">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Mobile Preview</span>
@@ -510,7 +489,6 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
             onClick={() => setIsPreviewModalOpen(true)}
             className="w-full aspect-[1/1.6] rounded-[40px] border-[8px] border-gray-900 shadow-2xl relative overflow-hidden flex flex-col bg-white cursor-pointer hover:shadow-indigo-500/10 transition-all duration-500 group/phone"
           >
-            {/* Notch */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-5 bg-gray-900 rounded-b-[14px] z-10" />
             
             <div className="flex-1 overflow-y-auto no-scrollbar">
@@ -584,14 +562,13 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
-      {/* Detail Preview Modal */}
       <Modal
         open={isPreviewModalOpen}
         onCancel={() => setIsPreviewModalOpen(false)}
         footer={null}
         width={1000}
         centered
-        bodyStyle={{ padding: 0, borderRadius: '32px', overflow: 'hidden' }}
+        styles={{ body: { padding: 0, borderRadius: '32px', overflow: 'hidden' } }}
       >
         <div className="flex flex-col md:flex-row min-h-[600px]">
             <div className="md:w-1/2 bg-gray-50 relative">
