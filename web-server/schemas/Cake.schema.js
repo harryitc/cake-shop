@@ -26,6 +26,10 @@ const cakeSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    model_url: {
+      type: String,
+      default: '',
+    },
     slug: {
       type: String,
       unique: true,

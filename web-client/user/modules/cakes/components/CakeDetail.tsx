@@ -4,14 +4,16 @@ import { useCakeQuery, useCakeReviewsQuery } from "../hooks";
 import { AddToCartBtn } from "../../cart/components/AddToCartBtn";
 import { Skeleton, Breadcrumb, Rate, Avatar, Empty, Pagination, Tag, Divider, Radio, Space, Button, message, Flex } from "antd";
 import Link from "next/link";
-import { ArrowLeftOutlined, UserOutlined, InfoCircleOutlined, HeartOutlined, HeartFilled, StarOutlined } from "@ant-design/icons";
+import { ArrowLeftOutlined, UserOutlined, InfoCircleOutlined, HeartOutlined, HeartFilled, StarOutlined, FormatPainterOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import { useWishlist } from "../../../hooks/use-wishlist";
 import { useMeQuery } from "../../auth/hooks";
 import { useLoyaltyQuery } from "../../loyalty/hooks";
 import { getAvatarUrl, getImageUrl } from "@/lib/utils";
+import { CakeModelViewer } from "./CakeModelViewer";
 
 export const CakeDetail = ({ id }: { id: string }) => {
+  const [viewMode, setViewMode] = useState<'3d' | '2d'>('2d');
   const [page, setPage] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const { data: cake, isLoading, isError } = useCakeQuery(id);
@@ -66,18 +68,27 @@ export const CakeDetail = ({ id }: { id: string }) => {
 
       <div className="bg-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6 md:p-12 flex flex-col md:flex-row gap-12 overflow-hidden relative">
         <div className="w-full md:w-1/2 relative group">
-          <div className="absolute top-4 left-4 z-10 flex flex-wrap gap-2">
+          <div className="absolute top-4 left-4 z-20 flex flex-wrap gap-2">
             {cake.tags.map((tag, idx) => (
               <span key={idx} className="bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-black text-indigo-600 shadow-sm border border-indigo-100 uppercase tracking-wider">
                 {tag}
               </span>
             ))}
           </div>
-          <img
-            src={getImageUrl(cake.imageUrl)}
-            alt={cake.name}
-            className="w-full aspect-square rounded-[24px] object-cover shadow-2xl shadow-indigo-100/50 group-hover:scale-[1.02] transition-transform duration-500"
-          />
+
+
+
+          {viewMode === '3d' && cake.modelUrl ? (
+            <div className="w-full aspect-square rounded-[24px] overflow-hidden shadow-2xl shadow-indigo-100/50">
+              <CakeModelViewer modelUrl={cake.modelUrl} />
+            </div>
+          ) : (
+            <img
+              src={getImageUrl(cake.imageUrl)}
+              alt={cake.name}
+              className="w-full aspect-square rounded-[24px] object-cover shadow-2xl shadow-indigo-100/50 group-hover:scale-[1.02] transition-transform duration-500"
+            />
+          )}
         </div>
 
         <div className="w-full md:w-1/2 flex flex-col">
@@ -165,7 +176,22 @@ export const CakeDetail = ({ id }: { id: string }) => {
             </div>
           </div>
 
-          <div className="mt-auto flex flex-col sm:flex-row gap-4">
+          <div className="mt-auto flex flex-col sm:flex-row gap-3">
+            {cake.modelUrl && (
+              <Button 
+                type="default" 
+                icon={viewMode === '3d' ? <ArrowLeftOutlined /> : <FormatPainterOutlined />} 
+                className="h-16 rounded-[20px] font-black border-2 border-indigo-100 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white flex items-center justify-center gap-2 px-6 shadow-sm flex-none transition-all duration-300"
+                onClick={() => {
+                   setViewMode(viewMode === '3d' ? '2d' : '3d');
+                   if (viewMode === '2d') {
+                     window.scrollTo({ top: 0, behavior: 'smooth' });
+                   }
+                }}
+              >
+                {viewMode === '3d' ? "QUAY LẠI ẢNH" : "THIẾT KẾ 3D"}
+              </Button>
+            )}
             {currentStock > 0 ? (
               <AddToCartBtn 
                 cakeId={cake.id} 
@@ -173,12 +199,12 @@ export const CakeDetail = ({ id }: { id: string }) => {
                 className="flex-grow h-16 rounded-[20px] bg-indigo-600 hover:bg-indigo-700 text-lg font-black shadow-xl shadow-indigo-200 border-none flex items-center justify-center gap-3"
               />
             ) : (
-              <div className="w-full py-5 text-center bg-gray-100 text-gray-400 font-black rounded-[20px] cursor-not-allowed uppercase tracking-widest text-sm">
+              <div className="flex-grow py-5 text-center bg-gray-100 text-gray-400 font-black rounded-[20px] cursor-not-allowed uppercase tracking-widest text-sm flex items-center justify-center">
                 Sản phẩm tạm thời hết hàng
               </div>
             )}
             <Button 
-              className={`h-16 w-16 rounded-[20px] border-2 flex items-center justify-center transition-all ${isLiked(cake.id) ? 'border-red-500 text-red-500 bg-red-50' : 'border-indigo-100 text-indigo-600 hover:border-indigo-600'}`}
+              className={`h-16 w-16 rounded-[20px] border-2 flex items-center justify-center transition-all shrink-0 ${isLiked(cake.id) ? 'border-red-500 text-red-500 bg-red-50' : 'border-gray-200 text-gray-400 hover:border-indigo-600 hover:text-indigo-600'}`}
               loading={isPending}
               onClick={() => {
                 if (!user) {
