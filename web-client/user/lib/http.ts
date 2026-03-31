@@ -1,7 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { notification, message as antdMessage } from "antd";
 import { API_BASE_URL } from "./configs";
-import { globalNavigate } from "./navigation";
 
 /**
  * Token Management: Centralized Access
@@ -56,7 +55,7 @@ httpClient.interceptors.request.use(
     if (typeof window !== "undefined") {
       const requestId = `${config.method}:${config.url}:${Date.now()}`;
       (config as any).metadata = { requestId };
-      
+
       const timer = setTimeout(() => {
         antdMessage.loading({
           content: "Hệ thống đang xử lý, vui lòng đợi...",
@@ -64,7 +63,7 @@ httpClient.interceptors.request.use(
           duration: 0, // Không tự động tắt
         });
       }, SLOW_REQUEST_THRESHOLD);
-      
+
       slowRequestTimers.set(requestId, timer);
     }
 
@@ -110,11 +109,11 @@ httpClient.interceptors.response.use(
 
     // ISSUE C: Chống lặp thông báo (5s cooldown)
     const isGlobalError = status >= 500 || status === 403 || status === 0 || error.code === 'ECONNABORTED';
-    
+
     if (isGlobalError && typeof window !== "undefined") {
       if (!activeErrorMessages.has(messageText)) {
         activeErrorMessages.add(messageText);
-        
+
         notification.error({
           message: 'Lỗi Hệ Thống',
           description: messageText,
@@ -133,7 +132,7 @@ httpClient.interceptors.response.use(
       authStorage.removeToken();
       // Tránh lặp vô tận nếu đang ở trang login
       if (!window.location.pathname.includes("/login")) {
-        globalNavigate("/login");
+        window.location.href = "/login";
       }
     }
 
