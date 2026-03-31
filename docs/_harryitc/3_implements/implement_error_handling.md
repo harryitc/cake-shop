@@ -1,8 +1,8 @@
 ---
 title: Hướng dẫn Triển khai Chi tiết - Hệ thống Xử lý Lỗi Thống nhất
 status: Approved
-version: 1.3.0
-date: 2026-03-29
+version: 1.3.1
+date: 2026-03-31
 author: Gemini CLI
 architecture_ref: "docs/_harryitc/3_architecture/11_error_handling_design.md"
 prd_ref: "docs/_harryitc/2_prd/prd_v6_error_handling.md"
@@ -38,22 +38,37 @@ Logic bóc tách thông tin và bảo mật theo môi trường:
 
 ```javascript
 const errorHandler = (err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
+  let statusCode = err.statusCode || 500;
+  let code = err.code || 'INTERNAL_ERROR';
+  const originalMessage = err.message || 'Unknown Error';
   const isProd = process.env.NODE_ENV === 'production';
+
+  // Ép lỗi bất ngờ về Logic Error (422)
+  if (statusCode === 500) {
+    statusCode = 422;
+    code = 'LOGIC_ERROR';
+  }
 
   const errorBody = {
     error: {
-      code: err.code || 'INTERNAL_ERROR',
+      code,
       statuscode: statusCode,
       timestamp: err.timestamp || new Date().toISOString(),
-      message: (statusCode === 500 && isProd) 
-               ? 'Máy chủ hiện đang bận, vui lòng thử lại sau.' 
+      path: req.originalUrl,
+      message: (code === 'LOGIC_ERROR') 
+               ? 'Hệ thống gặp sự cố nghiệp vụ, vui lòng thử lại sau.' 
                : err.message,
       details: err.details || null
     }
   };
 
-  if (!isProd) console.error(`[ERROR] ${err.code}:`, err.message);
+  // Log lỗi thực tế ở server cho developer
+  if (code === 'LOGIC_ERROR') {
+    console.error(`[LOGIC ERROR at ${req.originalUrl}]:`, originalMessage);
+    if (err.stack) console.error(err.stack);
+  } else if (!isProd) {
+    console.error(`[ERROR] ${code}:`, err.message);
+  }
 
   res.status(statusCode).json(errorBody);
 };

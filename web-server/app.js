@@ -7,7 +7,7 @@ const logger = require('morgan');
 
 const connectDB = require('./config/db.config');
 const errorHandler = require('./middlewares/error-handler');
-const { createError } = require('./utils/response.utils');
+const ApiError = require('./utils/error.factory');
 
 // Kết nối MongoDB
 connectDB();
@@ -47,7 +47,7 @@ const { HTTP_STATUS, ERROR_CODES } = require('./config/constants');
 
 // ─── 404 Handler ──────────────────────────────────────────────────────────────
 app.use((req, res, next) => {
-  next(createError('Route không tồn tại', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND));
+  throw ApiError.NOT_FOUND('Route không tồn tại');
 });
 
 // ─── Global Error Handler (phải đứng cuối cùng) ───────────────────────────────
