@@ -1,7 +1,8 @@
 const Joi = require('joi');
 const orderService = require('../services/order.service');
-const { sendSuccess, createError } = require('../utils/response.utils');
-const { HTTP_STATUS, ERROR_CODES, ORDER_STATUS } = require('../config/constants');
+const { sendSuccess } = require('../utils/response.utils');
+const ApiError = require('../utils/error.factory');
+const { HTTP_STATUS, ORDER_STATUS } = require('../config/constants');
 
 const createOrderSchema = Joi.object({
   address: Joi.string().trim().required().messages({
@@ -26,59 +27,43 @@ const updateStatusSchema = Joi.object({
   }),
 });
 
-const createOrder = async (req, res, next) => {
-  try {
-    const { error, value } = createOrderSchema.validate(req.body);
-    if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
+const createOrder = async (req, res) => {
+  const { error, value } = createOrderSchema.validate(req.body, { abortEarly: false });
+  if (error) throw ApiError.BAD_REQUEST(error.details[0].message, error.details);
 
-    const order = await orderService.createOrder(
-      req.user.userId, 
-      value.address, 
-      value.coupon_code,
-      value.points_to_use
-    );
-    return sendSuccess(res, { order }, 'Đặt hàng thành công', HTTP_STATUS.CREATED);
-  } catch (err) {
-    next(err);
-  }
+  const order = await orderService.createOrder(
+    req.user.userId, 
+    value.address, 
+    value.coupon_code,
+    value.points_to_use
+  );
+  return sendSuccess(res, { order }, 'Đặt hàng thành công', HTTP_STATUS.CREATED);
 };
 
-const getOrders = async (req, res, next) => {
-  try {
-    // Admin có thể truyền userId qua query để lọc
-    const targetUserId = req.user.role === 'admin' ? req.query.userId : req.user.userId;
-    const data = await orderService.getOrders(targetUserId, req.user.role);
-    return sendSuccess(res, data, 'Lấy danh sách đơn hàng thành công', HTTP_STATUS.OK);
-  } catch (err) {
-    next(err);
-  }
+const getOrders = async (req, res) => {
+  // Admin có thể truyền userId qua query để lọc
+  const targetUserId = req.user.role === 'admin' ? req.query.userId : req.user.userId;
+  const data = await orderService.getOrders(targetUserId, req.user.role);
+  return sendSuccess(res, data, 'Lấy danh sách đơn hàng thành công', HTTP_STATUS.OK);
 };
 
-const getOrderById = async (req, res, next) => {
-  try {
-    const { error: paramError, value: paramValue } = idParamSchema.validate(req.params);
-    if (paramError) throw createError(paramError.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
+const getOrderById = async (req, res) => {
+  const { error: paramError, value: paramValue } = idParamSchema.validate(req.params, { abortEarly: false });
+  if (paramError) throw ApiError.BAD_REQUEST(paramError.details[0].message, paramError.details);
 
-    const order = await orderService.getOrderById(paramValue.id, req.user.userId, req.user.role);
-    return sendSuccess(res, { order }, 'Lấy chi tiết đơn hàng thành công', HTTP_STATUS.OK);
-  } catch (err) {
-    next(err);
-  }
+  const order = await orderService.getOrderById(paramValue.id, req.user.userId, req.user.role);
+  return sendSuccess(res, { order }, 'Lấy chi tiết đơn hàng thành công', HTTP_STATUS.OK);
 };
 
-const updateStatus = async (req, res, next) => {
-  try {
-    const { error: paramError, value: paramValue } = idParamSchema.validate(req.params);
-    if (paramError) throw createError(paramError.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
+const updateStatus = async (req, res) => {
+  const { error: paramError, value: paramValue } = idParamSchema.validate(req.params, { abortEarly: false });
+  if (paramError) throw ApiError.BAD_REQUEST(paramError.details[0].message, paramError.details);
 
-    const { error: bodyError, value: bodyValue } = updateStatusSchema.validate(req.body);
-    if (bodyError) throw createError(bodyError.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
+  const { error: bodyError, value: bodyValue } = updateStatusSchema.validate(req.body, { abortEarly: false });
+  if (bodyError) throw ApiError.BAD_REQUEST(bodyError.details[0].message, bodyError.details);
 
-    const order = await orderService.updateStatus(paramValue.id, bodyValue.status);
-    return sendSuccess(res, { order }, 'Cập nhật trạng thái đơn hàng thành công', HTTP_STATUS.OK);
-  } catch (err) {
-    next(err);
-  }
+  const order = await orderService.updateStatus(paramValue.id, bodyValue.status);
+  return sendSuccess(res, { order }, 'Cập nhật trạng thái đơn hàng thành công', HTTP_STATUS.OK);
 };
 
 const exportExcel = async (req, res, next) => {

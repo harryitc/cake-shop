@@ -40,6 +40,25 @@ export const useAddToCartMutation = () => {
   });
 };
 
+export const useAddSyncToCartMutation = () => {
+  const queryClient = useQueryClient();
+  const isLoggedIn = useIsLoggedIn();
+  return useMutation({
+    mutationFn: async (payload: { cake_id: string; quantity: number; variant_id?: string | null }[]) => {
+      if (isLoggedIn) {
+        return cartApi.syncCart(payload);
+      } else {
+        for (const item of payload) {
+          addToLocalCart(item.cake_id, item.quantity, item.variant_id);
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+    },
+  });
+};
+
 export const useRemoveFromCartMutation = () => {
   const queryClient = useQueryClient();
   const isLoggedIn = useIsLoggedIn();

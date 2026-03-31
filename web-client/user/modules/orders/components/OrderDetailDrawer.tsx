@@ -4,7 +4,7 @@ import { Drawer, Tag, Divider, Button, Typography, Space, message } from "antd";
 import { ClockCircleOutlined, EnvironmentOutlined, WalletOutlined, StarOutlined, CrownOutlined, ShoppingOutlined, CloseOutlined } from "@ant-design/icons";
 import { IOrder } from "../types";
 import { API_DOMAIN } from "@/lib/configs";
-import { useAddToCartMutation } from "../../cart/hooks";
+import { useAddSyncToCartMutation } from "../../cart/hooks";
 import { useRouter } from "next/navigation";
 
 const { Text } = Typography;
@@ -18,7 +18,7 @@ interface OrderDetailDrawerProps {
 
 export const OrderDetailDrawer = ({ order, open, onClose, onReview }: OrderDetailDrawerProps) => {
   const router = useRouter();
-  const addToCartMutation = useAddToCartMutation();
+  const addToCartMutation = useAddSyncToCartMutation();
 
   if (!order) return null;
 
@@ -205,8 +205,8 @@ export const OrderDetailDrawer = ({ order, open, onClose, onReview }: OrderDetai
 
         <div className="grid grid-cols-2 gap-4 mt-4">
           <Button className="h-12 rounded-2xl font-black uppercase text-[11px] tracking-widest border-2 border-gray-100 text-gray-500">Hỗ trợ</Button>
-          <Button 
-            type="primary" 
+          <Button
+            type="primary"
             className="h-12 rounded-2xl font-black uppercase text-[11px] tracking-widest bg-indigo-600 shadow-lg shadow-indigo-200"
             onClick={handleBuyAgain}
             loading={addToCartMutation.isPending}

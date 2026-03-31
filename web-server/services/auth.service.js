@@ -11,7 +11,7 @@ const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
  * @param {Object} data - { email, password }
  * @returns {Object} { token, user }
  */
-const register = async ({ email, password }) => {
+const register = async ({ email, password, full_name, phone, birthday, address }) => {
   // Check duplicate
   const existingUser = await User.findOne({ email });
   if (existingUser) {
@@ -26,6 +26,10 @@ const register = async ({ email, password }) => {
   const user = await User.create({
     email,
     password_hash,
+    full_name,
+    phone,
+    birthday,
+    address,
     role: 'user', // force role user for public register
   });
 
