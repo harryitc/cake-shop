@@ -63,3 +63,9 @@ export const useUploadImageMutation = () => {
     mutationFn: cakeApi.uploadImage,
   });
 };
+
+export const useUploadModelMutation = () => {
+  return useMutation({
+    mutationFn: cakeApi.uploadModel,
+  });
+};

@@ -7,6 +7,7 @@ import { ConfigProvider, App } from "antd";
 import { useState } from "react";
 // Đăng ký theme antd ở đây để đồng bộ với website-design-system-token
 import { antdTheme } from "./antd-theme";
+import { NavigationObserver } from "@/components/common/NavigationObserver";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Đảm bảo chỉ khởi tạo QueryClient 1 lần mỗi session ở client
@@ -27,6 +28,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <AntdRegistry>
         <ConfigProvider theme={antdTheme}>
           <App>
+            <NavigationObserver />
             {children}
           </App>
         </ConfigProvider>

@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, Input, Button, App } from "antd";
 import { useLoginMutation } from "../hooks";
+import { useSyncCartMutation } from "@/modules/cart/hooks";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -22,7 +23,10 @@ const LoginFormContent = ({ mode = "user" }: { mode?: "user" | "admin" }) => {
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect");
 
-  const { mutate: login, isPending } = useLoginMutation();
+  const { mutate: login, isPending: isLoggingIn } = useLoginMutation();
+  const { mutate: syncCart, isPending: isSyncing } = useSyncCartMutation();
+
+  const isPending = isLoggingIn || isSyncing;
 
   const { control, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -42,7 +46,10 @@ const LoginFormContent = ({ mode = "user" }: { mode?: "user" | "admin" }) => {
           message.error("Tài khoản của bạn không có quyền Admin!");
           localStorage.removeItem("access_token");
         } else {
-          // Trang user - Ưu tiên quay lại trang trước đó nếu có redirect param
+          // Fire-and-forget: Chạy lệnh đồng bộ giỏ hàng dưới nền (Background Task)
+          syncCart();
+          
+          // Lập tức cho chuyển trang ngay để mang lại cảm giác mượt mà
           if (redirect) {
             router.push(decodeURIComponent(redirect));
           } else {

@@ -14,9 +14,6 @@ connectDB();
 
 const app = express();
 
-// ─── Static Files ─────────────────────────────────────────────────────────────
-app.use('/uploads', express.static('public/uploads'));
-
 // ─── Middlewares ──────────────────────────────────────────────────────────────
 const allowedOrigins = '*';
 // const allowedOrigins = process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',') : '*';
@@ -25,6 +22,10 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
+
+// ─── Static Files ─────────────────────────────────────────────────────────────
+app.use('/uploads', express.static('public/uploads'));
+
 app.use(logger('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
@@ -50,7 +51,7 @@ app.use((req, res, next) => {
   next(createError('Route không tồn tại', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND));
 });
 
-// ─── Global Error Handler (phải đứng cuối cùng) ───────────────────────────────
+// ─── Global Error Handler ───────────────────────────────
 app.use(errorHandler);
 
 module.exports = app;

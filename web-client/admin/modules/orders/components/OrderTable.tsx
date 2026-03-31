@@ -1,9 +1,11 @@
 "use client";
 
-import { Table, Select, message, Skeleton, Tag, Divider } from "antd";
+import { Table, Select, message, Skeleton, Tag, Divider, Button, Tooltip } from "antd";
+import { FileExcelOutlined } from "@ant-design/icons";
 import { useOrdersQuery, useUpdateOrderStatusMutation } from "../hooks";
 import { IOrder } from "../types";
 import { API_DOMAIN } from "@/lib/configs";
+import { httpClient } from "@/lib/http";
 import { useState } from "react";
 import { CakeDetailDrawer } from "../../cakes/components/CakeDetailDrawer";
 
@@ -11,9 +13,35 @@ import { CakeDetailDrawer } from "../../cakes/components/CakeDetailDrawer";
 export const OrderTable = () => {
   const [selectedCakeId, setSelectedCakeId] = useState<string | null>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data, isLoading, isError } = useOrdersQuery();
   const { mutate: updateStatus, isPending } = useUpdateOrderStatusMutation();
+
+  const handleExport = async (sortBy: string, order: "asc" | "desc") => {
+    try {
+      setIsExporting(true);
+      const response = await httpClient.get(`/orders/export?sortBy=${sortBy}&order=${order}`, {
+        responseType: "blob",
+      });
+      
+      const blob = new Blob([response as any], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `BAO_CAO_ORDERS_${Date.now()}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      message.success("Xuất file Excel thành công");
+    } catch (err: any) {
+      console.error("Export error:", err);
+      message.error(err.message || "Không thể xuất file");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const handleShowCakeDetail = (id: string) => {
     setSelectedCakeId(id);
@@ -119,6 +147,17 @@ export const OrderTable = () => {
           <h1 className="text-2xl font-black text-gray-900 tracking-tight">Quản Lý Đơn Hàng</h1>
           <p className="text-gray-400 font-medium mt-1">Lịch sử đơn hàng toàn hệ thống.</p>
         </div>
+        <Tooltip title="Tải báo cáo đơn hàng (Gồm thông tin khách và thanh toán)">
+          <Button 
+            icon={<FileExcelOutlined />} 
+            size="large"
+            className="border-gray-200 text-gray-600 hover:text-indigo-600 hover:border-indigo-200 font-bold rounded-xl h-12 px-6"
+            onClick={() => handleExport("createdAt", "desc")}
+            loading={isExporting}
+          >
+            Xuất Excel
+          </Button>
+        </Tooltip>
       </div>
 
       <div className="overflow-x-auto">

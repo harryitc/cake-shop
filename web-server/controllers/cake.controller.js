@@ -52,6 +52,7 @@ const createBodySchema = Joi.object({
   }),
   description: Joi.string().allow('').optional(),
   image_url: Joi.string().allow('').optional(),
+  model_url: Joi.string().allow('').optional(),
   variants: Joi.array().items(variantSchema).optional(),
   tags: Joi.array().items(Joi.string()).optional(),
   ingredients: Joi.array().items(Joi.string()).optional(),
@@ -69,6 +70,7 @@ const updateBodySchema = Joi.object({
   stock: Joi.number().min(0).optional(),
   description: Joi.string().allow('').optional(),
   image_url: Joi.string().allow('').optional(),
+  model_url: Joi.string().allow('').optional(),
   variants: Joi.array().items(variantSchema).optional(),
   tags: Joi.array().items(Joi.string()).optional(),
   ingredients: Joi.array().items(Joi.string()).optional(),
@@ -166,6 +168,28 @@ const remove = async (req, res, next) => {
   }
 };
 
+const exportExcel = async (req, res, next) => {
+  try {
+    const { sortBy, order } = req.query;
+    const sortOrder = order === 'desc' ? -1 : 1;
+    const workbook = await cakeService.exportExcel(sortBy, sortOrder);
+    
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename=' + `BAO_CAO_CAKES_${Date.now()}.xlsx`
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getAll,
   getById,
@@ -173,4 +197,5 @@ module.exports = {
   update,
   remove,
   importCakes,
+  exportExcel,
 };

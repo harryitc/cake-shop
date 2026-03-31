@@ -36,7 +36,7 @@ export const Header = () => {
   const handleLogout = () => {
     authStorage.removeToken();
     setToken(null);
-    window.location.href = "/login";
+    router.push("/login");
   };
 
   const getRankColor = (rank?: string) => {

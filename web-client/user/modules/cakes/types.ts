@@ -23,6 +23,7 @@ export interface ICakeDTO {
   price: number;
   stock?: number;
   image_url?: string;
+  model_url?: string;
   variants?: IVariant[];
   tags?: string[];
   ingredients?: string[];
@@ -47,6 +48,7 @@ export interface ICake {
   stock: number;
   formattedPrice: string;
   imageUrl: string;
+  modelUrl?: string;
   variants: IVariant[];
   tags: string[];
   ingredients: string[];

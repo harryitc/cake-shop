@@ -1,6 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { notification, message as antdMessage } from "antd";
 import { API_BASE_URL } from "./configs";
+import { globalNavigate } from "./navigation";
 
 /**
  * Token Management: Centralized Access
@@ -118,7 +119,7 @@ httpClient.interceptors.response.use(
       authStorage.removeToken();
       // Tránh lặp vô tận nếu đang ở trang login
       if (!window.location.pathname.includes("/login")) {
-        window.location.href = "/login";
+        globalNavigate("/login");
       }
     }
 

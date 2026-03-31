@@ -40,4 +40,14 @@ export const cakeApi = {
       }
     }) as any;
   },
+
+  uploadModel: (file: File) => {
+    const formData = new FormData();
+    formData.append("model", file);
+    return httpClient.post<{ path: string }>("/uploads/model", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      }
+    }) as any;
+  },
 };

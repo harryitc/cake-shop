@@ -51,6 +51,48 @@ const uploadImage = async (req, res, next) => {
   }
 };
 
+const uploadModel = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      throw createError('Vui lòng chọn file để tải lên', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
+    }
+
+    const ext = path.extname(req.file.originalname) || '.glb';
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const newFilename = `model-${uniqueSuffix}${ext}`;
+    const uploadDir = 'public/uploads/models/';
+    const fullPath = path.join(uploadDir, newFilename);
+
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    // Ghi thẳng buffer dạng nhị phân vào file
+    fs.writeFileSync(fullPath, req.file.buffer);
+
+    const fileInfo = {
+      filename_client: req.file.originalname,
+      filename_server: newFilename,
+      ext: ext,
+      size: req.file.size || Buffer.byteLength(req.file.buffer),
+      path: `/uploads/models/${newFilename}`,
+      domain: '',
+    };
+
+    const newFile = await FileSystem.create(fileInfo);
+
+    return sendSuccess(
+      res,
+      { path: newFile.path },
+      'Tải lên mô hình 3D thành công',
+      HTTP_STATUS.CREATED
+    );
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   uploadImage,
+  uploadModel,
 };
