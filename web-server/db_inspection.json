@@ -1,0 +1,261 @@
+{
+  "cakes": [
+    {
+      "_id": "69c4ea207cd8536031c72a13",
+      "name": "Bánh Chocolate Luxury dát vàng",
+      "description": "Đỉnh cao của sự sang trọng với chocolate đen nguyên chất và lớp dát vàng 24k.",
+      "price": 1500000,
+      "stock": 36,
+      "image_url": "/uploads/chocolate-luxury.png",
+      "slug": "banh-chocolate-luxury-dat-vang",
+      "__v": 0,
+      "createdAt": "2026-03-26T08:11:12.759Z",
+      "updatedAt": "2026-03-27T03:53:07.792Z",
+      "categories": [
+        "69c5ff239f5523435572524f"
+      ],
+      "category": "69c5ff239f5523435572524f",
+      "ingredients": [
+        "Bột mì",
+        "Đường",
+        "Trứng",
+        "Kem tươi",
+        "Socola Bỉ 70%"
+      ],
+      "specifications": {
+        "weight": "800g",
+        "servings": "4-10 người"
+      },
+      "tags": [
+        "Best Seller",
+        "Dark Chocolate",
+        "Premium"
+      ],
+      "variants": [
+        {
+          "size": "15cm (4-6 người)",
+          "price": 1500000,
+          "stock": 9,
+          "_id": "69c5ff237bb9359b5e17876a"
+        },
+        {
+          "size": "20cm (8-10 người)",
+          "price": 2400000,
+          "stock": 11,
+          "_id": "69c5ff237bb9359b5e17876b"
+        }
+      ]
+    },
+    {
+      "_id": "69c4ea207cd8536031c72a14",
+      "name": "Bánh Kem Dâu Tây Strawberry Dream",
+      "description": "Lớp kem tươi mịn màng kết hợp cùng dâu tây Đà Lạt tươi mọng nhất.",
+      "price": 550000,
+      "stock": 13,
+      "image_url": "/uploads/strawberry-cream.png",
+      "slug": "banh-kem-dau-tay-strawberry-dream",
+      "__v": 0,
+      "createdAt": "2026-03-26T08:11:12.761Z",
+      "updatedAt": "2026-03-27T03:53:07.792Z",
+      "categories": [
+        "69c5ff239f55234355725252"
+      ],
+      "category": "69c5ff239f55234355725252",
+      "ingredients": [
+        "Bột mì",
+        "Đường",
+        "Trứng",
+        "Kem tươi",
+        "Trái cây tươi theo mùa"
+      ],
+      "specifications": {
+        "weight": "800g",
+        "servings": "4-10 người"
+      },
+      "tags": [
+        "Best Seller",
+        "Fruit",
+        "Fresh"
+      ],
+      "variants": [
+        {
+          "size": "15cm (4-6 người)",
+          "price": 550000,
+          "stock": 18,
+          "_id": "69c5ff237bb9359b5e17876c"
+        },
+        {
+          "size": "20cm (8-10 người)",
+          "price": 880000,
+          "stock": 10,
+          "_id": "69c5ff237bb9359b5e17876d"
+        }
+      ]
+    },
+    {
+      "_id": "69c4ea207cd8536031c72a15",
+      "name": "Bánh Matcha Mille Crepe",
+      "description": "Hàng chục lớp bánh crepe mỏng tang xen kẽ lớp kem trà xanh Uji tinh khiết.",
+      "price": 680000,
+      "stock": 23,
+      "image_url": "/uploads/matcha-crepe.png",
+      "slug": "banh-matcha-mille-crepe",
+      "__v": 0,
+      "createdAt": "2026-03-26T08:11:12.761Z",
+      "updatedAt": "2026-03-27T03:53:07.792Z",
+      "categories": [
+        "69c5ff239f5523435572524e"
+      ],
+      "category": "69c5ff239f5523435572524e",
+      "ingredients": [
+        "Bột mì",
+        "Đường",
+        "Trứng",
+        "Kem tươi",
+        "Bột Matcha Uji"
+      ],
+      "specifications": {
+        "weight": "800g",
+        "servings": "4-10 người"
+      },
+      "tags": [
+        "Best Seller",
+        "Matcha Lover",
+        "Japanese Style"
+      ],
+      "variants": [
+        {
+          "size": "15cm (4-6 người)",
+          "price": 680000,
+          "stock": 16,
+          "_id": "69c5ff237bb9359b5e17876e"
+        },
+        {
+          "size": "20cm (8-10 người)",
+          "price": 1088000,
+          "stock": 5,
+          "_id": "69c5ff237bb9359b5e17876f"
+        }
+      ]
+    }
+  ],
+  "orders": [
+    {
+      "_id": "69c8cbae926a3a95f53719fb",
+      "user_id": "69c4e023fa1a5f2d3d794d1d",
+      "total_price": 2219000,
+      "coupon_code": "CAKE20JCJ3",
+      "discount_amount": 20000,
+      "points_used": 0,
+      "points_discount_amount": 0,
+      "points_earned": 109950,
+      "final_price": 2199000,
+      "status": "DONE",
+      "address": "581/35 Quang Trung, To 4 Phuong Nghia Chanh",
+      "items": [
+        {
+          "cake_id": "69c4ea207cd8536031c72abb",
+          "quantity": 1,
+          "variant_id": "69c5ff237bb9359b5e1788ba",
+          "variant_size": "15cm (4-6 người)",
+          "price_at_buy": 302000
+        },
+        {
+          "cake_id": "69c4ea207cd8536031c72abb",
+          "quantity": 1,
+          "variant_id": "69c5ff237bb9359b5e1788bb",
+          "variant_size": "20cm (8-10 người)",
+          "price_at_buy": 483000
+        },
+        {
+          "cake_id": "69c4ea207cd8536031c72ac7",
+          "quantity": 1,
+          "variant_id": "69c5ff237bb9359b5e1788d3",
+          "variant_size": "20cm (8-10 người)",
+          "price_at_buy": 1434000
+        }
+      ],
+      "createdAt": "2026-03-29T06:50:22.779Z",
+      "updatedAt": "2026-03-29T06:52:32.526Z",
+      "__v": 0
+    },
+    {
+      "_id": "69c8b027de6b96be4282fb70",
+      "user_id": "69c4e023fa1a5f2d3d794d1d",
+      "total_price": 2359000,
+      "coupon_code": "",
+      "discount_amount": 0,
+      "points_used": 0,
+      "points_discount_amount": 0,
+      "final_price": 2359000,
+      "status": "REJECTED",
+      "address": "581/35 Quang Trung, To 4 Phuong Nghia Chanh",
+      "items": [
+        {
+          "cake_id": "69c4ea207cd8536031c72a89",
+          "quantity": 1,
+          "variant_id": "69c5ff237bb9359b5e178856",
+          "variant_size": "15cm (4-6 người)",
+          "price_at_buy": 125000
+        },
+        {
+          "cake_id": "69c4ea207cd8536031c72abb",
+          "quantity": 1,
+          "variant_id": null,
+          "variant_size": "",
+          "price_at_buy": 302000
+        },
+        {
+          "cake_id": "69c4ea207cd8536031c72abb",
+          "quantity": 4,
+          "variant_id": "69c5ff237bb9359b5e1788bb",
+          "variant_size": "20cm (8-10 người)",
+          "price_at_buy": 483000
+        }
+      ],
+      "createdAt": "2026-03-29T04:52:55.283Z",
+      "updatedAt": "2026-03-29T06:16:53.070Z",
+      "__v": 0,
+      "points_earned": 0
+    },
+    {
+      "_id": "69c87705b8ddd60f1b2d0dab",
+      "user_id": "69c4e023fa1a5f2d3d794d1d",
+      "total_price": 3125000,
+      "coupon_code": "",
+      "discount_amount": 0,
+      "points_used": 0,
+      "points_discount_amount": 0,
+      "final_price": 3125000,
+      "status": "DONE",
+      "address": "581/35 Quang Trung, To 4 Phuong Nghia Chanh",
+      "items": [
+        {
+          "cake_id": "69c4ea207cd8536031c72abb",
+          "quantity": 4,
+          "variant_id": "69c5ff237bb9359b5e1788ba",
+          "variant_size": "15cm (4-6 người)",
+          "price_at_buy": 302000
+        },
+        {
+          "cake_id": "69c4ea207cd8536031c72abb",
+          "quantity": 1,
+          "variant_id": "69c5ff237bb9359b5e1788bb",
+          "variant_size": "20cm (8-10 người)",
+          "price_at_buy": 483000
+        },
+        {
+          "cake_id": "69c4ea207cd8536031c72ac7",
+          "quantity": 1,
+          "variant_id": "69c5ff237bb9359b5e1788d3",
+          "variant_size": "20cm (8-10 người)",
+          "price_at_buy": 1434000
+        }
+      ],
+      "createdAt": "2026-03-29T00:49:09.986Z",
+      "updatedAt": "2026-03-29T06:16:57.432Z",
+      "__v": 0,
+      "points_earned": 0
+    }
+  ]
+}

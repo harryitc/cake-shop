@@ -9,6 +9,7 @@ router.use(authenticate);
 
 router.post('/', orderLimiter, orderController.createOrder);
 router.get('/', orderController.getOrders);
+router.get('/export', requireRole('admin'), orderController.exportExcel);
 router.get('/:id', orderController.getOrderById);
 router.put('/:id', requireRole('admin'), orderController.updateStatus);
 

@@ -1,6 +1,7 @@
 const Cake = require('../schemas/Cake.schema');
 const { createError } = require('../utils/response.utils');
 const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
+const excelService = require('./excel.service');
 
 /**
  * Láy danh sách bánh (có phân trang và tìm kiếm theo tên)
@@ -135,10 +136,42 @@ const remove = async (id) => {
   return true;
 };
 
+/**
+ * Xuất danh sách bánh ra file Excel (Chỉ Admin)
+ * @returns {Promise<ExcelJS.Workbook>}
+ */
+const exportExcel = async (sortBy = 'name', sortOrder = 1) => {
+  const sortCriteria = {};
+  sortCriteria[sortBy] = sortOrder;
+
+  const cakes = await Cake.find()
+    .populate('category')
+    .sort(sortCriteria);
+
+  const columns = [
+    { header: 'Tên Bánh', key: 'name', width: 35 },
+    { header: 'Danh Mục', key: 'category_name', width: 25 },
+    { header: 'Giá Gốc (VNĐ)', key: 'price', width: 15 },
+    { header: 'Tồn Kho', key: 'stock', width: 15 },
+    { header: 'Nguyên Liệu', key: 'ingredients', width: 50 },
+  ];
+
+  const rows = cakes.map(cake => ({
+    name: cake.name,
+    category_name: cake.category ? cake.category.name : 'N/A',
+    price: cake.price,
+    stock: cake.stock || 0,
+    ingredients: cake.ingredients && Array.isArray(cake.ingredients) ? cake.ingredients.join(', ') : '',
+  }));
+
+  return await excelService.generateExcel('Danh sách Bánh', columns, rows);
+};
+
 module.exports = {
   getAll,
   getById,
   create,
   update,
   remove,
+  exportExcel,
 };
