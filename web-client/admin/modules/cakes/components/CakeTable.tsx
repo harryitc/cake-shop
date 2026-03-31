@@ -1,10 +1,11 @@
 "use client";
 
-import { Table, Button, Popconfirm, message, Skeleton, Space } from "antd";
+import { Table, Button, Popconfirm, message, Skeleton, Space, Tooltip } from "antd";
 import { EditOutlined, DeleteOutlined, PlusOutlined, FileExcelOutlined, HistoryOutlined } from "@ant-design/icons";
 import { useState } from "react";
 import { useCakesQuery, useDeleteCakeMutation, useImportCakesMutation } from "../hooks";
 import { ICake } from "../types";
+import { httpClient } from "@/lib/http";
 import ImportWizard from "@/components/ui/ImportWizard";
 import ImportHistoryDrawer from "@/components/ui/ImportHistoryDrawer";
 import { useRouter } from "next/navigation";
@@ -17,6 +18,32 @@ export const CakeTable = () => {
   
   const [importOpen, setImportOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async (sortBy: string, order: "asc" | "desc") => {
+    try {
+      setIsExporting(true);
+      const response = await httpClient.get(`/cakes/export?sortBy=${sortBy}&order=${order}`, {
+        responseType: "blob",
+      });
+      
+      const blob = new Blob([response as any], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `BAO_CAO_CAKES_${Date.now()}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      message.success("Xuất file Excel thành công");
+    } catch (err: any) {
+      console.error("Export error:", err);
+      message.error(err.message || "Không thể xuất file");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const handleCreate = () => {
     router.push("/admin/studio/cakes/create");
@@ -124,6 +151,17 @@ export const CakeTable = () => {
           >
             Lịch sử
           </Button>
+          <Tooltip title="Tải báo cáo sản phẩm (Danh sách tinh gọn)">
+            <Button 
+              icon={<FileExcelOutlined />} 
+              size="large"
+              className="border-gray-200 text-gray-600 hover:text-indigo-600 hover:border-indigo-200 font-bold rounded-xl h-12 px-6"
+              onClick={() => handleExport("name", "asc")}
+              loading={isExporting}
+            >
+              Xuất Excel
+            </Button>
+          </Tooltip>
           <Button 
             icon={<FileExcelOutlined />} 
             size="large"

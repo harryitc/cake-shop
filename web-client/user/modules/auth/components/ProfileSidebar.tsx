@@ -10,6 +10,7 @@ import {
   EnvironmentOutlined
 } from "@ant-design/icons";
 import { Avatar, Button } from "antd";
+import { useRouter } from "next/navigation";
 
 interface ProfileSidebarProps {
   activeTab: string;
@@ -18,6 +19,7 @@ interface ProfileSidebarProps {
 }
 
 export const ProfileSidebar = ({ activeTab, onTabChange, user }: ProfileSidebarProps) => {
+  const router = useRouter();
   const menuItems = [
     { key: "overview", label: "Tổng quan", icon: <UserOutlined /> },
     { key: "orders", label: "Đơn hàng của tôi", icon: <ShoppingOutlined /> },
@@ -28,7 +30,7 @@ export const ProfileSidebar = ({ activeTab, onTabChange, user }: ProfileSidebarP
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
-    window.location.href = "/login";
+    router.push("/login");
   };
 
   return (

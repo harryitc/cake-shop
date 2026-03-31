@@ -4,8 +4,11 @@ import { ICartResponse } from "./types";
 export const cartApi = {
   getCart: () => httpClient.get<ICartResponse>("/cart") as any,
   
-  addItem: (payload: { cake_id: string; quantity: number; variant_id?: string | null } | Array<{ cake_id: string; quantity: number; variant_id?: string | null }>) =>
+  addItem: (payload: { cake_id: string; quantity: number; variant_id?: string | null }) =>
     httpClient.post("/cart/items", payload) as any,
+    
+  syncCart: (payload: Array<{ cake_id: string; quantity: number; variant_id?: string | null }>) =>
+    httpClient.post("/cart/sync", payload) as any,
     
   removeItem: (id: string) =>
     httpClient.delete(`/cart/items/${id}`) as any,

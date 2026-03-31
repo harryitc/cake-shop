@@ -5,6 +5,7 @@ const Cake = require('../schemas/Cake.schema');
 const User = require('../schemas/User.schema');
 const CouponService = require('./coupon.service');
 const LoyaltyService = require('./loyalty.service');
+const excelService = require('./excel.service');
 const { createError } = require('../utils/response.utils');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../utils/email.utils');
 const { HTTP_STATUS, ERROR_CODES, ORDER_STATUS } = require('../config/constants');
@@ -287,9 +288,50 @@ const updateStatus = async (orderId, newStatus) => {
   }
 };
 
+/**
+ * Xuất danh sách đơn hàng ra file Excel (Chỉ Admin)
+ * @returns {Promise<ExcelJS.Workbook>}
+ */
+const exportExcel = async (sortBy = 'createdAt', sortOrder = -1) => {
+  const sortCriteria = {};
+  sortCriteria[sortBy] = sortOrder;
+
+  const orders = await Order.find()
+    .populate('user_id', 'username email full_name')
+    .populate('items.cake_id', 'name')
+    .sort(sortCriteria);
+
+  const columns = [
+    { header: 'Ngày Đặt', key: 'createdAt', width: 20 },
+    { header: 'Khách Hàng', key: 'userName', width: 25 },
+    { header: 'Email', key: 'userEmail', width: 30 },
+    { header: 'Địa Chỉ', key: 'address', width: 40 },
+    { header: 'Danh Sách Món', key: 'items_summary', width: 50 },
+    { header: 'Thanh Toán Cuối (VNĐ)', key: 'final_price', width: 25 },
+    { header: 'Trạng Thái', key: 'status', width: 15 },
+  ];
+
+  const rows = orders.map(order => {
+    const finalPriceVal = order.final_price || (order.total_price - (order.discount_amount || 0) - (order.points_discount_amount || 0));
+
+    return {
+      createdAt: order.createdAt ? order.createdAt.toLocaleString('vi-VN') : 'N/A',
+      userName: order.user_id ? (order.user_id.full_name || order.user_id.username) : 'Guest',
+      userEmail: order.user_id ? order.user_id.email : 'N/A',
+      address: order.address,
+      items_summary: order.items.map(item => `${item.cake_id?.name || 'Sản phẩm đã xóa'} (x${item.quantity})`).join(', '),
+      final_price: finalPriceVal,
+      status: order.status,
+    };
+  });
+
+  return await excelService.generateExcel('Báo cáo Đơn hàng', columns, rows);
+};
+
 module.exports = {
   createOrder,
   getOrders,
   getOrderById,
   updateStatus,
+  exportExcel,
 };

@@ -117,7 +117,7 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
       onCancel={handleClose}
       footer={null}
       width={700}
-      maskClosable={!isProcessing}
+      mask={{ closable: !isProcessing }}
     >
       <Steps
         current={currentStep}
@@ -130,7 +130,7 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
       />
 
       {currentStep === 0 && (
-        <Space direction="vertical" style={{ width: "100%" }} size="large">
+        <Space orientation="vertical" style={{ width: "100%" }} size="large">
           <section>
             <Title level={5}>1. Chọn chế độ nhập liệu</Title>
             <Radio.Group 
@@ -139,7 +139,7 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
               optionType="button"
               buttonStyle="solid"
             >
-              <Space direction="vertical">
+              <Space orientation="vertical">
                 <Radio value="UPSERT">
                   <Text strong>Ghi đè & Thêm mới (Upsert)</Text>
                   <br />

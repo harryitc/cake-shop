@@ -24,6 +24,9 @@ export const mapCakeToModel = (dto: any): ICake => {
       currency: "VND",
     }).format(price),
     imageUrl,
+    modelUrl: dto.model_url
+      ? (dto.model_url.startsWith('http') ? dto.model_url : `${API_DOMAIN}${dto.model_url}`)
+      : undefined,
     variants: (dto.variants || []).map((v: any) => ({
       _id: v._id || "",
       size: v.size || "Standard",

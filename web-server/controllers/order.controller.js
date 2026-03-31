@@ -66,9 +66,26 @@ const updateStatus = async (req, res) => {
   return sendSuccess(res, { order }, 'Cập nhật trạng thái đơn hàng thành công', HTTP_STATUS.OK);
 };
 
+const exportExcel = async (req, res, next) => {
+  try {
+    const { sortBy, order } = req.query;
+    const sortOrder = order === 'desc' ? -1 : 1;
+    const workbook = await orderService.exportExcel(sortBy, sortOrder);
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=BAO_CAO_ORDERS_${Date.now()}.xlsx`);
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createOrder,
   getOrders,
   getOrderById,
   updateStatus,
+  exportExcel,
 };

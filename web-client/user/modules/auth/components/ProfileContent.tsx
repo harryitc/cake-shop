@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useRouter } from "next/navigation";
 
 // Components
 import { ProfileSidebar } from "./ProfileSidebar";
@@ -37,6 +38,7 @@ type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 export const ProfileContent = () => {
   const { message } = App.useApp();
+  const router = useRouter();
   const { data: user, isLoading } = useMeQuery();
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfileMutation();
   const { mutate: changePassword, isPending: isChangingPass } = useChangePasswordMutation();
@@ -101,7 +103,7 @@ export const ProfileContent = () => {
         setIsPassModalOpen(false);
         resetPass();
         localStorage.removeItem("access_token");
-        window.location.href = "/login";
+        router.push("/login");
       },
       onError: (err: any) => message.error(err.message || "Lỗi đổi mật khẩu"),
     });

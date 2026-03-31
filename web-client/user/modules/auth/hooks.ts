@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "./api";
 import { mapUserToModel } from "./mapper";
 import { ILoginResponse } from "./types";
+import { authStorage } from "@/lib/http";
 
 export const useLoginMutation = () => {
   return useMutation<ILoginResponse, Error, any>({
@@ -23,6 +24,7 @@ export const useMeQuery = (options = {}) => {
       return mapUserToModel(data);
     },
     retry: false,
+    enabled: typeof window !== "undefined" ? !!authStorage.getToken() : false,
     ...options,
   });
 };
