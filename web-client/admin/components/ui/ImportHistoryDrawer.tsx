@@ -120,7 +120,7 @@ const ImportHistoryDrawer: React.FC<ImportHistoryDrawerProps> = ({ open, onClose
   return (
     <Drawer
       title={
-        <Space>
+        <Space orientation="horizontal">
           <HistoryOutlined />
           <span>Lịch sử Import {entityType === "cakes" ? "Sản phẩm" : ""}</span>
         </Space>
@@ -129,9 +129,10 @@ const ImportHistoryDrawer: React.FC<ImportHistoryDrawerProps> = ({ open, onClose
       onClose={onClose}
       open={open}
       width={700}
+      mask={{ closable: true }}
     >
       <div style={{ marginBottom: 16 }}>
-        <Space split={<Divider type="vertical" />}>
+        <Space separator={<Divider type="vertical" />}>
           <Text type="secondary"><Tag color="green">S</Tag> Thành công</Text>
           <Text type="secondary"><Tag color="red">F</Tag> Thất bại</Text>
           <Text type="secondary"><Tag color="default">SK</Tag> Bỏ qua</Text>
