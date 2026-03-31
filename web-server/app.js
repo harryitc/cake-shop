@@ -50,7 +50,7 @@ app.use((req, res, next) => {
   next(createError('Route không tồn tại', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND));
 });
 
-// ─── Global Error Handler (phải đứng cuối cùng) ───────────────────────────────
+// ─── Global Error Handler ───────────────────────────────
 app.use(errorHandler);
 
 module.exports = app;
