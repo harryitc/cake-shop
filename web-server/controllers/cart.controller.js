@@ -13,10 +13,12 @@ const itemObject = Joi.object({
   quantity: Joi.number().min(1).default(1),
 });
 
-const addItemSchema = Joi.alternatives().try(
-  itemObject,
-  Joi.array().items(itemObject).min(1)
-);
+const addItemSchema = itemObject;
+
+const syncCartSchema = Joi.array().items(itemObject).min(1).messages({
+  'array.min': 'Giỏ hàng cần đồng bộ không được rỗng',
+  'array.base': 'Dữ liệu đồng bộ phải là một danh sách',
+});
 
 const itemIdParamSchema = Joi.object({
   id: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
@@ -49,7 +51,19 @@ const addItem = async (req, res, next) => {
     if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
 
     const data = await cartService.addItem(req.user.userId, value);
-    return sendSuccess(res, data, 'Cập nhật giỏ hàng thành công', HTTP_STATUS.OK);
+    return sendSuccess(res, data, 'Thêm vào giỏ hàng thành công', HTTP_STATUS.OK);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const syncCart = async (req, res, next) => {
+  try {
+    const { error, value } = syncCartSchema.validate(req.body);
+    if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
+
+    const data = await cartService.syncCart(req.user.userId, value);
+    return sendSuccess(res, data, 'Đồng bộ giỏ hàng thành công', HTTP_STATUS.OK);
   } catch (err) {
     next(err);
   }
@@ -85,6 +99,7 @@ const updateItemQuantity = async (req, res, next) => {
 module.exports = {
   getCart,
   addItem,
+  syncCart,
   removeItem,
   updateItemQuantity,
 };

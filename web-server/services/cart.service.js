@@ -60,10 +60,8 @@ const getCart = async (userId) => {
  * @returns {Object|Array} updatedItem(s)
  */
 const addItem = async (userId, payload) => {
-  const isArray = Array.isArray(payload);
-  const itemsToAdd = isArray ? payload : [payload];
+  const { cake_id, quantity = 1, variant_id = null } = payload;
 
-  const results = await Promise.all(itemsToAdd.map(async ({ cake_id, quantity = 1, variant_id = null }) => {
     // Check sản phẩm có tồn tại không
     const cake = await Cake.findById(cake_id);
     if (!cake) {
@@ -84,9 +82,38 @@ const addItem = async (userId, payload) => {
       { $inc: { quantity: Number(quantity) } },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
+};
+
+/**
+ * Đồng bộ giỏ hàng từ Local Storage lên Server
+ * @param {string} userId 
+ * @param {Array} itemsToAdd - [{ cake_id, quantity, variant_id }]
+ * @returns {Array} updatedItems
+ */
+const syncCart = async (userId, itemsToAdd) => {
+  const results = await Promise.all(itemsToAdd.map(async ({ cake_id, quantity = 1, variant_id = null }) => {
+    // Check sản phẩm có tồn tại không
+    const cake = await Cake.findById(cake_id);
+    if (!cake) {
+      throw createError(`Không tìm thấy sản phẩm bánh: ${cake_id}`, HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    }
+
+    // Nếu có variant_id, kiểm tra xem variant có tồn tại trong cake không
+    if (variant_id) {
+      const variantExists = cake.variants.find(v => v._id.toString() === variant_id.toString());
+      if (!variantExists) {
+        throw createError(`Không tìm thấy biến thể cho sản phẩm: ${cake_id}`, HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+      }
+    }
+
+    return await CartItem.findOneAndUpdate(
+      { user_id: userId, cake_id: cake_id, variant_id: variant_id || null },
+      { $inc: { quantity: Number(quantity) } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
   }));
 
-  return isArray ? results : results[0];
+  return results;
 };
 
 /**
@@ -128,6 +155,7 @@ const updateItemQuantity = async (userId, itemId, quantity) => {
 module.exports = {
   getCart,
   addItem,
+  syncCart,
   removeItem,
   updateItemQuantity,
 };
