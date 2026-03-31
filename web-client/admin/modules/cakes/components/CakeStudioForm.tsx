@@ -235,6 +235,17 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
   }, [initialData, reset]);
 
   const handleUpload = (file: File) => {
+    const isImage = file.type.startsWith("image/");
+    if (!isImage) {
+      message.error("Vui lòng chỉ tải lên các tệp định dạng hình ảnh (Ví dụ: PNG, JPG, WEBP, GIF...);");
+      return false; // Ngăn không cho upload
+    }
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    if (!isLt5M) {
+      message.error("Kích thước ảnh phải nhỏ hơn 5MB!");
+      return false;
+    }
+
     uploadImage(file, {
       onSuccess: (data: any) => {
         setValue("image_url", data.path, { shouldDirty: true });
@@ -244,7 +255,7 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
         if (err.statuscode === 422) message.error(err.message);
       },
     });
-    return false;
+    return false; // always false prevent Antd default action and delegating it to useUploadImageMutation
   };
 
   const handleUploadModel = (file: File) => {
@@ -423,7 +434,7 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
                 <div className={`p-8 rounded-[24px] border transition-all duration-500 bg-white ${activeSection === 'section-media' ? 'border-amber-200 shadow-xl shadow-amber-500/5' : 'border-transparent shadow-sm'}`}>
                   <h2 className="text-lg font-bold text-gray-900 mb-8">03. Nội dung & Hình ảnh</h2>
                   <div className="flex gap-6 items-start">
-                    <Upload name="image" listType="picture-card" showUploadList={false} beforeUpload={handleUpload} className="studio-upload-v10">
+                    <Upload name="image" accept="image/png, image/jpeg, image/webp, image/gif" listType="picture-card" showUploadList={false} beforeUpload={handleUpload} className="studio-upload-v10">
                       {currentImageUrl ? (
                         <img src={currentImageUrl.startsWith("http") ? currentImageUrl : `${API_DOMAIN}${currentImageUrl}`} alt="cake" className="w-full h-full object-cover rounded-xl" />
                       ) : (
