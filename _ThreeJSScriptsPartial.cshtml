@@ -1,0 +1,1977 @@
+<script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+    // Hàm hiển thị mô hình 3D
+    function show3DModel(containerId, modelUrl) {
+        console.log(`Showing 3D model in container: ${containerId}, model: ${modelUrl}`);
+
+        // Lấy phần tử container
+        const container = document.getElementById(containerId);
+        if (!container) {
+            console.error(`Container not found: ${containerId}`);
+            return false;
+        }
+
+        try {
+            // Kiểm tra đường dẫn model hợp lệ
+            if (!modelUrl || modelUrl.trim() === '') {
+                console.error('Model URL is empty');
+                showModelError(container, 'Không tìm thấy đường dẫn đến mô hình 3D');
+                return false;
+            }
+
+            // Chuyển đổi đường dẫn model sang API controller nếu là đường dẫn cũ
+            let modelApiUrl = modelUrl;
+            if (modelUrl.startsWith('/models/products/')) {
+                // Lấy tên file từ đường dẫn
+                const filename = modelUrl.split('/').pop();
+                modelApiUrl = `/model/products/${filename}`;
+            }
+
+            // Hiển thị loading indicator
+            container.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Đang tải mô hình 3D...</p></div>';
+
+            // Khởi tạo scene Three.js và lưu vào biến toàn cục
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf8f8f8);
+
+            // Tạo camera và lưu vào biến toàn cục
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.z = 5;
+
+            // Tạo renderer và lưu vào biến toàn cục
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            // Thêm ánh sáng vào scene
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+
+            // Thêm controls để xoay, zoom mô hình
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 1.0;
+
+            // Tải mô hình GLTF
+            const loader = new THREE.GLTFLoader();
+            loader.load(
+                modelApiUrl,
+                (gltf) => {
+                    // Xóa loading indicator
+                    container.innerHTML = '';
+
+                    // Tạo container chứa renderer và controls đổi màu
+                    const viewerContainer = document.createElement('div');
+                    viewerContainer.style.position = 'relative';
+                    viewerContainer.style.width = '100%';
+                    viewerContainer.style.height = '100%';
+
+                    // Thêm renderer vào container
+                    viewerContainer.appendChild(renderer.domElement);
+
+                    // Tạo controls chọn màu - gọn hơn và ít che khuất hơn
+                    const colorControls = document.createElement('div');
+                    colorControls.className = 'color-controls';
+                    colorControls.style.position = 'absolute';
+                    colorControls.style.bottom = '10px';
+                    colorControls.style.right = '10px'; // Di chuyển sang bên phải
+                    colorControls.style.zIndex = '100';
+                    colorControls.style.background = 'rgba(255, 255, 255, 0.7)';
+                    colorControls.style.padding = '8px';
+                    colorControls.style.borderRadius = '8px';
+                    colorControls.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+                    colorControls.style.maxWidth = '220px'; // Làm cho nó hẹp hơn
+                    colorControls.style.maxHeight = '250px';
+                    colorControls.style.overflowY = 'auto';
+                    colorControls.style.transition = 'opacity 0.3s ease';
+                    colorControls.style.opacity = '0.8'; // Bắt đầu hơi trong suốt
+
+                    // Thêm hiệu ứng hover để làm controls chọn màu đậm hơn khi rê chuột vào
+                    colorControls.onmouseover = function() {
+                        this.style.opacity = '1';
+                    };
+
+                    colorControls.onmouseout = function() {
+                        this.style.opacity = '0.8';
+                    };
+
+                    // Thêm các lựa chọn màu với màu sắc nổi bật hơn để dễ nhìn hơn
+                    const colors = [
+                        { name: 'Đen', hex: '#000000' },
+                        { name: 'Trắng', hex: '#FFFFFF' },
+                        { name: 'Xám', hex: '#808080' },
+                        { name: 'Xám đậm', hex: '#4b4b4b' },
+                        { name: 'Đỏ', hex: '#FF0000' },
+                        { name: 'Đỏ đô', hex: '#8b0000' },
+                        { name: 'Hồng', hex: '#FF69B4' },
+                        { name: 'Cam', hex: '#FFA500' },
+                        { name: 'Vàng', hex: '#FFFF00' },
+                        { name: 'Xanh lá', hex: '#00FF00' },
+                        { name: 'Xanh lá đậm', hex: '#2ecc71' },
+                        { name: 'Xanh dương', hex: '#0000FF' },
+                        { name: 'Xanh dương đậm', hex: '#0a3d62' },
+                        { name: 'Xanh ngọc', hex: '#00FFFF' },
+                        { name: 'Tím', hex: '#800080' },
+                        { name: 'Tím nhạt', hex: '#9b59b6' },
+                        { name: 'Nâu', hex: '#6f4e37' },
+                        { name: 'Nâu đỏ', hex: '#A52A2A' }
+                    ];
+
+                    // Tạo nút chuyển đổi để ẩn/hiện controls chọn màu
+                    const toggleBtn = document.createElement('button');
+                    toggleBtn.innerHTML = '<i class="fas fa-palette"></i>';
+                    toggleBtn.style.position = 'absolute';
+                    toggleBtn.style.bottom = '10px';
+                    toggleBtn.style.right = '10px';
+                    toggleBtn.style.zIndex = '101';
+                    toggleBtn.style.width = '40px';
+                    toggleBtn.style.height = '40px';
+                    toggleBtn.style.borderRadius = '50%';
+                    toggleBtn.style.backgroundColor = '#007bff';
+                    toggleBtn.style.color = 'white';
+                    toggleBtn.style.border = 'none';
+                    toggleBtn.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+                    toggleBtn.style.cursor = 'pointer';
+                    toggleBtn.style.display = 'flex';
+                    toggleBtn.style.alignItems = 'center';
+                    toggleBtn.style.justifyContent = 'center';
+                    toggleBtn.style.fontSize = '18px';
+                    toggleBtn.title = 'Thay đổi màu sắc';
+
+                    // Ẩn controls chọn màu ban đầu
+                    colorControls.style.display = 'none';
+                    colorControls.style.right = '60px'; // Đặt cạnh nút chuyển đổi
+
+                    // Chuyển đổi hiển thị controls chọn màu
+                    let colorControlsVisible = false;
+                    toggleBtn.onclick = function() {
+                        colorControlsVisible = !colorControlsVisible;
+                        colorControls.style.display = colorControlsVisible ? 'block' : 'none';
+                        this.innerHTML = colorControlsVisible ? '<i class="fas fa-times"></i>' : '<i class="fas fa-palette"></i>';
+                        this.style.backgroundColor = colorControlsVisible ? '#dc3545' : '#007bff';
+                    };
+
+                    viewerContainer.appendChild(toggleBtn);
+
+                    // Tạo các tab cho các lựa chọn màu khác nhau
+                    const tabsContainer = document.createElement('div');
+                    tabsContainer.style.display = 'flex';
+                    tabsContainer.style.marginBottom = '8px';
+                    tabsContainer.style.borderBottom = '1px solid #ddd';
+
+                    // Tab màu đơn
+                    const solidColorTab = document.createElement('div');
+                    solidColorTab.innerText = 'Màu đơn';
+                    solidColorTab.style.padding = '4px 8px';
+                    solidColorTab.style.cursor = 'pointer';
+                    solidColorTab.style.fontSize = '12px';
+                    solidColorTab.style.fontWeight = 'bold';
+                    solidColorTab.style.borderBottom = '2px solid #007bff';
+                    solidColorTab.style.color = '#007bff';
+
+                    // Tab màu caro
+                    const checkeredTab = document.createElement('div');
+                    checkeredTab.innerText = 'Màu caro';
+                    checkeredTab.style.padding = '4px 8px';
+                    checkeredTab.style.cursor = 'pointer';
+                    checkeredTab.style.fontSize = '12px';
+                    checkeredTab.style.fontWeight = 'bold';
+                    checkeredTab.style.borderBottom = '2px solid transparent';
+                    checkeredTab.style.color = '#666';
+
+                    // Thêm các tab vào container
+                    tabsContainer.appendChild(solidColorTab);
+                    tabsContainer.appendChild(checkeredTab);
+                    colorControls.appendChild(tabsContainer);
+
+                    // Tạo các vùng nội dung cho từng tab
+                    const solidColorContent = document.createElement('div');
+                    solidColorContent.style.display = 'block';
+
+                    const checkeredContent = document.createElement('div');
+                    checkeredContent.style.display = 'none';
+
+                    // Chức năng chuyển tab
+                    solidColorTab.onclick = function() {
+                        solidColorContent.style.display = 'block';
+                        checkeredContent.style.display = 'none';
+                        solidColorTab.style.borderBottom = '2px solid #007bff';
+                        solidColorTab.style.color = '#007bff';
+                        checkeredTab.style.borderBottom = '2px solid transparent';
+                        checkeredTab.style.color = '#666';
+                    };
+
+                    checkeredTab.onclick = function() {
+                        solidColorContent.style.display = 'none';
+                        checkeredContent.style.display = 'block';
+                        checkeredTab.style.borderBottom = '2px solid #007bff';
+                        checkeredTab.style.color = '#007bff';
+                        solidColorTab.style.borderBottom = '2px solid transparent';
+                        solidColorTab.style.color = '#666';
+                    };
+
+                    // Thêm các vùng nội dung vào controls chọn màu
+                    colorControls.appendChild(solidColorContent);
+                    colorControls.appendChild(checkeredContent);
+
+                    // Tạo grid các nút chọn màu đơn - gọn hơn
+                    const colorGrid = document.createElement('div');
+                    colorGrid.style.display = 'grid';
+                    colorGrid.style.gridTemplateColumns = 'repeat(5, 1fr)'; // 5 cột thay vì 6
+                    colorGrid.style.gap = '6px'; // Khoảng cách nhỏ hơn
+                    colorGrid.style.marginBottom = '8px';
+
+                    colors.forEach(color => {
+                        const colorBtn = document.createElement('button');
+                        colorBtn.style.width = '25px'; // Nút nhỏ hơn
+                        colorBtn.style.height = '25px';
+                        colorBtn.style.backgroundColor = color.hex;
+                        colorBtn.style.border = '2px solid #ddd';
+                        colorBtn.style.borderRadius = '50%';
+                        colorBtn.style.cursor = 'pointer';
+                        colorBtn.style.transition = 'transform 0.2s, border-color 0.2s';
+                        colorBtn.title = color.name;
+
+                        // Thêm hiệu ứng hover
+                        colorBtn.onmouseover = function() {
+                            this.style.transform = 'scale(1.1)';
+                        };
+
+                        colorBtn.onmouseout = function() {
+                            this.style.transform = 'scale(1)';
+                        };
+
+                        colorBtn.onclick = function() {
+                            changeModelColor(gltf.scene, color.hex);
+                            // Đánh dấu màu đã chọn
+                            document.querySelectorAll('.color-controls button.color-btn').forEach(btn => {
+                                btn.style.border = '2px solid #ddd';
+                                btn.style.boxShadow = 'none';
+                            });
+                            this.style.border = '2px solid #000';
+                            this.style.boxShadow = '0 0 5px rgba(0,0,0,0.5)';
+                        };
+
+                        colorBtn.className = 'color-btn';
+                        colorGrid.appendChild(colorBtn);
+                    });
+
+                    solidColorContent.appendChild(colorGrid);
+
+                    // Thêm hàng controls gọn cho màu đơn
+                    const controlsRow = document.createElement('div');
+                    controlsRow.style.display = 'flex';
+                    controlsRow.style.justifyContent = 'space-between';
+                    controlsRow.style.alignItems = 'center';
+                    controlsRow.style.gap = '5px';
+
+                    // Thêm nút khôi phục màu gốc với style đẹp hơn
+                    const resetBtn = document.createElement('button');
+                    resetBtn.innerHTML = '<i class="fas fa-undo-alt"></i>';
+                    resetBtn.title = 'Khôi phục màu gốc';
+                    resetBtn.className = 'btn btn-sm btn-outline-secondary';
+                    resetBtn.style.padding = '3px 8px';
+                    resetBtn.style.fontSize = '12px';
+                    resetBtn.style.flex = '0 0 auto';
+                    resetBtn.onclick = function() {
+                        resetModelColor(gltf.scene);
+                        // Đặt lại màu cho các nút
+                        document.querySelectorAll('.color-controls button.color-btn').forEach(btn => {
+                            btn.style.border = '2px solid #ddd';
+                            btn.style.boxShadow = 'none';
+                        });
+                    };
+
+                    // Thêm input chọn màu tùy chỉnh - gọn hơn
+                    const customColorInput = document.createElement('input');
+                    customColorInput.type = 'color';
+                    customColorInput.style.width = '30px';
+                    customColorInput.style.height = '30px';
+                    customColorInput.style.border = 'none';
+                    customColorInput.style.borderRadius = '4px';
+                    customColorInput.style.cursor = 'pointer';
+                    customColorInput.style.padding = '0';
+                    customColorInput.style.flex = '0 0 auto';
+                    customColorInput.title = 'Chọn màu tùy chỉnh';
+
+                    const applyCustomBtn = document.createElement('button');
+                    applyCustomBtn.innerHTML = '<i class="fas fa-check"></i>';
+                    applyCustomBtn.title = 'Áp dụng màu tùy chỉnh';
+                    applyCustomBtn.className = 'btn btn-sm btn-primary';
+                    applyCustomBtn.style.padding = '3px 8px';
+                    applyCustomBtn.style.fontSize = '12px';
+                    applyCustomBtn.style.flex = '0 0 auto';
+
+                    applyCustomBtn.onclick = function() {
+                        const customColor = customColorInput.value;
+                        changeModelColor(gltf.scene, customColor);
+                        // Đặt lại màu cho các nút
+                        document.querySelectorAll('.color-controls button.color-btn').forEach(btn => {
+                            btn.style.border = '2px solid #ddd';
+                            btn.style.boxShadow = 'none';
+                        });
+                    };
+
+                    controlsRow.appendChild(resetBtn);
+                    controlsRow.appendChild(customColorInput);
+                    controlsRow.appendChild(applyCustomBtn);
+
+                    solidColorContent.appendChild(controlsRow);
+
+                    // Tạo controls caro
+                    const checkeredHeader = document.createElement('div');
+                    checkeredHeader.innerHTML = '<div style="margin-bottom: 8px; font-size: 12px; color: #333;">Chọn màu cho họa tiết caro:</div>';
+                    checkeredContent.appendChild(checkeredHeader);
+
+                    // Tạo selector màu chính
+                    const primaryColorLabel = document.createElement('div');
+                    primaryColorLabel.innerText = 'Màu chính:';
+                    primaryColorLabel.style.fontSize = '12px';
+                    primaryColorLabel.style.marginBottom = '4px';
+                    checkeredContent.appendChild(primaryColorLabel);
+
+                    // Tạo grid chọn màu chính
+                    const primaryColorGrid = document.createElement('div');
+                    primaryColorGrid.style.display = 'grid';
+                    primaryColorGrid.style.gridTemplateColumns = 'repeat(5, 1fr)';
+                    primaryColorGrid.style.gap = '6px';
+                    primaryColorGrid.style.marginBottom = '12px';
+
+                    // Tạo selector màu phụ
+                    const secondaryColorLabel = document.createElement('div');
+                    secondaryColorLabel.innerText = 'Màu phụ:';
+                    secondaryColorLabel.style.fontSize = '12px';
+                    secondaryColorLabel.style.marginBottom = '4px';
+
+                    // Tạo grid chọn màu phụ
+                    const secondaryColorGrid = document.createElement('div');
+                    secondaryColorGrid.style.display = 'grid';
+                    secondaryColorGrid.style.gridTemplateColumns = 'repeat(5, 1fr)';
+                    secondaryColorGrid.style.gap = '6px';
+                    secondaryColorGrid.style.marginBottom = '12px';
+
+                    // Thêm nút màu vào grid màu chính và phụ
+                    colors.forEach(color => {
+                        // Nút màu chính
+                        const primaryColorBtn = document.createElement('button');
+                        primaryColorBtn.style.width = '25px';
+                        primaryColorBtn.style.height = '25px';
+                        primaryColorBtn.style.backgroundColor = color.hex;
+                        primaryColorBtn.style.border = '2px solid #ddd';
+                        primaryColorBtn.style.borderRadius = '50%';
+                        primaryColorBtn.style.cursor = 'pointer';
+                        primaryColorBtn.style.transition = 'transform 0.2s, border-color 0.2s';
+                        primaryColorBtn.title = color.name;
+                        primaryColorBtn.dataset.color = color.hex;
+                        primaryColorBtn.className = 'primary-color-btn';
+
+                        // Thêm hiệu ứng hover
+                        primaryColorBtn.onmouseover = function() {
+                            this.style.transform = 'scale(1.1)';
+                        };
+
+                        primaryColorBtn.onmouseout = function() {
+                            this.style.transform = 'scale(1)';
+                        };
+
+                        primaryColorBtn.onclick = function() {
+                            // Cập nhật màu chính
+                            const primaryColor = this.dataset.color;
+                            const secondaryColor = currentCheckeredColors.secondary;
+                            const patternSize = parseInt(patternSizeSlider.value);
+                            const lineWidth = parseFloat(lineWidthSlider.value);
+                            const lineSpacing = parseInt(lineSpacingSlider.value);
+                            const patternType = patternTypeSelect.value;
+
+                            applyCheckeredPattern(gltf.scene, primaryColor, secondaryColor, patternSize, lineWidth, patternType, lineSpacing);
+
+                            // Đánh dấu màu đã chọn
+                            document.querySelectorAll('.primary-color-btn').forEach(btn => {
+                                btn.style.border = '2px solid #ddd';
+                                btn.style.boxShadow = 'none';
+                            });
+                            this.style.border = '2px solid #000';
+                            this.style.boxShadow = '0 0 5px rgba(0,0,0,0.5)';
+                        };
+
+                        primaryColorGrid.appendChild(primaryColorBtn);
+
+                        // Nút màu phụ
+                        const secondaryColorBtn = document.createElement('button');
+                        secondaryColorBtn.style.width = '25px';
+                        secondaryColorBtn.style.height = '25px';
+                        secondaryColorBtn.style.backgroundColor = color.hex;
+                        secondaryColorBtn.style.border = '2px solid #ddd';
+                        secondaryColorBtn.style.borderRadius = '50%';
+                        secondaryColorBtn.style.cursor = 'pointer';
+                        secondaryColorBtn.style.transition = 'transform 0.2s, border-color 0.2s';
+                        secondaryColorBtn.title = color.name;
+                        secondaryColorBtn.dataset.color = color.hex;
+                        secondaryColorBtn.className = 'secondary-color-btn';
+
+                        // Thêm hiệu ứng hover
+                        secondaryColorBtn.onmouseover = function() {
+                            this.style.transform = 'scale(1.1)';
+                        };
+
+                        secondaryColorBtn.onmouseout = function() {
+                            this.style.transform = 'scale(1)';
+                        };
+
+                        secondaryColorBtn.onclick = function() {
+                            // Cập nhật màu phụ
+                            const primaryColor = currentCheckeredColors.primary;
+                            const secondaryColor = this.dataset.color;
+                            const patternSize = parseInt(patternSizeSlider.value);
+                            const lineWidth = parseFloat(lineWidthSlider.value);
+                            const lineSpacing = parseInt(lineSpacingSlider.value);
+                            const patternType = patternTypeSelect.value;
+
+                            applyCheckeredPattern(gltf.scene, primaryColor, secondaryColor, patternSize, lineWidth, patternType, lineSpacing);
+
+                            // Đánh dấu màu đã chọn
+                            document.querySelectorAll('.secondary-color-btn').forEach(btn => {
+                                btn.style.border = '2px solid #ddd';
+                                btn.style.boxShadow = 'none';
+                            });
+                            this.style.border = '2px solid #000';
+                            this.style.boxShadow = '0 0 5px rgba(0,0,0,0.5)';
+                        };
+
+                        secondaryColorGrid.appendChild(secondaryColorBtn);
+                    });
+
+                    checkeredContent.appendChild(primaryColorGrid);
+                    checkeredContent.appendChild(secondaryColorLabel);
+                    checkeredContent.appendChild(secondaryColorGrid);
+
+                    // Thêm controls chọn màu tùy chỉnh cho caro
+                    const checkeredCustomControls = document.createElement('div');
+                    checkeredCustomControls.style.display = 'flex';
+                    checkeredCustomControls.style.flexDirection = 'column';
+                    checkeredCustomControls.style.gap = '8px';
+
+                    // Hàng màu tùy chỉnh chính
+                    const primaryCustomRow = document.createElement('div');
+                    primaryCustomRow.style.display = 'flex';
+                    primaryCustomRow.style.alignItems = 'center';
+                    primaryCustomRow.style.gap = '5px';
+
+                    const primaryCustomLabel = document.createElement('div');
+                    primaryCustomLabel.innerText = 'Màu chính tùy chỉnh:';
+                    primaryCustomLabel.style.fontSize = '12px';
+                    primaryCustomLabel.style.flex = '1';
+
+                    const primaryCustomInput = document.createElement('input');
+                    primaryCustomInput.type = 'color';
+                    primaryCustomInput.style.width = '30px';
+                    primaryCustomInput.style.height = '30px';
+                    primaryCustomInput.style.border = 'none';
+                    primaryCustomInput.style.borderRadius = '4px';
+                    primaryCustomInput.style.cursor = 'pointer';
+                    primaryCustomInput.style.padding = '0';
+                    primaryCustomInput.value = currentCheckeredColors.primary;
+
+                    primaryCustomRow.appendChild(primaryCustomLabel);
+                    primaryCustomRow.appendChild(primaryCustomInput);
+
+                    // Hàng màu tùy chỉnh phụ
+                    const secondaryCustomRow = document.createElement('div');
+                    secondaryCustomRow.style.display = 'flex';
+                    secondaryCustomRow.style.alignItems = 'center';
+                    secondaryCustomRow.style.gap = '5px';
+
+                    const secondaryCustomLabel = document.createElement('div');
+                    secondaryCustomLabel.innerText = 'Màu phụ tùy chỉnh:';
+                    secondaryCustomLabel.style.fontSize = '12px';
+                    secondaryCustomLabel.style.flex = '1';
+
+                    const secondaryCustomInput = document.createElement('input');
+                    secondaryCustomInput.type = 'color';
+                    secondaryCustomInput.style.width = '30px';
+                    secondaryCustomInput.style.height = '30px';
+                    secondaryCustomInput.style.border = 'none';
+                    secondaryCustomInput.style.borderRadius = '4px';
+                    secondaryCustomInput.style.cursor = 'pointer';
+                    secondaryCustomInput.style.padding = '0';
+                    secondaryCustomInput.value = currentCheckeredColors.secondary;
+
+                    secondaryCustomRow.appendChild(secondaryCustomLabel);
+                    secondaryCustomRow.appendChild(secondaryCustomInput);
+
+                    // Thêm selector kiểu caro
+                    const patternTypeRow = document.createElement('div');
+                    patternTypeRow.style.display = 'flex';
+                    patternTypeRow.style.alignItems = 'center';
+                    patternTypeRow.style.gap = '5px';
+                    patternTypeRow.style.marginTop = '8px';
+
+                    const patternTypeLabel = document.createElement('div');
+                    patternTypeLabel.innerText = 'Kiểu caro:';
+                    patternTypeLabel.style.fontSize = '12px';
+                    patternTypeLabel.style.flex = '1';
+
+                    const patternTypeSelect = document.createElement('select');
+                    patternTypeSelect.style.fontSize = '12px';
+                    patternTypeSelect.style.padding = '2px 5px';
+                    patternTypeSelect.style.borderRadius = '4px';
+                    patternTypeSelect.style.border = '1px solid #ccc';
+
+                    // Thêm các tùy chọn
+                    const checkeredOption = document.createElement('option');
+                    checkeredOption.value = 'checkered';
+                    checkeredOption.text = 'Caro đan xen';
+                    checkeredOption.selected = currentPatternType === 'checkered';
+
+                    const windowpaneOption = document.createElement('option');
+                    windowpaneOption.value = 'windowpane';
+                    windowpaneOption.text = 'Caro cửa sổ';
+                    windowpaneOption.selected = currentPatternType === 'windowpane';
+
+                    const doubleWindowpaneOption = document.createElement('option');
+                    doubleWindowpaneOption.value = 'double-windowpane';
+                    doubleWindowpaneOption.text = 'Caro cửa sổ đôi';
+                    doubleWindowpaneOption.selected = currentPatternType === 'double-windowpane';
+
+                    patternTypeSelect.appendChild(checkeredOption);
+                    patternTypeSelect.appendChild(windowpaneOption);
+                    patternTypeSelect.appendChild(doubleWindowpaneOption);
+
+                    patternTypeSelect.onchange = function() {
+                        currentPatternType = this.value;
+
+                        // Hiển thị/ẩn controls dựa trên kiểu caro
+                        const isWindowpane = currentPatternType === 'windowpane' || currentPatternType === 'double-windowpane';
+                        const isDoubleWindowpane = currentPatternType === 'double-windowpane';
+
+                        lineWidthRow.style.display = isWindowpane ? 'flex' : 'none';
+                        lineSpacingRow.style.display = isDoubleWindowpane ? 'flex' : 'none';
+                    };
+
+                    patternTypeRow.appendChild(patternTypeLabel);
+                    patternTypeRow.appendChild(patternTypeSelect);
+
+                    // Thêm controls chỉnh kích thước caro
+                    const patternSizeRow = document.createElement('div');
+                    patternSizeRow.style.display = 'flex';
+                    patternSizeRow.style.alignItems = 'center';
+                    patternSizeRow.style.gap = '5px';
+                    patternSizeRow.style.marginTop = '8px';
+
+                    const patternSizeLabel = document.createElement('div');
+                    patternSizeLabel.innerText = 'Kích thước ô caro:';
+                    patternSizeLabel.style.fontSize = '12px';
+                    patternSizeLabel.style.flex = '1';
+
+                    const patternSizeSlider = document.createElement('input');
+                    patternSizeSlider.type = 'range';
+                    patternSizeSlider.min = '4';
+                    patternSizeSlider.max = '24';
+                    patternSizeSlider.step = '2';
+                    patternSizeSlider.value = currentCheckeredSize.toString();
+                    patternSizeSlider.style.width = '100px';
+
+                    const patternSizeValue = document.createElement('span');
+                    patternSizeValue.innerText = currentCheckeredSize.toString();
+                    patternSizeValue.style.fontSize = '12px';
+                    patternSizeValue.style.marginLeft = '5px';
+                    patternSizeValue.style.width = '20px';
+                    patternSizeValue.style.textAlign = 'center';
+
+                    patternSizeSlider.oninput = function() {
+                        patternSizeValue.innerText = this.value;
+                    };
+
+                    patternSizeRow.appendChild(patternSizeLabel);
+                    patternSizeRow.appendChild(patternSizeSlider);
+                    patternSizeRow.appendChild(patternSizeValue);
+
+                    // Thêm controls chỉnh độ dày đường kẻ caro
+                    const lineWidthRow = document.createElement('div');
+                    lineWidthRow.style.display = currentPatternType === 'windowpane' ? 'flex' : 'none';
+                    lineWidthRow.style.alignItems = 'center';
+                    lineWidthRow.style.gap = '5px';
+                    lineWidthRow.style.marginTop = '8px';
+
+                    const lineWidthLabel = document.createElement('div');
+                    lineWidthLabel.innerText = 'Độ dày đường kẻ:';
+                    lineWidthLabel.style.fontSize = '12px';
+                    lineWidthLabel.style.flex = '1';
+
+                    const lineWidthSlider = document.createElement('input');
+                    lineWidthSlider.type = 'range';
+                    lineWidthSlider.min = '1';
+                    lineWidthSlider.max = '5';
+                    lineWidthSlider.step = '0.5';
+                    lineWidthSlider.value = currentLineWidth.toString();
+                    lineWidthSlider.style.width = '100px';
+
+                    const lineWidthValue = document.createElement('span');
+                    lineWidthValue.innerText = currentLineWidth.toString();
+                    lineWidthValue.style.fontSize = '12px';
+                    lineWidthValue.style.marginLeft = '5px';
+                    lineWidthValue.style.width = '20px';
+                    lineWidthValue.style.textAlign = 'center';
+
+                    lineWidthSlider.oninput = function() {
+                        lineWidthValue.innerText = this.value;
+                    };
+
+                    lineWidthRow.appendChild(lineWidthLabel);
+                    lineWidthRow.appendChild(lineWidthSlider);
+                    lineWidthRow.appendChild(lineWidthValue);
+
+                    // Thêm controls chỉnh khoảng cách đường kẻ đôi
+                    const lineSpacingRow = document.createElement('div');
+                    lineSpacingRow.style.display = currentPatternType === 'double-windowpane' ? 'flex' : 'none';
+                    lineSpacingRow.style.alignItems = 'center';
+                    lineSpacingRow.style.gap = '5px';
+                    lineSpacingRow.style.marginTop = '8px';
+
+                    const lineSpacingLabel = document.createElement('div');
+                    lineSpacingLabel.innerText = 'Khoảng cách đường kẻ:';
+                    lineSpacingLabel.style.fontSize = '12px';
+                    lineSpacingLabel.style.flex = '1';
+
+                    const lineSpacingSlider = document.createElement('input');
+                    lineSpacingSlider.type = 'range';
+                    lineSpacingSlider.min = '2';
+                    lineSpacingSlider.max = '10';
+                    lineSpacingSlider.step = '1';
+                    lineSpacingSlider.value = currentLineSpacing.toString();
+                    lineSpacingSlider.style.width = '100px';
+
+                    const lineSpacingValue = document.createElement('span');
+                    lineSpacingValue.innerText = currentLineSpacing.toString();
+                    lineSpacingValue.style.fontSize = '12px';
+                    lineSpacingValue.style.marginLeft = '5px';
+                    lineSpacingValue.style.width = '20px';
+                    lineSpacingValue.style.textAlign = 'center';
+
+                    lineSpacingSlider.oninput = function() {
+                        lineSpacingValue.innerText = this.value;
+                    };
+
+                    lineSpacingRow.appendChild(lineSpacingLabel);
+                    lineSpacingRow.appendChild(lineSpacingSlider);
+                    lineSpacingRow.appendChild(lineSpacingValue);
+
+                    // Nút áp dụng màu caro tùy chỉnh
+                    const applyCheckeredBtn = document.createElement('button');
+                    applyCheckeredBtn.innerHTML = 'Áp dụng màu caro';
+                    applyCheckeredBtn.className = 'btn btn-sm btn-primary';
+                    applyCheckeredBtn.style.marginTop = '5px';
+                    applyCheckeredBtn.style.fontSize = '12px';
+
+                    applyCheckeredBtn.onclick = function() {
+                        const primaryColor = primaryCustomInput.value;
+                        const secondaryColor = secondaryCustomInput.value;
+                        const patternSize = parseInt(patternSizeSlider.value);
+                        const lineWidth = parseFloat(lineWidthSlider.value);
+                        const lineSpacing = parseInt(lineSpacingSlider.value);
+                        const patternType = patternTypeSelect.value;
+
+                        // Cập nhật các biến toàn cục
+                        currentCheckeredColors.primary = primaryColor;
+                        currentCheckeredColors.secondary = secondaryColor;
+                        currentCheckeredSize = patternSize;
+                        currentLineWidth = lineWidth;
+                        currentLineSpacing = lineSpacing;
+                        currentPatternType = patternType;
+
+                        // Áp dụng họa tiết với tất cả các tham số
+                        const texture = createPatternTexture(primaryColor, secondaryColor, 512, patternSize, lineWidth, lineSpacing);
+
+                        // Áp dụng texture lên mô hình
+                        applyTextureToModel(gltf.scene, texture);
+
+                        // Đặt lại màu cho các nút
+                        document.querySelectorAll('.primary-color-btn, .secondary-color-btn').forEach(btn => {
+                            btn.style.border = '2px solid #ddd';
+                            btn.style.boxShadow = 'none';
+                        });
+                    };
+
+                    // Thêm nút khôi phục màu gốc cho caro
+                    const resetCheckeredBtn = document.createElement('button');
+                    resetCheckeredBtn.innerHTML = '<i class="fas fa-undo-alt"></i> Khôi phục màu gốc';
+                    resetCheckeredBtn.className = 'btn btn-sm btn-outline-secondary';
+                    resetCheckeredBtn.style.marginTop = '5px';
+                    resetCheckeredBtn.style.fontSize = '12px';
+                    resetCheckeredBtn.style.marginRight = '5px';
+
+                    resetCheckeredBtn.onclick = function() {
+                        resetModelColor(gltf.scene);
+                        // Đặt lại màu cho các nút
+                        document.querySelectorAll('.primary-color-btn, .secondary-color-btn').forEach(btn => {
+                            btn.style.border = '2px solid #ddd';
+                            btn.style.boxShadow = 'none';
+                        });
+                    };
+
+                    // Tạo một hàng cho các nút
+                    const checkeredButtonsRow = document.createElement('div');
+                    checkeredButtonsRow.style.display = 'flex';
+                    checkeredButtonsRow.style.justifyContent = 'space-between';
+
+                    checkeredButtonsRow.appendChild(resetCheckeredBtn);
+                    checkeredButtonsRow.appendChild(applyCheckeredBtn);
+
+                    checkeredCustomControls.appendChild(primaryCustomRow);
+                    checkeredCustomControls.appendChild(secondaryCustomRow);
+                    checkeredCustomControls.appendChild(patternTypeRow);
+                    checkeredCustomControls.appendChild(patternSizeRow);
+                    checkeredCustomControls.appendChild(lineWidthRow);
+                    checkeredCustomControls.appendChild(lineSpacingRow);
+                    checkeredCustomControls.appendChild(checkeredButtonsRow);
+
+                    checkeredContent.appendChild(checkeredCustomControls);
+                    viewerContainer.appendChild(colorControls);
+
+                    // Thêm viewer vào DOM
+                    container.appendChild(viewerContainer);
+
+                    // Canh giữa mô hình trong scene
+                    // Tính toán bounding box để lấy tâm và kích thước mô hình
+                    const box = new THREE.Box3().setFromObject(gltf.scene);
+                    const center = new THREE.Vector3();
+                    box.getCenter(center);
+                    const size = new THREE.Vector3();
+                    box.getSize(size);
+
+                    // Đặt lại vị trí mô hình về tâm
+                    gltf.scene.position.x = -center.x;
+                    gltf.scene.position.y = -center.y;
+                    gltf.scene.position.z = -center.z;
+
+                    // Điều chỉnh vị trí camera dựa vào kích thước mô hình
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const fov = camera.fov * (Math.PI / 180);
+                    let cameraDistance = maxDim / (2 * Math.tan(fov / 2));
+                    cameraDistance *= 1.5;
+                    camera.position.z = cameraDistance;
+
+                    // Thêm mô hình vào scene
+                    scene.add(gltf.scene);
+
+                    // Debug: In ra bảng các material của mô hình
+                    console.log('Model loaded, analyzing materials:');
+                    const materialNames = [];
+                    gltf.scene.traverse((child) => {
+                        if (child.isMesh && child.material) {
+                            if (Array.isArray(child.material)) {
+                                child.material.forEach(mat => {
+                                    materialNames.push({
+                                        name: mat.name || 'unnamed',
+                                        color: mat.color ? `rgb(${Math.round(mat.color.r*255)},${Math.round(mat.color.g*255)},${Math.round(mat.color.b*255)})` : 'unknown',
+                                        metalness: mat.metalness,
+                                        roughness: mat.roughness,
+                                        opacity: mat.opacity,
+                                        transparent: mat.transparent
+                                    });
+                                });
+                            } else {
+                                materialNames.push({
+                                    name: child.material.name || 'unnamed',
+                                    color: child.material.color ? `rgb(${Math.round(child.material.color.r*255)},${Math.round(child.material.color.g*255)},${Math.round(child.material.color.b*255)})` : 'unknown',
+                                    metalness: child.material.metalness,
+                                    roughness: child.material.roughness,
+                                    opacity: child.material.opacity,
+                                    transparent: child.material.transparent
+                                });
+                            }
+                        }
+                    });
+                    console.table(materialNames);
+
+                    // Bắt đầu vòng lặp render
+                    animate();
+                },
+                (xhr) => {
+                    // Hiển thị tiến trình tải mô hình
+                    if (xhr.lengthComputable) {
+                        const percent = Math.floor((xhr.loaded / xhr.total) * 100);
+                        container.innerHTML = `<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Đang tải mô hình 3D: ${percent}%</p></div>`;
+                    }
+                },
+                (error) => {
+                    // Hiển thị lỗi khi tải mô hình
+                    showModelError(container, `Lỗi khi tải mô hình: ${error.message || 'Không xác định'}`);
+                    console.error('Error loading model:', error);
+                }
+            );
+
+            // Xử lý khi thay đổi kích thước cửa sổ
+            function handleResize() {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            }
+
+            window.addEventListener('resize', handleResize);
+
+            // Vòng lặp render
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+
+            return true;
+        } catch (error) {
+            console.error('Error showing 3D model:', error);
+            showModelError(container, `Lỗi: ${error.message}`);
+            return false;
+        }
+    }
+
+    // Biến toàn cục lưu trạng thái mô hình, material gốc, các tham số caro
+    let originalMaterials = null;
+    let currentModel = null;
+    let scene = null;
+    let camera = null;
+    let renderer = null;
+    let currentCheckeredColors = { primary: '#FFFFFF', secondary: '#000000' };
+    let currentCheckeredSize = 12; // Số ô caro mặc định
+    let currentPatternType = 'windowpane'; // Kiểu caro mặc định
+    let currentLineWidth = 1; // Độ dày đường kẻ caro
+    let currentLineSpacing = 3; // Khoảng cách đường kẻ đôi
+
+    // Hàm đổi màu mô hình - chỉ đổi màu mesh chính (lớn nhất)
+    function changeModelColor(model, colorHex) {
+        // Lưu lại mô hình hiện tại để tham chiếu
+        currentModel = model;
+
+        // Chuyển đổi mã màu hex sang đối tượng THREE.Color
+        const color = new THREE.Color(colorHex);
+
+        // Ghi log màu đang áp dụng
+        console.log('Applying color:', colorHex, 'RGB:', color.r.toFixed(2), color.g.toFixed(2), color.b.toFixed(2));
+
+        // Lưu lại material gốc nếu chưa lưu
+        if (!originalMaterials) {
+            // Tạo bản sao sâu của tất cả material
+            originalMaterials = [];
+
+            model.traverse((child) => {
+                if (child.isMesh && child.material) {
+                    // Ghi log để debug
+                    console.log('Found mesh:', child.name);
+
+                    // Lưu lại material gốc kèm tham chiếu mesh
+                    if (Array.isArray(child.material)) {
+                        child.material.forEach((mat, index) => {
+                            originalMaterials.push({
+                                mesh: child,
+                                index: index,
+                                material: mat.clone()
+                            });
+                            // Ghi log thuộc tính material
+                            console.log(`Material ${index}:`, mat.name, mat.color);
+                        });
+                    } else {
+                        originalMaterials.push({
+                            mesh: child,
+                            material: child.material.clone()
+                        });
+                        // Ghi log thuộc tính material
+                        console.log('Material:', child.material.name, child.material.color);
+                    }
+                }
+            });
+        }
+
+        console.log('Changing color to:', colorHex);
+
+        // Tìm mesh chính trong mô hình bằng nhiều chiến lược
+        let mainMesh = null;
+
+        // Ghi log tất cả mesh trong mô hình để debug
+        console.log('All meshes in the model:');
+        model.traverse((child) => {
+            if (child.isMesh) {
+                console.log(`Mesh: ${child.name}, Type: ${child.type}`);
+            }
+        });
+
+        // Chiến lược 1: Tìm mesh có tên đặc trưng (body, main, base, ...)
+        const mainPartNames = ['body', 'main', 'base', 'hull', 'chassis', 'frame', 'primary', 'car', 'vehicle', 'model'];
+        let foundMainPart = false;
+
+        model.traverse((child) => {
+            if (child.isMesh && child.name && !foundMainPart) {
+                const lowerName = child.name.toLowerCase();
+                // Kiểm tra tên mesh có nằm trong danh sách ưu tiên không
+                for (const partName of mainPartNames) {
+                    if (lowerName.includes(partName)) {
+                        console.log('Found main part by name:', child.name);
+                        mainMesh = child;
+                        foundMainPart = true;
+                        break;
+                    }
+                }
+            }
+        });
+
+        // Chiến lược 2: Nếu chưa tìm được, chọn mesh có nhiều đỉnh nhất
+        if (!foundMainPart) {
+            let maxVertices = 0;
+
+            model.traverse((child) => {
+                if (child.isMesh && child.geometry && child.geometry.attributes.position) {
+                    const vertexCount = child.geometry.attributes.position.count;
+                    console.log(`Mesh: ${child.name}, Vertices: ${vertexCount}`);
+
+                    if (vertexCount > maxVertices) {
+                        maxVertices = vertexCount;
+                        mainMesh = child;
+                        foundMainPart = true;
+                    }
+                }
+            });
+
+            if (foundMainPart) {
+                console.log('Found main part by vertex count:', mainMesh.name, 'with', maxVertices, 'vertices');
+            }
+        }
+
+        // Chiến lược 3: Nếu vẫn chưa tìm được, chọn mesh có thể tích lớn nhất
+        if (!foundMainPart) {
+            let largestSize = 0;
+
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    // Tính thể tích mesh bằng bounding box
+                    const boundingBox = new THREE.Box3().setFromObject(child);
+                    const size = boundingBox.getSize(new THREE.Vector3());
+                    const volume = size.x * size.y * size.z;
+
+                    console.log('Mesh:', child.name, 'Volume:', volume);
+
+                    // Cập nhật mesh lớn nhất nếu có thể tích lớn hơn
+                    if (volume > largestSize) {
+                        largestSize = volume;
+                        mainMesh = child;
+                        foundMainPart = true;
+                    }
+                }
+            });
+
+            if (foundMainPart) {
+                console.log('Found main part by volume:', mainMesh.name, 'with volume', largestSize);
+            }
+        }
+
+        // Chiến lược 4: Nếu vẫn chưa tìm được, chọn mesh có material có texture
+        if (!foundMainPart) {
+            model.traverse((child) => {
+                if (child.isMesh && child.material) {
+                    if (Array.isArray(child.material)) {
+                        // Kiểm tra nếu có material nào có texture
+                        for (const mat of child.material) {
+                            if (mat.map) {
+                                console.log('Found mesh with texture:', child.name);
+                                mainMesh = child;
+                                foundMainPart = true;
+                                break;
+                            }
+                        }
+                    } else if (child.material.map) {
+                        console.log('Found mesh with texture:', child.name);
+                        mainMesh = child;
+                        foundMainPart = true;
+                    }
+                }
+
+                if (foundMainPart) return;
+            });
+        }
+
+        // Nếu tìm được mesh chính, đổi màu material của nó
+        if (mainMesh) {
+            console.log('Main mesh found:', mainMesh.name);
+
+            if (Array.isArray(mainMesh.material)) {
+                // Nếu mesh có nhiều material, đổi tất cả
+                for (let i = 0; i < mainMesh.material.length; i++) {
+                    const oldMat = mainMesh.material[i];
+
+                    // Tạo một material hoàn toàn mới dựa trên loại material cũ
+                    let newMat;
+
+                    // Xác định loại material và tạo bản sao phù hợp
+                    if (oldMat.type === 'MeshStandardMaterial') {
+                        newMat = new THREE.MeshStandardMaterial({
+                            color: color,
+                            metalness: oldMat.metalness,
+                            roughness: oldMat.roughness,
+                            transparent: oldMat.transparent,
+                            opacity: oldMat.opacity,
+                            side: oldMat.side
+                        });
+                    } else if (oldMat.type === 'MeshPhongMaterial') {
+                        newMat = new THREE.MeshPhongMaterial({
+                            color: color,
+                            specular: oldMat.specular,
+                            shininess: oldMat.shininess,
+                            transparent: oldMat.transparent,
+                            opacity: oldMat.opacity,
+                            side: oldMat.side
+                        });
+                    } else if (oldMat.type === 'MeshLambertMaterial') {
+                        newMat = new THREE.MeshLambertMaterial({
+                            color: color,
+                            transparent: oldMat.transparent,
+                            opacity: oldMat.opacity,
+                            side: oldMat.side
+                        });
+                    } else if (oldMat.type === 'MeshBasicMaterial') {
+                        newMat = new THREE.MeshBasicMaterial({
+                            color: color,
+                            transparent: oldMat.transparent,
+                            opacity: oldMat.opacity,
+                            side: oldMat.side
+                        });
+                    } else {
+                        // Đối với các loại material khác, chỉ cần sao chép và thiết lập màu
+                        newMat = oldMat.clone();
+                        newMat.color.set(color);
+                    }
+
+                    // Giữ lại các texture map từ material gốc nếu có
+                    if (oldMat.map) newMat.map = oldMat.map;
+                    if (oldMat.normalMap) newMat.normalMap = oldMat.normalMap;
+                    if (oldMat.bumpMap) newMat.bumpMap = oldMat.bumpMap;
+                    if (oldMat.roughnessMap) newMat.roughnessMap = oldMat.roughnessMap;
+                    if (oldMat.metalnessMap) newMat.metalnessMap = oldMat.metalnessMap;
+                    if (oldMat.aoMap) newMat.aoMap = oldMat.aoMap;
+                    if (oldMat.emissiveMap) newMat.emissiveMap = oldMat.emissiveMap;
+
+                    // Xử lý các trường hợp đặc biệt cho các material màu đen
+                    if (oldMat.map && oldMat.map.image) {
+                        // Giữ lại texture nhưng áp dụng hiệu ứng màu
+                        newMat.map = oldMat.map;
+                        newMat.color.set(color);
+                        newMat.transparent = true;
+
+                        // Sử dụng chế độ hòa trộn khác cho hiệu ứng màu tốt hơn
+                        newMat.blending = THREE.CustomBlending;
+                        newMat.blendSrc = THREE.SrcAlphaFactor;
+                        newMat.blendDst = THREE.OneMinusSrcAlphaFactor;
+                        newMat.blendEquation = THREE.AddEquation;
+                    }
+
+                    // Đảm bảo material biết cần cập nhật
+                    newMat.needsUpdate = true;
+
+                    // Thay thế material cũ bằng material mới
+                    mainMesh.material[i] = newMat;
+
+                    console.log(`Updated material ${i} on main mesh:`, oldMat.type, 'Old color:', oldMat.color, 'New color:', newMat.color);
+                }
+            } else {
+                const oldMat = mainMesh.material;
+
+                // Tạo một material hoàn toàn mới dựa trên loại material cũ
+                let newMat;
+
+                // Xác định loại material và tạo bản sao phù hợp
+                if (oldMat.type === 'MeshStandardMaterial') {
+                    newMat = new THREE.MeshStandardMaterial({
+                        color: color,
+                        metalness: oldMat.metalness,
+                        roughness: oldMat.roughness,
+                        transparent: oldMat.transparent,
+                        opacity: oldMat.opacity,
+                        side: oldMat.side
+                    });
+                } else if (oldMat.type === 'MeshPhongMaterial') {
+                    newMat = new THREE.MeshPhongMaterial({
+                        color: color,
+                        specular: oldMat.specular,
+                        shininess: oldMat.shininess,
+                        transparent: oldMat.transparent,
+                        opacity: oldMat.opacity,
+                        side: oldMat.side
+                    });
+                } else if (oldMat.type === 'MeshLambertMaterial') {
+                    newMat = new THREE.MeshLambertMaterial({
+                        color: color,
+                        transparent: oldMat.transparent,
+                        opacity: oldMat.opacity,
+                        side: oldMat.side
+                    });
+                } else if (oldMat.type === 'MeshBasicMaterial') {
+                    newMat = new THREE.MeshBasicMaterial({
+                        color: color,
+                        transparent: oldMat.transparent,
+                        opacity: oldMat.opacity,
+                        side: oldMat.side
+                    });
+                } else {
+                    // Đối với các loại material khác, chỉ cần sao chép và thiết lập màu
+                    newMat = oldMat.clone();
+                    newMat.color.set(color);
+                }
+
+                // Giữ lại các texture map từ material gốc nếu có
+                if (oldMat.map) newMat.map = oldMat.map;
+                if (oldMat.normalMap) newMat.normalMap = oldMat.normalMap;
+                if (oldMat.bumpMap) newMat.bumpMap = oldMat.bumpMap;
+                if (oldMat.roughnessMap) newMat.roughnessMap = oldMat.roughnessMap;
+                if (oldMat.metalnessMap) newMat.metalnessMap = oldMat.metalnessMap;
+                if (oldMat.aoMap) newMat.aoMap = oldMat.aoMap;
+                if (oldMat.emissiveMap) newMat.emissiveMap = oldMat.emissiveMap;
+
+                // Xử lý các trường hợp đặc biệt cho các material màu đen
+                if (oldMat.map && oldMat.map.image) {
+                    // Giữ lại texture nhưng áp dụng hiệu ứng màu
+                    newMat.map = oldMat.map;
+                    newMat.color.set(color);
+                    newMat.transparent = true;
+
+                    // Sử dụng chế độ hòa trộn khác cho hiệu ứng màu tốt hơn
+                    newMat.blending = THREE.CustomBlending;
+                    newMat.blendSrc = THREE.SrcAlphaFactor;
+                    newMat.blendDst = THREE.OneMinusSrcAlphaFactor;
+                    newMat.blendEquation = THREE.AddEquation;
+                }
+
+                // Đảm bảo material biết cần cập nhật
+                newMat.needsUpdate = true;
+
+                // Thay thế material cũ bằng material mới
+                mainMesh.material = newMat;
+
+                console.log('Updated material on main mesh:', oldMat.type, 'Old color:', oldMat.color, 'New color:', newMat.color);
+            }
+        } else {
+            console.warn('No main mesh found in the model');
+        }
+
+        // Render lại scene
+        renderer.render(scene, camera);
+    }
+
+    // Hàm khôi phục màu gốc cho mesh chính
+    function resetModelColor(model) {
+        if (!originalMaterials || !currentModel) {
+            console.log('No original materials to restore');
+            return;
+        }
+
+        console.log('Restoring original materials for main mesh');
+
+        // Tìm mesh chính trong mô hình bằng các chiến lược như trên
+        let mainMesh = null;
+        let foundMainPart = false;
+
+        // Chiến lược 1: Tìm mesh có tên đặc trưng (body, main, base, ...)
+        const mainPartNames = ['body', 'main', 'base', 'hull', 'chassis', 'frame', 'primary', 'car', 'vehicle', 'model'];
+
+        model.traverse((child) => {
+            if (child.isMesh && child.name && !foundMainPart) {
+                const lowerName = child.name.toLowerCase();
+                // Kiểm tra tên mesh có nằm trong danh sách ưu tiên không
+                for (const partName of mainPartNames) {
+                    if (lowerName.includes(partName)) {
+                        console.log('Found main part by name:', child.name);
+                        mainMesh = child;
+                        foundMainPart = true;
+                        break;
+                    }
+                }
+            }
+        });
+
+        // Chiến lược 2: Nếu chưa tìm được, chọn mesh có nhiều đỉnh nhất
+        if (!foundMainPart) {
+            let maxVertices = 0;
+
+            model.traverse((child) => {
+                if (child.isMesh && child.geometry && child.geometry.attributes.position) {
+                    const vertexCount = child.geometry.attributes.position.count;
+                    console.log(`Mesh: ${child.name}, Vertices: ${vertexCount}`);
+
+                    if (vertexCount > maxVertices) {
+                        maxVertices = vertexCount;
+                        mainMesh = child;
+                        foundMainPart = true;
+                    }
+                }
+            });
+
+            if (foundMainPart) {
+                console.log('Found main part by vertex count:', mainMesh.name, 'with', maxVertices, 'vertices');
+            }
+        }
+
+        // Chiến lược 3: Nếu vẫn chưa tìm được, chọn mesh có thể tích lớn nhất
+        if (!foundMainPart) {
+            let largestSize = 0;
+
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    // Tính thể tích mesh bằng bounding box
+                    const boundingBox = new THREE.Box3().setFromObject(child);
+                    const size = boundingBox.getSize(new THREE.Vector3());
+                    const volume = size.x * size.y * size.z;
+
+                    console.log('Mesh:', child.name, 'Volume:', volume);
+
+                    // Cập nhật mesh lớn nhất nếu có thể tích lớn hơn
+                    if (volume > largestSize) {
+                        largestSize = volume;
+                        mainMesh = child;
+                        foundMainPart = true;
+                    }
+                }
+            });
+
+            if (foundMainPart) {
+                console.log('Found main part by volume:', mainMesh.name, 'with volume', largestSize);
+            }
+        }
+
+        // Chiến lược 4: Nếu vẫn chưa tìm được, chọn mesh có material có texture
+        if (!foundMainPart) {
+            model.traverse((child) => {
+                if (child.isMesh && child.material) {
+                    if (Array.isArray(child.material)) {
+                        // Kiểm tra nếu có material nào có texture
+                        for (const mat of child.material) {
+                            if (mat.map) {
+                                console.log('Found mesh with texture:', child.name);
+                                mainMesh = child;
+                                foundMainPart = true;
+                                break;
+                            }
+                        }
+                    } else if (child.material.map) {
+                        console.log('Found mesh with texture:', child.name);
+                        mainMesh = child;
+                        foundMainPart = true;
+                    }
+                }
+
+                if (foundMainPart) return;
+            });
+        }
+
+        // Nếu tìm được mesh chính, khôi phục material gốc đã lưu
+        if (mainMesh) {
+            console.log('Restoring materials for main mesh:', mainMesh.name);
+
+            // Tìm các material gốc cho mesh này
+            const meshMaterials = originalMaterials.filter(item => item.mesh === mainMesh);
+
+            if (meshMaterials.length > 0) {
+                if (Array.isArray(mainMesh.material)) {
+                    // Đối với mesh có nhiều material
+                    meshMaterials.forEach(item => {
+                        if (typeof item.index !== 'undefined' && item.index < mainMesh.material.length) {
+                            // Tạo một bản sao sâu của material gốc
+                            const newMat = item.material.clone();
+
+                            // Đảm bảo tất cả thuộc tính được chuyển giao đúng cách
+                            if (item.material.map) newMat.map = item.material.map;
+                            if (item.material.normalMap) newMat.normalMap = item.material.normalMap;
+                            if (item.material.bumpMap) newMat.bumpMap = item.material.bumpMap;
+                            if (item.material.roughnessMap) newMat.roughnessMap = item.material.roughnessMap;
+                            if (item.material.metalnessMap) newMat.metalnessMap = item.material.metalnessMap;
+                            if (item.material.aoMap) newMat.aoMap = item.material.aoMap;
+                            if (item.material.emissiveMap) newMat.emissiveMap = item.material.emissiveMap;
+
+                            // Đặt lại chế độ hòa trộn về mặc định nếu đã thay đổi
+                            newMat.blending = THREE.NormalBlending;
+
+                            // Đảm bảo material biết cần cập nhật
+                            newMat.needsUpdate = true;
+
+                            // Thay thế material hiện tại bằng material gốc
+                            mainMesh.material[item.index] = newMat;
+
+                            console.log(`Restored array material ${item.index} for main mesh:`, mainMesh.name);
+                        }
+                    });
+                } else {
+                    // Đối với mesh chỉ có một material
+                    const item = meshMaterials.find(item => typeof item.index === 'undefined');
+
+                    if (item) {
+                        // Tạo một bản sao sâu của material gốc
+                        const newMat = item.material.clone();
+
+                        // Đảm bảo tất cả thuộc tính được chuyển giao đúng cách
+                        if (item.material.map) newMat.map = item.material.map;
+                        if (item.material.normalMap) newMat.normalMap = item.material.normalMap;
+                        if (item.material.bumpMap) newMat.bumpMap = item.material.bumpMap;
+                        if (item.material.roughnessMap) newMat.roughnessMap = item.material.roughnessMap;
+                        if (item.material.metalnessMap) newMat.metalnessMap = item.material.metalnessMap;
+                        if (item.material.aoMap) newMat.aoMap = item.material.aoMap;
+                        if (item.material.emissiveMap) newMat.emissiveMap = item.material.emissiveMap;
+
+                        // Đặt lại chế độ hòa trộn về mặc định nếu đã thay đổi
+                        newMat.blending = THREE.NormalBlending;
+
+                        // Đảm bảo material biết cần cập nhật
+                        newMat.needsUpdate = true;
+
+                        // Thay thế material hiện tại bằng material gốc
+                        mainMesh.material = newMat;
+
+                        console.log('Restored material for main mesh:', mainMesh.name);
+                    }
+                }
+            } else {
+                console.warn('No original materials found for main mesh');
+            }
+        } else {
+            console.warn('No main mesh found in the model');
+        }
+
+        // Render lại scene
+        renderer.render(scene, camera);
+
+        console.log('Material restoration complete');
+    }
+
+    // Hiển thị thông báo lỗi khi không tải được mô hình
+    function showModelError(container, message) {
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <h4>Không thể tải mô hình 3D</h4>
+                <p>${message || 'Lỗi không xác định'}</p>
+                <p>Có thể do một trong các nguyên nhân sau:</p>
+                <ul>
+                    <li>Định dạng file không được hỗ trợ (chỉ hỗ trợ các file .glb, .gltf)</li>
+                    <li>Đường dẫn đến file không chính xác</li>
+                    <li>File mô hình bị hỏng</li>
+                </ul>
+            </div>
+        `;
+    }
+
+    // Tạo texture caro dựa vào kiểu caro hiện tại (windowpane, double-windowpane, checkered)
+    function createPatternTexture(primaryColor, secondaryColor, size = 512, segments = null, lineWidth = null, lineSpacing = null) {
+        // Sử dụng các giá trị toàn cục nếu không được cung cấp
+        if (segments === null) {
+            segments = currentCheckeredSize;
+        }
+
+        if (lineWidth === null) {
+            lineWidth = currentLineWidth;
+        }
+
+        if (lineSpacing === null) {
+            lineSpacing = currentLineSpacing;
+        }
+
+        // Tạo texture phù hợp dựa trên kiểu caro
+        if (currentPatternType === 'windowpane') {
+            return createWindowpaneTexture(primaryColor, secondaryColor, size, segments, lineWidth);
+        } else if (currentPatternType === 'double-windowpane') {
+            return createDoubleWindowpaneTexture(primaryColor, secondaryColor, size, segments, lineWidth, lineSpacing);
+        } else {
+            return createCheckeredTexture(primaryColor, secondaryColor, size, segments);
+        }
+    }
+
+    // Tạo texture caro kiểu double windowpane (có 2 đường kẻ song song)
+    function createDoubleWindowpaneTexture(primaryColor, secondaryColor, size = 512, segments = 12, lineWidth = 1, lineSpacing = 3) {
+        // Tạo phần tử canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        // Đổ màu nền bằng màu chính
+        ctx.fillStyle = primaryColor;
+        ctx.fillRect(0, 0, size, size);
+
+        // Thiết lập thuộc tính đường kẻ
+        ctx.strokeStyle = secondaryColor;
+        ctx.lineWidth = lineWidth;
+
+        // Tính kích thước của mỗi ô
+        const cellSize = size / segments;
+
+        // Vẽ các đường lưới
+        ctx.beginPath();
+
+        // Vẽ đường kẻ đôi dọc
+        for (let x = 1; x < segments; x++) {
+            if (x % 3 === 0) { // Vẽ đường kẻ đôi mỗi 3 ô để có vẻ ngoài tinh tế hơn
+                const xPos1 = x * cellSize - lineSpacing/2;
+                const xPos2 = x * cellSize + lineSpacing/2;
+
+                // Đường kẻ đầu tiên
+                ctx.moveTo(xPos1, 0);
+                ctx.lineTo(xPos1, size);
+
+                // Đường kẻ thứ hai
+                ctx.moveTo(xPos2, 0);
+                ctx.lineTo(xPos2, size);
+            }
+        }
+
+        // Vẽ đường kẻ đôi ngang
+        for (let y = 1; y < segments; y++) {
+            if (y % 3 === 0) { // Vẽ đường kẻ đôi mỗi 3 ô
+                const yPos1 = y * cellSize - lineSpacing/2;
+                const yPos2 = y * cellSize + lineSpacing/2;
+
+                // Đường kẻ đầu tiên
+                ctx.moveTo(0, yPos1);
+                ctx.lineTo(size, yPos1);
+
+                // Đường kẻ thứ hai
+                ctx.moveTo(0, yPos2);
+                ctx.lineTo(size, yPos2);
+            }
+        }
+
+        ctx.stroke();
+
+        // Tạo texture từ canvas
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(2, 2); // Lặp lại họa tiết
+
+        return texture;
+    }
+
+    // Tạo texture caro kiểu checkered (ô vuông xen kẽ)
+    function createCheckeredTexture(primaryColor, secondaryColor, size = 512, segments = 8) {
+        // Tạo phần tử canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        // Tính kích thước của mỗi ô vuông
+        const squareSize = size / segments;
+
+        // Vẽ họa tiết caro
+        for (let x = 0; x < segments; x++) {
+            for (let y = 0; y < segments; y++) {
+                // Xác định ô này sẽ có màu chính hay màu phụ
+                const isEven = (x + y) % 2 === 0;
+                ctx.fillStyle = isEven ? primaryColor : secondaryColor;
+
+                // Vẽ ô vuông
+                ctx.fillRect(x * squareSize, y * squareSize, squareSize, squareSize);
+            }
+        }
+
+        // Tạo texture từ canvas
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(2, 2); // Lặp lại họa tiết
+
+        return texture;
+    }
+
+    // Tạo texture caro kiểu windowpane (kẻ ô vuông)
+    function createWindowpaneTexture(primaryColor, secondaryColor, size = 512, segments = 12, lineWidth = 1) {
+        // Tạo phần tử canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        // Đổ màu nền bằng màu chính
+        ctx.fillStyle = primaryColor;
+        ctx.fillRect(0, 0, size, size);
+
+        // Thiết lập thuộc tính đường kẻ
+        ctx.strokeStyle = secondaryColor;
+        ctx.lineWidth = lineWidth;
+
+        // Tính kích thước của mỗi ô
+        const cellSize = size / segments;
+
+        // Vẽ các đường lưới
+        ctx.beginPath();
+
+        // Vẽ đường kẻ dọc
+        for (let x = 1; x < segments; x++) {
+            const xPos = x * cellSize;
+            ctx.moveTo(xPos, 0);
+            ctx.lineTo(xPos, size);
+        }
+
+        // Vẽ đường kẻ ngang
+        for (let y = 1; y < segments; y++) {
+            const yPos = y * cellSize;
+            ctx.moveTo(0, yPos);
+            ctx.lineTo(size, yPos);
+        }
+
+        ctx.stroke();
+
+        // Tạo texture từ canvas
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(4, 4); // Lặp lại họa tiết nhiều lần để làm cho nó nhỏ hơn
+
+        return texture;
+    }
+
+    // Áp dụng texture trực tiếp lên mesh chính của mô hình
+    function applyTextureToModel(model, texture) {
+        // Lưu lại mô hình hiện tại để tham chiếu
+        currentModel = model;
+
+        console.log('Applying texture to model');
+
+        // Lưu lại material gốc nếu chưa lưu
+        if (!originalMaterials) {
+            // Tạo bản sao sâu của tất cả material
+            originalMaterials = [];
+
+            model.traverse((child) => {
+                if (child.isMesh && child.material) {
+                    // Ghi log để debug
+                    console.log('Found mesh:', child.name);
+
+                    // Lưu lại material gốc kèm tham chiếu mesh
+                    if (Array.isArray(child.material)) {
+                        child.material.forEach((mat, index) => {
+                            originalMaterials.push({
+                                mesh: child,
+                                index: index,
+                                material: mat.clone()
+                            });
+                            // Ghi log thuộc tính material
+                            console.log(`Material ${index}:`, mat.name, mat.color);
+                        });
+                    } else {
+                        originalMaterials.push({
+                            mesh: child,
+                            material: child.material.clone()
+                        });
+                        // Ghi log thuộc tính material
+                        console.log('Material:', child.material.name, child.material.color);
+                    }
+                }
+            });
+        }
+
+        // Tìm mesh chính trong mô hình
+        let mainMesh = findMainMesh(model);
+
+        // Nếu tìm được mesh chính, thay material của nó bằng material mới có texture
+        if (mainMesh) {
+            console.log('Applying texture to main mesh:', mainMesh.name);
+
+            if (Array.isArray(mainMesh.material)) {
+                // Nếu mesh có nhiều material, đổi tất cả
+                for (let i = 0; i < mainMesh.material.length; i++) {
+                    const oldMat = mainMesh.material[i];
+
+                    // Tạo một material mới dựa trên loại material cũ
+                    let newMat;
+
+                    if (oldMat.type === 'MeshStandardMaterial') {
+                        newMat = new THREE.MeshStandardMaterial({
+                            map: texture,
+                            metalness: 0.1,
+                            roughness: 0.7,
+                            side: oldMat.side
+                        });
+                    } else if (oldMat.type === 'MeshPhongMaterial') {
+                        newMat = new THREE.MeshPhongMaterial({
+                            map: texture,
+                            side: oldMat.side
+                        });
+                    } else if (oldMat.type === 'MeshLambertMaterial') {
+                        newMat = new THREE.MeshLambertMaterial({
+                            map: texture,
+                            side: oldMat.side
+                        });
+                    } else if (oldMat.type === 'MeshBasicMaterial') {
+                        newMat = new THREE.MeshBasicMaterial({
+                            map: texture,
+                            side: oldMat.side
+                        });
+                    } else {
+                        // Đối với các loại material khác, chỉ cần sao chép và thiết lập map
+                        newMat = oldMat.clone();
+                        newMat.map = texture;
+                    }
+
+                    // Giữ lại các map khác từ material gốc
+                    if (oldMat.normalMap) newMat.normalMap = oldMat.normalMap;
+                    if (oldMat.bumpMap) newMat.bumpMap = oldMat.bumpMap;
+
+                    // Đảm bảo material biết cần cập nhật
+                    newMat.needsUpdate = true;
+
+                    // Thay thế material cũ bằng material mới
+                    mainMesh.material[i] = newMat;
+                }
+            } else {
+                // Đối với mesh chỉ có một material
+                const oldMat = mainMesh.material;
+
+                // Tạo một material mới dựa trên loại material cũ
+                let newMat;
+
+                if (oldMat.type === 'MeshStandardMaterial') {
+                    newMat = new THREE.MeshStandardMaterial({
+                        map: texture,
+                        metalness: 0.1,
+                        roughness: 0.7,
+                        side: oldMat.side
+                    });
+                } else if (oldMat.type === 'MeshPhongMaterial') {
+                    newMat = new THREE.MeshPhongMaterial({
+                        map: texture,
+                        side: oldMat.side
+                    });
+                } else if (oldMat.type === 'MeshLambertMaterial') {
+                    newMat = new THREE.MeshLambertMaterial({
+                        map: texture,
+                        side: oldMat.side
+                    });
+                } else if (oldMat.type === 'MeshBasicMaterial') {
+                    newMat = new THREE.MeshBasicMaterial({
+                        map: texture,
+                        side: oldMat.side
+                    });
+                } else {
+                    // Đối với các loại material khác, chỉ cần sao chép và thiết lập map
+                    newMat = oldMat.clone();
+                    newMat.map = texture;
+                }
+
+                // Giữ lại các map khác từ material gốc
+                if (oldMat.normalMap) newMat.normalMap = oldMat.normalMap;
+                if (oldMat.bumpMap) newMat.bumpMap = oldMat.bumpMap;
+
+                // Đảm bảo material biết cần cập nhật
+                newMat.needsUpdate = true;
+
+                // Thay thế material cũ bằng material mới
+                mainMesh.material = newMat;
+            }
+        } else {
+            console.warn('No main mesh found in the model');
+        }
+
+        // Render lại scene
+        renderer.render(scene, camera);
+    }
+
+    // Hàm tìm mesh chính trong mô hình (ưu tiên tên, số đỉnh)
+    function findMainMesh(model) {
+        let mainMesh = null;
+        let foundMainPart = false;
+
+        // Chiến lược 1: Tìm mesh có tên đặc trưng
+        const mainPartNames = ['body', 'main', 'base', 'hull', 'chassis', 'frame', 'primary', 'car', 'vehicle', 'model'];
+
+        model.traverse((child) => {
+            if (child.isMesh && child.name && !foundMainPart) {
+                const lowerName = child.name.toLowerCase();
+                for (const partName of mainPartNames) {
+                    if (lowerName.includes(partName)) {
+                        console.log('Found main part by name:', child.name);
+                        mainMesh = child;
+                        foundMainPart = true;
+                        break;
+                    }
+                }
+            }
+        });
+
+        // Chiến lược 2: Nếu chưa tìm được, chọn mesh có nhiều đỉnh nhất
+        if (!foundMainPart) {
+            let maxVertices = 0;
+
+            model.traverse((child) => {
+                if (child.isMesh && child.geometry && child.geometry.attributes.position) {
+                    const vertexCount = child.geometry.attributes.position.count;
+                    if (vertexCount > maxVertices) {
+                        maxVertices = vertexCount;
+                        mainMesh = child;
+                        foundMainPart = true;
+                    }
+                }
+            });
+
+            if (foundMainPart) {
+                console.log('Found main part by vertex count:', mainMesh.name, 'with', maxVertices, 'vertices');
+            }
+        }
+
+        return mainMesh;
+    }
+
+    // Hàm áp dụng caro lên mô hình (tạo texture và gọi applyTextureToModel)
+    function applyCheckeredPattern(model, primaryColor, secondaryColor, segments = null, lineWidth = null, patternType = null, lineSpacing = null) {
+        // Lưu lại mô hình hiện tại để tham chiếu
+        currentModel = model;
+
+        // Cập nhật màu caro chính
+        currentCheckeredColors.primary = primaryColor;
+        currentCheckeredColors.secondary = secondaryColor;
+
+        // Cập nhật kích thước ô nếu được cung cấp
+        if (segments !== null) {
+            currentCheckeredSize = segments;
+        }
+
+        // Cập nhật độ dày đường kẻ nếu được cung cấp
+        if (lineWidth !== null) {
+            currentLineWidth = lineWidth;
+        }
+
+        // Cập nhật kiểu caro nếu được cung cấp
+        if (patternType !== null) {
+            currentPatternType = patternType;
+        }
+
+        // Cập nhật khoảng cách đường kẻ nếu được cung cấp
+        if (lineSpacing !== null) {
+            currentLineSpacing = lineSpacing;
+        }
+
+        console.log('Applying pattern:', primaryColor, secondaryColor, 'Type:', patternType);
+
+        // Tạo texture với các thiết lập hiện tại
+        const texture = createPatternTexture(primaryColor, secondaryColor, 512, currentCheckeredSize, currentLineWidth, currentLineSpacing);
+
+        // Áp dụng texture lên mô hình
+        applyTextureToModel(model, texture);
+
+        // Trả về ngay vì chúng ta đang sử dụng phương pháp mới
+        return;
+
+        // Mã dưới đây được giữ lại để tham khảo nhưng không còn được sử dụng nữa
+        // Lưu lại material gốc nếu chưa lưu
+        if (!originalMaterials) {
+            // Tạo bản sao sâu của tất cả material
+            originalMaterials = [];
+
+            model.traverse((child) => {
+                if (child.isMesh && child.material) {
+                    // Ghi log để debug
+                    console.log('Found mesh:', child.name);
+
+                    // Lưu lại material gốc kèm tham chiếu mesh
+                    if (Array.isArray(child.material)) {
+                        child.material.forEach((mat, index) => {
+                            originalMaterials.push({
+                                mesh: child,
+                                index: index,
+                                material: mat.clone()
+                            });
+                            // Ghi log thuộc tính material
+                            console.log(`Material ${index}:`, mat.name, mat.color);
+                        });
+                    } else {
+                        originalMaterials.push({
+                            mesh: child,
+                            material: child.material.clone()
+                        });
+                        // Ghi log thuộc tính material
+                        console.log('Material:', child.material.name, child.material.color);
+                    }
+                }
+            });
+        }
+
+        // Tìm mesh chính trong mô hình (sử dụng lại các chiến lược như trong hàm changeModelColor)
+        let mainMesh = null;
+        let foundMainPart = false;
+
+        // Chiến lược 1: Tìm mesh có tên đặc trưng (body, main, base, ...)
+        const mainPartNames = ['body', 'main', 'base', 'hull', 'chassis', 'frame', 'primary', 'car', 'vehicle', 'model'];
+
+        model.traverse((child) => {
+            if (child.isMesh && child.name && !foundMainPart) {
+                const lowerName = child.name.toLowerCase();
+                for (const partName of mainPartNames) {
+                    if (lowerName.includes(partName)) {
+                        console.log('Found main part by name:', child.name);
+                        mainMesh = child;
+                        foundMainPart = true;
+                        break;
+                    }
+                }
+            }
+        });
+
+        // Chiến lược 2: Nếu chưa tìm được, chọn mesh có nhiều đỉnh nhất
+        if (!foundMainPart) {
+            let maxVertices = 0;
+
+            model.traverse((child) => {
+                if (child.isMesh && child.geometry && child.geometry.attributes.position) {
+                    const vertexCount = child.geometry.attributes.position.count;
+                    if (vertexCount > maxVertices) {
+                        maxVertices = vertexCount;
+                        mainMesh = child;
+                        foundMainPart = true;
+                    }
+                }
+            });
+
+            if (foundMainPart) {
+                console.log('Found main part by vertex count:', mainMesh.name, 'with', maxVertices, 'vertices');
+            }
+        }
+
+        // Nếu tìm được mesh chính, áp dụng họa tiết caro
+        if (mainMesh) {
+            console.log('Applying checkered pattern to main mesh:', mainMesh.name);
+
+            // Tạo texture họa tiết
+            const texture = createPatternTexture(primaryColor, secondaryColor, 512, currentCheckeredSize, currentLineWidth);
+
+
+            if (Array.isArray(mainMesh.material)) {
+                // Nếu mesh có nhiều material, đổi tất cả
+                for (let i = 0; i < mainMesh.material.length; i++) {
+                    const oldMat = mainMesh.material[i];
+
+                    // Tạo một material mới dựa trên loại material cũ
+                    let newMat;
+
+                    if (oldMat.type === 'MeshStandardMaterial') {
+                        newMat = new THREE.MeshStandardMaterial({
+                            map: texture,
+                            metalness: 0.1,
+                            roughness: 0.7,
+                            side: oldMat.side
+                        });
+                    } else if (oldMat.type === 'MeshPhongMaterial') {
+                        newMat = new THREE.MeshPhongMaterial({
+                            map: texture,
+                            side: oldMat.side
+                        });
+                    } else if (oldMat.type === 'MeshLambertMaterial') {
+                        newMat = new THREE.MeshLambertMaterial({
+                            map: texture,
+                            side: oldMat.side
+                        });
+                    } else if (oldMat.type === 'MeshBasicMaterial') {
+                        newMat = new THREE.MeshBasicMaterial({
+                            map: texture,
+                            side: oldMat.side
+                        });
+                    } else {
+                        // Đối với các loại material khác, chỉ cần sao chép và thiết lập map
+                        newMat = oldMat.clone();
+                        newMat.map = texture;
+                    }
+
+                    // Giữ lại các map khác từ material gốc
+                    if (oldMat.normalMap) newMat.normalMap = oldMat.normalMap;
+                    if (oldMat.bumpMap) newMat.bumpMap = oldMat.bumpMap;
+
+                    // Đảm bảo material biết cần cập nhật
+                    newMat.needsUpdate = true;
+
+                    // Thay thế material cũ bằng material mới
+                    mainMesh.material[i] = newMat;
+                }
+            } else {
+                // Đối với mesh chỉ có một material
+                const oldMat = mainMesh.material;
+
+                // Tạo một material mới dựa trên loại material cũ
+                let newMat;
+
+                if (oldMat.type === 'MeshStandardMaterial') {
+                    newMat = new THREE.MeshStandardMaterial({
+                        map: texture,
+                        metalness: 0.1,
+                        roughness: 0.7,
+                        side: oldMat.side
+                    });
+                } else if (oldMat.type === 'MeshPhongMaterial') {
+                    newMat = new THREE.MeshPhongMaterial({
+                        map: texture,
+                        side: oldMat.side
+                    });
+                } else if (oldMat.type === 'MeshLambertMaterial') {
+                    newMat = new THREE.MeshLambertMaterial({
+                        map: texture,
+                        side: oldMat.side
+                    });
+                } else if (oldMat.type === 'MeshBasicMaterial') {
+                    newMat = new THREE.MeshBasicMaterial({
+                        map: texture,
+                        side: oldMat.side
+                    });
+                } else {
+                    // Đối với các loại material khác, chỉ cần sao chép và thiết lập map
+                    newMat = oldMat.clone();
+                    newMat.map = texture;
+                }
+
+                // Giữ lại các map khác từ material gốc
+                if (oldMat.normalMap) newMat.normalMap = oldMat.normalMap;
+                if (oldMat.bumpMap) newMat.bumpMap = oldMat.bumpMap;
+
+                // Đảm bảo material biết cần cập nhật
+                newMat.needsUpdate = true;
+
+                // Thay thế material cũ bằng material mới
+                mainMesh.material = newMat;
+            }
+        } else {
+            console.warn('No main mesh found in the model');
+        }
+
+        // Render lại scene
+        renderer.render(scene, camera);
+    }
+
+    // Function to change the 3D model
+    function changeModel(modelUrl) {
+        // Lấy container mô hình
+        const container = document.getElementById('model-container');
+        if (!container) {
+            console.error('Model container not found');
+            return;
+        }
+
+        // Xóa nội dung container
+        container.innerHTML = '';
+
+        // Hiển thị loading indicator
+        container.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Đang tải mô hình 3D...</p></div>';
+
+        // Đặt lại các biến toàn cục
+        originalMaterials = null;
+        currentModel = null;
+
+        // Tải mô hình mới
+        show3DModel('model-container', modelUrl);
+    }
+
+    // Đối tượng hỗ trợ gọi hàm show3DModel từ ngoài
+    const ThreeModelViewer = {
+        init: function(containerId, modelUrl) {
+            return show3DModel(containerId, modelUrl);
+        }
+    };
+
+    const ModelViewerHelper = ThreeModelViewer;
+</script>

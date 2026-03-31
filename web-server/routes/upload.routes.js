@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const uploadController = require('../controllers/upload.controller');
-const upload = require('../middlewares/upload.middleware');
+const { upload, uploadModel } = require('../middlewares/upload.middleware');
 const authenticate = require('../middlewares/auth.middleware');
 const requireRole = require('../middlewares/role.middleware');
 
@@ -11,6 +11,13 @@ router.post(
   authenticate,
   upload.single('image'),
   uploadController.uploadImage
+);
+
+router.post(
+  '/model',
+  authenticate,
+  uploadModel.single('model'),
+  uploadController.uploadModel
 );
 
 module.exports = router;

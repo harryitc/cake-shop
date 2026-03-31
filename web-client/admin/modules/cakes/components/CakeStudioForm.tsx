@@ -17,7 +17,7 @@ import {
   CoffeeOutlined
 } from "@ant-design/icons";
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useCreateCakeMutation, useUpdateCakeMutation, useUploadImageMutation } from "../hooks";
+import { useCreateCakeMutation, useUpdateCakeMutation, useUploadImageMutation, useUploadModelMutation } from "../hooks";
 import { useCategoriesQuery } from "../../categories/hooks";
 import { ICake } from "../types";
 import { API_DOMAIN } from "@/lib/configs";
@@ -31,6 +31,7 @@ const cakeSchema = z.object({
   price: z.number().min(0, "Giá bánh không được âm"),
   stock: z.number().min(0, "Số lượng không được âm"),
   image_url: z.string().optional(),
+  model_url: z.string().optional(),
   variants: z.array(z.object({
     _id: z.string().optional(),
     size: z.string().min(1, "Vui lòng nhập kích thước"),
@@ -53,6 +54,7 @@ type CakeFormValues = {
   price: number;
   stock: number;
   image_url?: string;
+  model_url?: string;
   variants?: { _id?: string; size: string; price: number; stock: number }[];
   tags?: string[];
   ingredients?: string[];
@@ -131,13 +133,14 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
   const { mutate: createCake, isPending: isCreating } = useCreateCakeMutation();
   const { mutate: updateCake, isPending: isUpdating } = useUpdateCakeMutation();
   const { mutate: uploadImage, isPending: isUploading } = useUploadImageMutation();
+  const { mutate: uploadModel, isPending: isUploadingModel } = useUploadModelMutation();
   const isPending = isCreating || isUpdating;
 
   const { control, handleSubmit, formState: { errors, isDirty, isValid }, reset, setValue, watch } = useForm<CakeFormValues>({
     resolver: zodResolver(cakeSchema) as any,
     mode: "onChange",
     defaultValues: {
-      name: "", category: "", categories: [], description: "", price: 0, stock: 0, image_url: "",
+      name: "", category: "", categories: [], description: "", price: 0, stock: 0, image_url: "", model_url: "",
       variants: [], tags: [], ingredients: [], specifications: { weight: "", servings: "" }
     },
   });
@@ -149,6 +152,7 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
 
   const watchedValues = watch();
   const currentImageUrl = watchedValues.image_url;
+  const currentModelUrl = watchedValues.model_url;
   const currentDescription = watchedValues.description || "";
 
   const applyPreset = (type: keyof typeof CAKE_PRESETS) => {
@@ -219,11 +223,12 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
             weight: initialData.specifications?.weight || "",
             servings: initialData.specifications?.servings || ""
           },
-          image_url: finalImagePath
+          image_url: finalImagePath,
+          model_url: initialData.modelUrl ? initialData.modelUrl.replace(API_DOMAIN, "") : ""
         });
       } else {
         reset({
-          name: "", category: "", categories: [], description: "", price: 0, stock: 0, image_url: "",
+          name: "", category: "", categories: [], description: "", price: 0, stock: 0, image_url: "", model_url: "",
           variants: [], tags: [], ingredients: [], specifications: { weight: "", servings: "" }
         });
       }
@@ -242,8 +247,21 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
     return false;
   };
 
+  const handleUploadModel = (file: File) => {
+    uploadModel(file, {
+      onSuccess: (data: any) => {
+        setValue("model_url", data.path, { shouldDirty: true });
+        message.success("Upload model 3D thành công");
+      },
+      onError: (err: any) => {
+        if (err.statuscode === 422) message.error(err.message);
+      },
+    });
+    return false;
+  };
+
   const onSubmit = (values: CakeFormValues) => {
-    const payload = { ...values, image_url: values.image_url || undefined };
+    const payload = { ...values, image_url: values.image_url || undefined, model_url: values.model_url || undefined };
 
     if (isEditing) {
       updateCake({ id: initialData?.id || "", payload }, {
@@ -417,10 +435,37 @@ export const CakeStudioForm = ({ initialData, loading = false }: CakeStudioFormP
                         )}
                       </Upload>
                       <div className="flex-1 space-y-4">
-                        <Form.Item label={<span className="font-bold text-gray-700 text-[12px] px-1 tracking-tight">LIÊN KẾT HÌNH ÁNH DỰ PHÒNG</span>} className="mb-0">
+                        <Form.Item label={<span className="font-bold text-gray-700 text-[12px] px-1 tracking-tight">LIÊN KẾT HÌNH ẢNH DỰ PHÒNG</span>} className="mb-0">
                           <Controller name="image_url" control={control} render={({ field }) => <Input {...field} placeholder="https://cloud.com/image.jpg" className="rounded-lg h-9 bg-gray-50 border-gray-100 text-[11px] font-bold shadow-none focus:bg-white" />} />
                         </Form.Item>
                         <p className="text-[10px] text-gray-400 font-bold italic leading-relaxed">Ghi chú: Ảnh chính là yếu tố tiên quyết thu hút ánh nhìn đầu tiên của khách hàng.</p>
+                      </div>
+                    </div>
+
+                    <Divider className="my-8 border-gray-50" />
+
+                    <h3 className="text-sm font-bold text-gray-900 mb-4">Mô hình 3D (Tùy chọn)</h3>
+                    <div className="flex gap-6 items-start">
+                      <Upload name="model" accept=".glb,.gltf" listType="picture-card" showUploadList={false} beforeUpload={handleUploadModel} className="studio-upload-v10">
+                        {currentModelUrl ? (
+                          <div className="flex flex-col items-center justify-center h-full bg-indigo-50 rounded-xl relative overflow-hidden group">
+                              <span className="font-bold text-[10px] uppercase text-indigo-600 tracking-wider">Có Model 3D</span>
+                              <div className="absolute inset-0 bg-indigo-600 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  Thay đổi
+                              </div>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center h-full">
+                            {isUploadingModel ? <LoadingOutlined className="text-xl text-indigo-500" /> : <div className="text-2xl font-black text-gray-200">3D</div>}
+                            <div className="mt-2 text-gray-300 font-bold text-[8px] tracking-widest uppercase">TẢI MODEL</div>
+                          </div>
+                        )}
+                      </Upload>
+                      <div className="flex-1 space-y-4">
+                        <Form.Item label={<span className="font-bold text-gray-700 text-[12px] px-1 tracking-tight">LIÊN KẾT MODEL DỰ PHÒNG (.GLB/.GLTF)</span>} className="mb-0">
+                          <Controller name="model_url" control={control} render={({ field }) => <Input {...field} placeholder="/models/cake.glb" className="rounded-lg h-9 bg-gray-50 border-gray-100 text-[11px] font-bold shadow-none focus:bg-white" />} />
+                        </Form.Item>
+                        <p className="text-[10px] text-gray-400 font-bold italic leading-relaxed">Ghi chú: Mô hình 3D giúp người dùng tương tác trực tiếp lên giao diện bánh.</p>
                       </div>
                     </div>
 

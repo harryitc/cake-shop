@@ -14,9 +14,6 @@ connectDB();
 
 const app = express();
 
-// ─── Static Files ─────────────────────────────────────────────────────────────
-app.use('/uploads', express.static('public/uploads'));
-
 // ─── Middlewares ──────────────────────────────────────────────────────────────
 const allowedOrigins = '*';
 // const allowedOrigins = process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',') : '*';
@@ -25,6 +22,10 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
+
+// ─── Static Files ─────────────────────────────────────────────────────────────
+app.use('/uploads', express.static('public/uploads'));
+
 app.use(logger('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
