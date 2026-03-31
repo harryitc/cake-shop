@@ -12,6 +12,12 @@ const registerSchema = Joi.object({
     'string.min': 'Mật khẩu phải chứa ít nhất 6 ký tự',
     'any.required': 'Vui lòng nhập mật khẩu',
   }),
+  full_name: Joi.string().allow('').optional(),
+  phone: Joi.string().pattern(/^[0-9]+$/).allow('').optional().messages({
+    'string.pattern.base': 'Số điện thoại chỉ được chứa các chữ số',
+  }),
+  birthday: Joi.date().allow(null, '').optional(),
+  address: Joi.string().allow('').optional(),
 });
 
 const loginSchema = Joi.object({
