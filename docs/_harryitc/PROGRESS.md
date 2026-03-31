@@ -140,3 +140,10 @@ updated_at: 2026-03-28
     - [x] User: Point usage at Checkout (Max 20% discount logic)
 
 **Status: ✅ DONE**
+
+---
+
+## Mở rộng nhỏ định kỳ (Hot-features)
+- [x] **[Hotfix] Mở rộng Form Đăng ký (Register Fields Expansion)**
+    - [x] Backend: Cập nhật Schema validation (Joi) + Service injection cho `full_name`, `phone`, `birthday`, `address`.
+    - [x] User App: Thêm Zod fields & Antd `DatePicker`/`Input` vào `RegisterForm.tsx`.
