@@ -38,6 +38,9 @@ export interface IRegisterPayload {
   email: string;
   password?: string;
   full_name?: string;
+  phone?: string;
+  birthday?: string | null;
+  address?: string;
 }
 
 export interface IChangePasswordPayload {
