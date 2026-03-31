@@ -1,7 +1,8 @@
 const Joi = require('joi');
 const cartService = require('../services/cart.service');
-const { sendSuccess, createError } = require('../utils/response.utils');
-const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
+const { sendSuccess } = require('../utils/response.utils');
+const ApiError = require('../utils/error.factory');
+const { HTTP_STATUS } = require('../config/constants');
 
 // --- Schemas Validate ---
 const itemObject = Joi.object({
@@ -35,26 +36,19 @@ const updateQuantitySchema = Joi.object({
 });
 
 // --- Handlers ---
-const getCart = async (req, res, next) => {
-  try {
-    // req.user.userId đã được attach từ auth.middleware
-    const data = await cartService.getCart(req.user.userId);
-    return sendSuccess(res, data, 'Lấy giỏ hàng thành công', HTTP_STATUS.OK);
-  } catch (err) {
-    next(err);
-  }
+const getCart = async (req, res) => {
+  // req.user.userId đã được attach từ auth.middleware
+  const data = await cartService.getCart(req.user.userId);
+  return sendSuccess(res, data, 'Lấy giỏ hàng thành công', HTTP_STATUS.OK);
 };
 
-const addItem = async (req, res, next) => {
-  try {
-    const { error, value } = addItemSchema.validate(req.body);
-    if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
+const addItem = async (req, res) => {
+  const { error, value } = addItemSchema.validate(req.body, { abortEarly: false });
+  if (error) throw ApiError.BAD_REQUEST(error.details[0].message, error.details);
 
-    const data = await cartService.addItem(req.user.userId, value);
-    return sendSuccess(res, data, 'Thêm vào giỏ hàng thành công', HTTP_STATUS.OK);
-  } catch (err) {
-    next(err);
-  }
+  const data = await cartService.addItem(req.user.userId, value);
+  return sendSuccess(res, data, 'Thêm vào giỏ hàng thành công', HTTP_STATUS.OK);
+
 };
 
 const syncCart = async (req, res, next) => {
@@ -69,31 +63,23 @@ const syncCart = async (req, res, next) => {
   }
 };
 
-const removeItem = async (req, res, next) => {
-  try {
-    const { error, value } = itemIdParamSchema.validate(req.params);
-    if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
+const removeItem = async (req, res) => {
+  const { error, value } = itemIdParamSchema.validate(req.params, { abortEarly: false });
+  if (error) throw ApiError.BAD_REQUEST(error.details[0].message, error.details);
 
-    await cartService.removeItem(req.user.userId, value.id);
-    return sendSuccess(res, null, 'Đã xóa sản phẩm khỏi giỏ hàng', HTTP_STATUS.OK);
-  } catch (err) {
-    next(err);
-  }
+  await cartService.removeItem(req.user.userId, value.id);
+  return sendSuccess(res, null, 'Đã xóa sản phẩm khỏi giỏ hàng', HTTP_STATUS.OK);
 };
 
-const updateItemQuantity = async (req, res, next) => {
-  try {
-    const { error: paramError, value: paramValue } = itemIdParamSchema.validate(req.params);
-    if (paramError) throw createError(paramError.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
+const updateItemQuantity = async (req, res) => {
+  const { error: paramError, value: paramValue } = itemIdParamSchema.validate(req.params, { abortEarly: false });
+  if (paramError) throw ApiError.BAD_REQUEST(paramError.details[0].message, paramError.details);
 
-    const { error: bodyError, value: bodyValue } = updateQuantitySchema.validate(req.body);
-    if (bodyError) throw createError(bodyError.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
+  const { error: bodyError, value: bodyValue } = updateQuantitySchema.validate(req.body, { abortEarly: false });
+  if (bodyError) throw ApiError.BAD_REQUEST(bodyError.details[0].message, bodyError.details);
 
-    const data = await cartService.updateItemQuantity(req.user.userId, paramValue.id, bodyValue.quantity);
-    return sendSuccess(res, data, 'Cập nhật số lượng thành công', HTTP_STATUS.OK);
-  } catch (err) {
-    next(err);
-  }
+  const data = await cartService.updateItemQuantity(req.user.userId, paramValue.id, bodyValue.quantity);
+  return sendSuccess(res, data, 'Cập nhật số lượng thành công', HTTP_STATUS.OK);
 };
 
 module.exports = {

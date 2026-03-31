@@ -1,8 +1,8 @@
 ---
 title: Kiến trúc Hệ thống Xử lý Lỗi (Error Handling Architecture)
 status: Approved
-version: 1.3.1
-date: 2026-03-29
+version: 1.3.2
+date: 2026-03-31
 author: Gemini CLI
 prd_ref: "docs/_harryitc/2_prd/prd_v6_error_handling.md"
 ---
@@ -23,8 +23,9 @@ Mọi phản hồi lỗi từ Backend **BẮT BUỘC** phải tuân thủ địn
     "code": "ERROR_CODE_STRING",         // Mã định danh (ví dụ: USER_NOT_FOUND)
     "statuscode": 404,                   // Mã trạng thái HTTP (numeric)
     "timestamp": "2026-03-29T10:00:00Z", // Thời điểm lỗi (ISO 8601)
+    "path": "/api/v1/auth/login",        // Endpoint phát sinh lỗi
     "message": "Thông báo lỗi thân thiện", // Nội dung hiển thị cho UI
-    "details": {}                        // (Tùy chọn) Chi tiết lỗi (ví dụ: validation)
+    "details": []                        // (Tùy chọn) Chi tiết lỗi (ví dụ: validation)
   }
 }
 ```
@@ -116,4 +117,7 @@ Lỗi được chia thành 2 loại chính:
 2. **Tại Frontend**: 
    - Không gọi `notification.error` trực tiếp tại Component cho các lỗi hệ thống (để Interceptor lo).
    - Luôn sử dụng `httpClient` thay vì `axios` thuần để được hưởng các cơ chế xử lý lỗi và hiệu năng tập trung.
-3. **Bảo mật**: Không để lộ stack trace hoặc thông tin DB nhạy cảm trong thuộc tính `message` ở môi trường Production.
+3. **Bảo mật**: 
+   - Không để lộ thông tin nhạy cảm (như lỗi DB, stack trace) trong thuộc tính `message` cho Client.
+   - **Cơ chế 422 Protection**: Các lỗi hệ thống bất ngờ (mã 500) được tự động chuyển về mã **422 (LOGIC_ERROR)** với thông báo chung chung ("Hệ thống gặp sự cố nghiệp vụ") để bảo vệ thông tin. 
+   - Lỗi thực tế **BẮT BUỘC** phải được log chi tiết tại server console để phục vụ việc điều tra lỗi.
