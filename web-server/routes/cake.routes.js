@@ -8,6 +8,7 @@ const excelUpload = require('../middlewares/excel-upload.middleware');
 
 // Routes công khai cho người dùng và khách xem
 router.get('/', cakeController.getAll);
+router.get('/export', authenticate, requireRole('admin'), cakeController.exportExcel);
 router.get('/:id', cakeController.getById);
 
 // Routes bảo vệ chỉ dành cho quản trị viên thêm sửa xoá

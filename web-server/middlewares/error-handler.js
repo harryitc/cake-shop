@@ -6,8 +6,19 @@ const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
  * Không bao giờ để lộ stack trace ra ngoài môi trường production.
  */
 const errorHandler = (err, req, res, next) => {
+  // Lấy statusCode từ err (nếu có), mặc định ban đầu là 500
   let statusCode = err.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR;
   let code = err.code || ERROR_CODES.INTERNAL_ERROR;
+  
+  // Lưu lại message gốc để logging ở server
+  const originalMessage = err.message || 'Unknown Error';
+
+  // --- Tùy chỉnh: Ép các lỗi hệ thống bất ngờ (500) về lỗi Logic (422) ---
+  if (statusCode === HTTP_STATUS.INTERNAL_SERVER_ERROR) {
+    statusCode = HTTP_STATUS.LOGIC_ERROR; // 422
+    code = ERROR_CODES.LOGIC_ERROR;
+  }
+
   let message = err.message || 'Có lỗi xảy ra từ máy chủ';
   let details = err.details || null;
 
@@ -39,14 +50,20 @@ const errorHandler = (err, req, res, next) => {
       code,
       statuscode: statusCode,
       timestamp: err.timestamp || new Date().toISOString(),
-      message: (statusCode === 500 && isProd) 
-               ? 'Máy chủ hiện đang bận, vui lòng thử lại sau.' 
+      path: req.originalUrl, // <--- THÊM TRƯỞNG PATH
+      message: (code === ERROR_CODES.LOGIC_ERROR) 
+               ? 'Hệ thống gặp sự cố nghiệp vụ, vui lòng thử lại sau.' 
                : message,
       details
     }
   };
 
-  if (!isProd) {
+  // --- LOGGING TẠI SERVER ---
+  // Nếu là lỗi Logic Error (422), chúng ta log chi tiết lỗi gốc để Dev kiểm tra
+  if (code === ERROR_CODES.LOGIC_ERROR) {
+    console.error(`[LOGIC ERROR at ${req.originalUrl}]:`, originalMessage);
+    if (err.stack) console.error(err.stack);
+  } else if (!isProd) {
     console.error(`[ERROR] ${code}:`, message);
     if (statusCode === 500) console.error(err.stack);
   }

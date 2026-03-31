@@ -21,6 +21,19 @@ const activeErrorMessages = new Set<string>();
 const slowRequestTimers = new Map<string, any>();
 
 /**
+ * Định dạng phản hồi lỗi chuẩn từ Backend
+ */
+interface ApiErrorResponse {
+  error?: {
+    code: string;
+    statuscode: number;
+    timestamp: string;
+    message: string;
+    details?: any[];
+  };
+}
+
+/**
  * Custom Axios instance cho User (Magic Unwrap .data.data)
  */
 export const httpClient = axios.create({
@@ -80,7 +93,7 @@ httpClient.interceptors.response.use(
     // Trả về dữ liệu thực tế từ backend (unwrap .data.data)
     return response.data?.data;
   },
-  (error: AxiosError<any>) => {
+  (error: AxiosError<ApiErrorResponse>) => {
     // ISSUE B: Xóa timer và đóng message khi lỗi
     const requestId = (error.config as any)?.metadata?.requestId;
     if (requestId) {
@@ -105,6 +118,7 @@ httpClient.interceptors.response.use(
         notification.error({
           message: 'Lỗi Hệ Thống',
           description: messageText,
+          placement: "topRight",
         });
 
         // Mở khóa sau 5 giây

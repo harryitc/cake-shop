@@ -3,7 +3,7 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Form, Input, Button, App } from "antd";
+import { Form, Input, Button, App, DatePicker } from "antd";
 import { useRegisterMutation } from "../hooks";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -11,6 +11,13 @@ import Link from "next/link";
 const registerSchema = z.object({
   email: z.string().min(1, "Vui lòng nhập email").email("Email không đúng định dạng"),
   password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+  full_name: z.string().optional(),
+  phone: z.string()
+    .regex(/^[0-9]+$/, "Số điện thoại chỉ được nhập số")
+    .or(z.literal(""))
+    .optional(),
+  birthday: z.any().optional(),
+  address: z.string().optional(),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -26,7 +33,11 @@ export const RegisterForm = () => {
   });
 
   const onSubmit = (values: RegisterFormValues) => {
-    register(values, {
+    const payload = { ...values } as any;
+    if (payload.birthday) {
+      payload.birthday = payload.birthday.toISOString();
+    }
+    register(payload, {
       onSuccess: (res) => {
         localStorage.setItem("access_token", res.token);
         message.success("Đăng ký thành công!");
@@ -72,6 +83,71 @@ export const RegisterForm = () => {
             )}
           />
         </Form.Item>
+
+        <Form.Item
+          label={<span className="font-medium text-gray-700">Họ và tên</span>}
+          validateStatus={errors.full_name ? "error" : ""}
+          help={errors.full_name?.message}
+        >
+          <Controller
+            name="full_name"
+            control={control}
+            render={({ field }) => (
+              <Input {...field} placeholder="Nguyễn Văn A" size="large" className="rounded-lg" />
+            )}
+          />
+        </Form.Item>
+
+        <Form.Item
+          label={<span className="font-medium text-gray-700">Số điện thoại</span>}
+          validateStatus={errors.phone ? "error" : ""}
+          help={errors.phone?.message}
+        >
+          <Controller
+            name="phone"
+            control={control}
+            render={({ field }) => (
+              <Input {...field} placeholder="0123456789" size="large" className="rounded-lg" />
+            )}
+          />
+        </Form.Item>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Form.Item
+            label={<span className="font-medium text-gray-700">Ngày sinh</span>}
+            validateStatus={errors.birthday ? "error" : ""}
+            help={errors.birthday?.message as string}
+          >
+            <Controller
+              name="birthday"
+              control={control}
+              render={({ field }) => (
+                <DatePicker 
+                  {...field} 
+                  onChange={(date) => field.onChange(date)}
+                  format="DD/MM/YYYY" 
+                  size="large" 
+                  className="w-full rounded-lg" 
+                  placeholder="Chọn ngày sinh"
+                />
+              )}
+            />
+          </Form.Item>
+
+          <Form.Item
+            label={<span className="font-medium text-gray-700">Địa chỉ</span>}
+            validateStatus={errors.address ? "error" : ""}
+            help={errors.address?.message}
+          >
+            <Controller
+              name="address"
+              control={control}
+              render={({ field }) => (
+                <Input {...field} placeholder="Địa chỉ giao hàng" size="large" className="rounded-lg" />
+              )}
+            />
+          </Form.Item>
+        </div>
 
         <Form.Item className="mt-8 mb-4">
           <Button
