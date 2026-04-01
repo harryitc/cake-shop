@@ -139,21 +139,23 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
               optionType="button"
               buttonStyle="solid"
             >
-              <Space orientation="vertical">
+              <Space direction="vertical" style={{ width: '100%' }}>
                 <Radio value="UPSERT">
                   <Text strong>Ghi đè & Thêm mới (Upsert)</Text>
                   <br />
-                  <Text type="secondary">Cập nhật thông tin nếu đã tồn tại, nếu chưa sẽ tạo mới.</Text>
+                  <Text type="secondary">Tìm theo ID trong Excel. Nếu tồn tại sẽ cập nhật, nếu không sẽ tạo mới (Hệ thống tự sinh ID mới).</Text>
                 </Radio>
                 <Radio value="INSERT_ONLY">
                   <Text strong>Chỉ thêm mới (Insert Only)</Text>
                   <br />
-                  <Text type="secondary">Chỉ nhập những dòng chưa tồn tại trong hệ thống.</Text>
+                  <Text type="secondary" className="text-blue-600">
+                    <CheckCircleOutlined /> Hệ thống luôn tạo mới. <span className="font-bold">Lưu ý:</span> Bạn không cần nhập ID sản phẩm.
+                  </Text>
                 </Radio>
                 <Radio value="UPDATE_ONLY">
                   <Text strong>Chỉ cập nhật (Update Only)</Text>
                   <br />
-                  <Text type="secondary">Chỉ cập nhật thông tin cho những bản ghi đã có sẵn.</Text>
+                  <Text type="secondary">Yêu cầu nhập ID sản phẩm chính xác. Nếu không tìm thấy, hệ thống sẽ bỏ qua (Skip).</Text>
                 </Radio>
               </Space>
             </Radio.Group>
