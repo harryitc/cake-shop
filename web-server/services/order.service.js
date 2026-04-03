@@ -93,7 +93,7 @@ const createOrder = async (userId, address, couponCode = null, pointsToUse = 0) 
     let validatedCoupon = null;
 
     if (couponCode) {
-      const couponResult = await CouponService.validateCoupon(couponCode, total_price);
+      const couponResult = await CouponService.validateCoupon(couponCode, total_price, userId, items);
       validatedCoupon = couponResult.coupon;
       discount_amount = couponResult.discountAmount;
       final_price = couponResult.finalPrice;
