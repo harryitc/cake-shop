@@ -149,6 +149,7 @@ const exportExcel = async (sortBy = 'name', sortOrder = 1) => {
     .sort(sortCriteria);
 
   const columns = [
+    { header: 'ID Sản phẩm', key: '_id', width: 30 },
     { header: 'Tên Bánh', key: 'name', width: 35 },
     { header: 'Danh Mục', key: 'category_name', width: 25 },
     { header: 'Giá Gốc (VNĐ)', key: 'price', width: 15 },
@@ -157,6 +158,7 @@ const exportExcel = async (sortBy = 'name', sortOrder = 1) => {
   ];
 
   const rows = cakes.map(cake => ({
+    _id: cake._id.toString(),
     name: cake.name,
     category_name: cake.category ? cake.category.name : 'N/A',
     price: cake.price,

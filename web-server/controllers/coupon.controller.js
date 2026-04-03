@@ -4,24 +4,28 @@ const ApiError = require('../utils/error.factory');
 const { HTTP_STATUS } = require('../config/constants');
 const Joi = require('joi');
 
+const couponSchema = Joi.object({
+  code: Joi.string().trim().uppercase(),
+  type: Joi.string().valid('PERCENT', 'FIXED'),
+  value: Joi.number().min(0),
+  min_order_value: Joi.number().min(0).default(0),
+  max_discount_value: Joi.number().min(0).allow(null).optional(),
+  start_date: Joi.date(),
+  end_date: Joi.date().min(Joi.ref('start_date')),
+  usage_limit: Joi.number().min(1).allow(null).optional(),
+  usage_limit_per_user: Joi.number().min(1).default(1),
+  applicable_categories: Joi.array().items(Joi.string()).default([]),
+  description: Joi.string().allow('').optional(),
+  is_active: Joi.boolean().default(true),
+});
+
 class CouponController {
   async create(req, res) {
-    const schema = Joi.object({
-      code: Joi.string().required().trim().uppercase(),
-      type: Joi.string().valid('PERCENT', 'FIXED').required(),
-      value: Joi.number().min(0).required(),
-      min_order_value: Joi.number().min(0).default(0),
-      max_discount_value: Joi.number().min(0).allow(null).optional(),
-      start_date: Joi.date().required(),
-      end_date: Joi.date().min(Joi.ref('start_date')).required(),
-      usage_limit: Joi.number().min(1).allow(null).optional(),
-      usage_limit_per_user: Joi.number().min(1).default(1),
-      applicable_categories: Joi.array().items(Joi.string()).default([]),
-      description: Joi.string().allow('').optional(),
-      is_active: Joi.boolean().default(true),
-    });
+    const { error, value } = couponSchema.fork(
+      ['code', 'type', 'value', 'start_date', 'end_date'],
+      (schema) => schema.required()
+    ).validate(req.body, { abortEarly: false });
 
-    const { error, value } = schema.validate(req.body, { abortEarly: false });
     if (error) throw ApiError.BAD_REQUEST(error.details[0].message, error.details);
 
     const coupon = await couponService.createCoupon(value);
@@ -65,7 +69,10 @@ class CouponController {
   }
 
   async update(req, res) {
-    const coupon = await couponService.updateCoupon(req.params.id, req.body);
+    const { error, value } = couponSchema.validate(req.body, { abortEarly: false });
+    if (error) throw ApiError.BAD_REQUEST(error.details[0].message, error.details);
+
+    const coupon = await couponService.updateCoupon(req.params.id, value);
     if (!coupon) throw ApiError.NOT_FOUND('Không tìm thấy mã giảm giá');
     return sendSuccess(res, coupon, 'Cập nhật thành công');
   }

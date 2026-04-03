@@ -6,11 +6,12 @@ const { IMPORT_ENTITIES } = require('../../../config/constants');
 const cakeImportConfig = {
   entity: IMPORT_ENTITIES.CAKE,
   model: Cake,
-  uniqueKey: 'slug',
+  uniqueKey: '_id',
   batchSize: 500,
 
   // Mapping Excel Header -> DB Field
   mapping: {
+    'ID Sản phẩm': '_id',
     'Tên Bánh': 'name',
     'Mô tả': 'description',
     'Giá': 'price',

@@ -19,7 +19,7 @@ export const mapCouponToModel = (dto: any) => {
     used_count: dto.used_count || 0,
     is_active: dto.is_active ?? true,
     applicable_categories: (dto.applicable_categories || []).map((cat: any) => 
-      typeof cat === 'object' ? cat.name : cat
+      typeof cat === 'object' ? (cat._id || cat.id) : cat
     ),
     createdAt: dto.createdAt || new Date().toISOString(),
   };
