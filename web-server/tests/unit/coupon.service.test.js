@@ -243,4 +243,80 @@ describe('coupon.service – validateCoupon (discount calculation)', () => {
 
     expect(result.discountAmount).toBe(expected);
   });
+
+  // ──────────────────────────────────────────────────────────────
+  // NHÓM 3: Kiểm tra giới hạn người dùng & Danh mục sản phẩm (Advanced)
+  // ──────────────────────────────────────────────────────────────
+
+  // TC-WV09: Giới hạn lượt dùng theo từng người dùng (User limit)
+  it('TC-WV09: ném lỗi khi người dùng đã hết lượt sử dụng mã này', async () => {
+    const Order = require('../../schemas/Order.schema');
+    const coupon = makeFakeCoupon({ usage_limit_per_user: 2 });
+    Coupon.findOne.mockResolvedValue(coupon);
+
+    // Giả lập người dùng đã dùng 2 lần
+    Order.countDocuments.mockResolvedValue(2);
+
+    await expect(CouponService.validateCoupon('TESTCODE', 100_000, 'user-123'))
+      .rejects
+      .toMatchObject({ statusCode: 400, errorCode: 'COUPON_LIMIT_REACHED' });
+
+    expect(Order.countDocuments).toHaveBeenCalledWith(expect.objectContaining({ user_id: 'user-123' }));
+  });
+
+  // TC-WV10: Lỗi khi coupon có hạn chế danh mục nhưng cartItems trống
+  it('TC-WV10: ném lỗi khi coupon yêu cầu danh mục nhưng giỏ hàng trống', async () => {
+    const coupon = makeFakeCoupon({ applicable_categories: ['cat-1'] });
+    Coupon.findOne.mockResolvedValue(coupon);
+
+    await expect(CouponService.validateCoupon('TESTCODE', 100_000, 'user-123', []))
+      .rejects
+      .toMatchObject({ statusCode: 400, errorCode: 'COUPON_INVALID' });
+  });
+
+  // TC-WV11: Lọc sản phẩm theo danh mục và tính discount trên baseAmount correct
+  it('TC-WV11: chỉ tính giảm giá trên các sản phẩm thuộc danh mục hợp lệ', async () => {
+    const Cake = require('../../schemas/Cake.schema');
+    const coupon = makeFakeCoupon({
+      applicable_categories: ['cat-1'],
+      type: 'PERCENT',
+      value: 10 // 10%
+    });
+    Coupon.findOne.mockResolvedValue(coupon);
+
+    const cartItems = [
+      { cake_id: 'cake-valid', quantity: 2, price_at_buy: 50_000 }, // 100K valid
+      { cake_id: 'cake-invalid', quantity: 1, price_at_buy: 50_000 }, // 50K invalid
+    ];
+
+    Cake.find.mockReturnValue({
+      select: jest.fn().mockResolvedValue([
+        { _id: 'cake-valid', category_id: 'cat-1' },
+        { _id: 'cake-invalid', category_id: 'cat-2' },
+      ])
+    });
+
+    const result = await CouponService.validateCoupon('TESTCODE', 150_000, 'user-123', cartItems);
+
+    // discount 10% chỉ áp dụng trên 100K = 10K
+    expect(result.appliedOnAmount).toBe(100_000);
+    expect(result.discountAmount).toBe(10_000);
+    expect(result.finalPrice).toBe(140_000);
+  });
+
+  // TC-WV12: Ném lỗi khi không có sản phẩm nào trong giỏ thuộc danh mục áp dụng
+  it('TC-WV12: ném lỗi khi không có sản phẩm nào hợp lệ để áp dụng mã', async () => {
+    const Cake = require('../../schemas/Cake.schema');
+    const coupon = makeFakeCoupon({ applicable_categories: ['cat-999'] });
+    Coupon.findOne.mockResolvedValue(coupon);
+
+    const cartItems = [{ cake_id: 'cake-1', quantity: 1, price_at_buy: 100_000 }];
+    Cake.find.mockReturnValue({
+      select: jest.fn().mockResolvedValue([{ _id: 'cake-1', category_id: 'cat-0' }])
+    });
+
+    await expect(CouponService.validateCoupon('TESTCODE', 100_000, 'user-123', cartItems))
+      .rejects
+      .toMatchObject({ statusCode: 400, errorCode: 'COUPON_INVALID' });
+  });
 });
