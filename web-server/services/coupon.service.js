@@ -69,22 +69,35 @@ class CouponService {
 
     // 4. Kiểm tra điều kiện danh mục sản phẩm (nếu có)
     let baseAmountForDiscount = orderTotal;
-    let isCategoryConditionMet = true;
 
     if (coupon.applicable_categories && coupon.applicable_categories.length > 0) {
+      // Nếu có giới hạn danh mục nhưng giỏ hàng trống (truyền sai tham số)
+      if (!cartItems || cartItems.length === 0) {
+        throw createError('Không tìm thấy thông tin sản phẩm để áp dụng mã giảm giá theo danh mục', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_INVALID);
+      }
+
       // Lấy thông tin category của các sản phẩm trong giỏ hàng
-      const cakeIds = cartItems.map(item => item.cake_id);
+      const cakeIds = cartItems
+        .filter(item => item && item.cake_id)
+        .map(item => item.cake_id);
+      
       const cakesInCart = await Cake.find({ _id: { $in: cakeIds } }).select('category_id');
       
       const cakeCategoryMap = cakesInCart.reduce((acc, cake) => {
-        acc[cake._id.toString()] = cake.category_id.toString();
+        if (cake && cake._id && cake.category_id) {
+          acc[cake._id.toString()] = cake.category_id.toString();
+        }
         return acc;
       }, {});
 
       // Lọc các sản phẩm thuộc danh mục được áp dụng
       const validItems = cartItems.filter(item => {
+        if (!item || !item.cake_id) return false;
         const categoryId = cakeCategoryMap[item.cake_id.toString()];
-        return coupon.applicable_categories.some(catId => catId.toString() === categoryId);
+        
+        return categoryId && coupon.applicable_categories && coupon.applicable_categories.some(catId => {
+          return catId && catId.toString() === categoryId;
+        });
       });
 
       if (validItems.length === 0) {
@@ -92,7 +105,11 @@ class CouponService {
       }
 
       // Chỉ tính giảm giá trên tổng tiền của các sản phẩm thuộc danh mục hợp lệ
-      baseAmountForDiscount = validItems.reduce((sum, item) => sum + (item.price_at_buy * item.quantity), 0);
+      baseAmountForDiscount = validItems.reduce((sum, item) => {
+        const price = item.price_at_buy || 0;
+        const qty = item.quantity || 0;
+        return sum + (price * qty);
+      }, 0);
     }
 
     // 5. Tính toán số tiền giảm
@@ -106,8 +123,8 @@ class CouponService {
       }
     }
 
-    // Đảm bảo số tiền giảm không vượt quá tổng tiền của đơn hàng hoặc phần được áp dụng
-    discountAmount = Math.min(discountAmount, baseAmountForDiscount);
+    // Đảm bảo số tiền giảm không vượt quá tổng tiền của phần được áp dụng
+    discountAmount = Math.floor(Math.min(discountAmount, baseAmountForDiscount));
 
     return {
       coupon,
@@ -129,6 +146,19 @@ class CouponService {
   }
 
   async updateCoupon(id, data) {
+    if (data.code) {
+      const normalizedCode = data.code.toUpperCase();
+      const existing = await Coupon.findOne({ 
+        code: normalizedCode, 
+        _id: { $ne: id } 
+      });
+      
+      if (existing) {
+        throw createError('Mã giảm giá đã tồn tại', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.DUPLICATE_ERROR);
+      }
+      data.code = normalizedCode;
+    }
+    
     return await Coupon.findByIdAndUpdate(id, data, { new: true, runValidators: true });
   }
 
