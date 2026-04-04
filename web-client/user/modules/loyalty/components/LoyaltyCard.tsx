@@ -1,6 +1,6 @@
 import { Card, Tag, Table, Typography, Progress } from "antd";
 import { TrophyOutlined, HistoryOutlined, StarOutlined } from "@ant-design/icons";
-import { useLoyaltyQuery } from "../hooks";
+import { useLoyaltyQuery, useLoyaltyConfigQuery } from "../hooks";
 import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
@@ -12,23 +12,26 @@ const RANK_COLORS = {
   DIAMOND: "#b9f2ff",
 };
 
-const NEXT_TIER_THRESHOLDS = {
-  BRONZE: { next: "SILVER", min: 2000000 },
-  SILVER: { next: "GOLD", min: 5000000 },
-  GOLD: { next: "DIAMOND", min: 10000000 },
-  DIAMOND: { next: null, min: 0 },
-};
-
 export const LoyaltyCard = () => {
-  const { data, isLoading } = useLoyaltyQuery();
+  const { data, isLoading: isLoadingLoyalty } = useLoyaltyQuery();
+  const { data: config, isLoading: isLoadingConfig } = useLoyaltyConfigQuery();
 
-  if (isLoading) return <Card loading />;
+  if (isLoadingLoyalty || isLoadingConfig) return <Card loading />;
 
   const rank = data?.rank || "BRONZE";
   const points = data?.points || 0;
   const spent = data?.totalSpent || 0;
 
-  const nextTier = NEXT_TIER_THRESHOLDS[rank as keyof typeof NEXT_TIER_THRESHOLDS];
+  // Xử lý logic thăng hạng từ cấu hình API
+  const thresholds = config?.tier_thresholds || {};
+  const NEXT_TIER_MAP: Record<string, { next: string | null; min: number }> = {
+    BRONZE: { next: "SILVER", min: thresholds.SILVER || 0 },
+    SILVER: { next: "GOLD", min: thresholds.GOLD || 0 },
+    GOLD: { next: "DIAMOND", min: thresholds.DIAMOND || 0 },
+    DIAMOND: { next: null, min: 0 },
+  };
+
+  const nextTier = NEXT_TIER_MAP[rank as keyof typeof NEXT_TIER_MAP];
   const percent = nextTier.next ? Math.min((spent / nextTier.min) * 100, 100) : 100;
 
   return (

@@ -1,5 +1,4 @@
 const Wishlist = require('../schemas/Wishlist.schema');
-const { createError } = require('../utils/response.utils');
 
 /**
  * Lấy danh sách yêu thích của người dùng

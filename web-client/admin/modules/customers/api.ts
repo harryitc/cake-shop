@@ -52,5 +52,12 @@ export const customersService = {
   updateLoyaltyConfig: (config: Partial<ILoyaltyConfig>) => {
     return httpClient.put<ILoyaltyConfig>("/loyalty/admin/config", config) as any;
   },
+
+  recalculateRanks: (filters: { rank?: string; search?: string }) => {
+    return httpClient.post<{ total_scanned: number; total_updated: number }>(
+      "/loyalty/admin/recalculate-ranks",
+      filters
+    ) as any;
+  },
 };
 

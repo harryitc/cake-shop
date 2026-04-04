@@ -51,16 +51,12 @@ const addItem = async (req, res) => {
 
 };
 
-const syncCart = async (req, res, next) => {
-  try {
-    const { error, value } = syncCartSchema.validate(req.body);
-    if (error) throw createError(error.details[0].message, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
+const syncCart = async (req, res) => {
+  const { error, value } = syncCartSchema.validate(req.body);
+  if (error) throw ApiError.BAD_REQUEST(error.details[0].message, error.details);
 
-    const data = await cartService.syncCart(req.user.userId, value);
-    return sendSuccess(res, data, 'Đồng bộ giỏ hàng thành công', HTTP_STATUS.OK);
-  } catch (err) {
-    next(err);
-  }
+  const data = await cartService.syncCart(req.user.userId, value);
+  return sendSuccess(res, data, 'Đồng bộ giỏ hàng thành công', HTTP_STATUS.OK);
 };
 
 const removeItem = async (req, res) => {

@@ -4,7 +4,7 @@ import { Card, Form, Input, Button, Progress, Avatar } from "antd";
 import { MailOutlined, UserOutlined, PhoneOutlined, HomeOutlined, TrophyOutlined, StarOutlined } from "@ant-design/icons";
 import { Controller } from "react-hook-form";
 import { AvatarUpload } from "../AvatarUpload";
-import { useLoyaltyQuery } from "@/modules/loyalty/hooks";
+import { useLoyaltyQuery, useLoyaltyConfigQuery } from "@/modules/loyalty/hooks";
 import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
 
@@ -24,13 +24,6 @@ const RANK_COLORS = {
   SILVER: { from: "#c0c0c0", to: "#8e8e8e" },
   GOLD: { from: "#D4AF37", to: "#F1B24A" },
   DIAMOND: { from: "#b9f2ff", to: "#73d1e6" },
-};
-
-const NEXT_TIER_THRESHOLDS = {
-  BRONZE: { next: "SILVER", min: 2000000 },
-  SILVER: { next: "GOLD", min: 5000000 },
-  GOLD: { next: "DIAMOND", min: 10000000 },
-  DIAMOND: { next: null, min: 0 },
 };
 
 const GET_RANK_LABEL = (rank: string) => {
@@ -54,12 +47,24 @@ export const OverviewSection = ({
   updateProfileAvatar
 }: OverviewSectionProps) => {
   const { data: loyaltyData } = useLoyaltyQuery();
+  const { data: loyaltyConfig } = useLoyaltyConfigQuery();
   const rank = loyaltyData?.rank || user?.rank || "BRONZE";
   const points = loyaltyData?.points ?? user?.loyalty_points ?? 0;
   const spent = loyaltyData?.totalSpent ?? user?.total_spent ?? 0;
   
-  const nextTier = NEXT_TIER_THRESHOLDS[rank as keyof typeof NEXT_TIER_THRESHOLDS] || NEXT_TIER_THRESHOLDS.BRONZE;
-  const percent = nextTier.next ? Math.min((spent / nextTier.min) * 100, 100) : 100;
+  const thresholds = loyaltyConfig?.tier_thresholds || {};
+  
+  const getNextTierInfo = (currentRank: string) => {
+    switch (currentRank) {
+      case "BRONZE": return { next: "SILVER", min: thresholds.SILVER || 0 };
+      case "SILVER": return { next: "GOLD", min: thresholds.GOLD || 0 };
+      case "GOLD": return { next: "DIAMOND", min: thresholds.DIAMOND || 0 };
+      default: return { next: null, min: 0 };
+    }
+  };
+
+  const nextTier = getNextTierInfo(rank);
+  const percent = nextTier.next ? (nextTier.min > 0 ? Math.min((spent / nextTier.min) * 100, 100) : 0) : 100;
   const colors = RANK_COLORS[rank as keyof typeof RANK_COLORS] || RANK_COLORS.BRONZE;
 
   return (

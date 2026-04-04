@@ -83,3 +83,15 @@ export const useUpdateLoyaltyConfigMutation = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["loyalty-config"] }),
   });
 };
+
+export const useRecalculateRanksMutation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (filters: { rank?: string; search?: string }) =>
+      customersService.recalculateRanks(filters),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["customers"] });
+      qc.invalidateQueries({ queryKey: ["loyalty-stats"] });
+    },
+  });
+};

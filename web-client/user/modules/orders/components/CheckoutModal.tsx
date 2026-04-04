@@ -6,7 +6,7 @@ import * as z from "zod";
 import { Modal, Form, Input, App, Button, Tag, Divider, Avatar, Switch } from "antd";
 import { useCreateOrderMutation } from "../hooks";
 import { useMeQuery } from "../../auth/hooks";
-import { useLoyaltyQuery } from "../../loyalty/hooks";
+import { useLoyaltyQuery, useLoyaltyConfigQuery } from "../../loyalty/hooks";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { orderApi } from "../api";
@@ -37,6 +37,7 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
   const { mutate, isPending } = useCreateOrderMutation();
   const { data: me } = useMeQuery({ enabled: open });
   const { data: loyaltyData } = useLoyaltyQuery();
+  const { data: loyaltyConfig } = useLoyaltyConfigQuery();
 
   const [couponLoading, setCouponLoading] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<{
@@ -48,17 +49,19 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
   const [usePoints, setUsePoints] = useState(false);
 
   // Use latest loyalty data from separate API
-  const currentPoints = loyaltyData?.points;
-  const currentRank = loyaltyData?.rank;
+  const currentPoints = loyaltyData?.points || 0;
+  const currentRank = loyaltyData?.rank || "BRONZE";
 
   // Calculate points usage
-  // Default logic: 1 point = 1 VND, max 20% discount
-  const pointToVndRatio = 1;
-  const maxDiscountPercentage = 20;
+  // Get from API config
+  const pointToVndRatio = loyaltyConfig?.point_to_vnd_ratio || 0;
+  const maxDiscountPercentage = loyaltyConfig?.max_point_discount_percentage || 0;
 
   const currentTotal = appliedCoupon ? appliedCoupon.finalPrice : totalPrice;
   const maxDiscountFromPoints = Math.floor(currentTotal * (maxDiscountPercentage / 100));
-  const maxPointsAvailable = Math.min(currentPoints, Math.floor(maxDiscountFromPoints / pointToVndRatio));
+  const maxPointsAvailable = pointToVndRatio > 0 
+    ? Math.min(currentPoints, Math.floor(maxDiscountFromPoints / pointToVndRatio))
+    : 0;
 
   const pointsDiscountAmount = usePoints ? maxPointsAvailable * pointToVndRatio : 0;
   const finalOrderPrice = currentTotal - pointsDiscountAmount;
@@ -81,13 +84,9 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
     }
   };
 
-  const getEarnRatio = (rank?: string) => {
-    switch (rank) {
-      case "SILVER": return 0.02;
-      case "GOLD": return 0.03;
-      case "DIAMOND": return 0.05;
-      default: return 0.01;
-    }
+  const getEarnRatio = (rank: string) => {
+    if (!loyaltyConfig?.point_ratios) return 0;
+    return loyaltyConfig.point_ratios[rank] || 0;
   };
 
   const expectedPoints = Math.floor(finalOrderPrice * getEarnRatio(currentRank));
@@ -277,7 +276,7 @@ export const CheckoutModal = ({ open, onCancel, totalPrice, items }: CheckoutMod
                   <div className="text-sm font-bold text-gray-800">Dùng điểm Cake Rewards</div>
                   <div className="text-[11px] text-gray-500">
                     Bạn có <span className="font-bold text-indigo-600">{currentPoints.toLocaleString()}</span> điểm.
-                    Tối đa giảm 20% đơn hàng.
+                    Tối đa giảm {maxDiscountPercentage}% đơn hàng.
                   </div>
                 </div>
               </div>

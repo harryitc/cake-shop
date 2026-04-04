@@ -14,17 +14,35 @@ import {
   Col,
   App
 } from "antd";
-import { SaveOutlined, ReloadOutlined } from "@ant-design/icons";
-import { useLoyaltyConfigQuery, useUpdateLoyaltyConfigMutation } from "../hooks";
+import { SaveOutlined, ReloadOutlined, SyncOutlined } from "@ant-design/icons";
+import { useLoyaltyConfigQuery, useUpdateLoyaltyConfigMutation, useRecalculateRanksMutation } from "../hooks";
 
 const { Title, Text } = Typography;
 
 const LoyaltyConfigForm: React.FC = () => {
-  const { message: msg } = App.useApp();
+  const { message: msg, modal } = App.useApp();
   const [form] = Form.useForm();
   
   const { data: config, isLoading, refetch } = useLoyaltyConfigQuery();
   const updateMutation = useUpdateLoyaltyConfigMutation();
+  const recalculateMutation = useRecalculateRanksMutation();
+
+  const handleRecalculate = () => {
+    modal.confirm({
+      title: 'Tái thẩm định hạng thành viên',
+      content: 'Hệ thống sẽ quét toàn bộ khách hàng và cập nhật lại hạng dựa trên cấu hình hiện tại. Bạn có muốn tiếp tục?',
+      okText: 'Bắt đầu quét',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          const result = await recalculateMutation.mutateAsync({});
+          msg.success(`Thành công! Đã quét ${result.total_scanned} khách hàng và cập nhật ${result.total_updated} người.`);
+        } catch (error: any) {
+          msg.error(error.message || "Lỗi khi tái thẩm định hạng");
+        }
+      }
+    });
+  };
 
   useEffect(() => {
     if (config) {
@@ -193,17 +211,73 @@ const LoyaltyConfigForm: React.FC = () => {
           </Row>
         </div>
 
-        <div className="flex justify-end pt-4">
+        <Divider className="my-8" />
+
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <Button 
             type="primary" 
             htmlType="submit" 
             icon={<SaveOutlined />} 
             loading={updateMutation.isPending} 
             size="large"
-            className="rounded-xl h-12 px-10 bg-indigo-600 hover:bg-indigo-700 border-none shadow-lg shadow-indigo-200 font-black uppercase text-xs tracking-widest"
+            className="w-full md:w-auto rounded-xl h-12 px-12 bg-indigo-600 hover:bg-indigo-700 border-none shadow-lg shadow-indigo-200 font-black uppercase text-xs tracking-widest"
           >
             Lưu tất cả cấu hình
           </Button>
+
+          <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100 w-full md:w-auto">
+            <div className="hidden sm:block text-right">
+              <p className="m-0 text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Thao tác nâng cao</p>
+              <p className="m-0 text-[9px] text-gray-400 italic font-medium leading-none">Áp dụng luật mới cho toàn bộ khách hàng</p>
+            </div>
+            <Button 
+              type="default" 
+              size="large"
+              icon={<SyncOutlined />} 
+              loading={recalculateMutation.isPending}
+              onClick={() => {
+                modal.confirm({
+                  title: <span className="font-black text-lg">Tái thẩm định hạng thành viên</span>,
+                  icon: <SyncOutlined className="text-indigo-600" />,
+                  content: (
+                    <div className="mt-4">
+                      <p className="text-gray-500 text-sm mb-4 italic">Hệ thống sẽ quét khách hàng và cập nhật lại hạng dựa trên cấu hình hiện tại. Bạn có thể chọn lọc theo hạng:</p>
+                      <Form layout="vertical" id="recalc-filter-form">
+                        <Form.Item name="filterRank" label={<span className="font-bold text-gray-400 text-[10px] uppercase">Lọc theo hạng hiện tại</span>}>
+                          <select 
+                            id="rank-select" 
+                            className="w-full h-10 rounded-xl border border-gray-200 px-3 text-sm focus:border-indigo-500 focus:outline-none bg-white font-bold text-gray-700"
+                          >
+                            <option value="">Tất cả khách hàng</option>
+                            <option value="BRONZE">Hạng Đồng</option>
+                            <option value="SILVER">Hạng Bạc</option>
+                            <option value="GOLD">Hạng Vàng</option>
+                            <option value="DIAMOND">Hạng Kim cương</option>
+                          </select>
+                        </Form.Item>
+                      </Form>
+                    </div>
+                  ),
+                  okText: 'Bắt đầu quét',
+                  cancelText: 'Hủy',
+                  okButtonProps: { className: "rounded-lg font-bold bg-indigo-600 border-none" },
+                  cancelButtonProps: { className: "rounded-lg font-bold" },
+                  onOk: async () => {
+                    const rankValue = (document.getElementById('rank-select') as HTMLSelectElement)?.value;
+                    try {
+                      const result = await recalculateMutation.mutateAsync({ rank: rankValue || undefined });
+                      msg.success(`Thành công! Đã quét ${result.total_scanned} khách hàng và cập nhật ${result.total_updated} người.`);
+                    } catch (error: any) {
+                      msg.error(error.message || "Lỗi khi tái thẩm định hạng");
+                    }
+                  }
+                });
+              }}
+              className="w-full sm:w-auto rounded-xl h-12 px-8 border-2 border-indigo-600 text-indigo-600 hover:!text-indigo-700 hover:!border-indigo-700 font-black uppercase text-xs tracking-widest"
+            >
+              Tái thẩm định hạng
+            </Button>
+          </div>
         </div>
       </Form>
     </Card>

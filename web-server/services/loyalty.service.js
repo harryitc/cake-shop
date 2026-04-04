@@ -3,6 +3,7 @@ const Order = require('../schemas/Order.schema.js');
 const PointHistory = require('../schemas/PointHistory.schema.js');
 const LoyaltyConfig = require('../schemas/LoyaltyConfig.schema.js');
 const { LOYALTY_RANKS, POINT_TYPES } = require('../config/constants');
+const ApiError = require('../utils/error.factory');
 const mongoose = require('mongoose');
 
 class LoyaltyService {
@@ -102,7 +103,7 @@ class LoyaltyService {
       { new: true, session }
     );
 
-    if (!updatedUser) throw new Error('User không tồn tại');
+    if (!updatedUser) throw ApiError.NOT_FOUND('User không tồn tại');
 
     // Đảm bảo điểm không âm (Fix lại nếu bị âm sau khi trừ)
     if (updatedUser.loyalty_points < 0) {
@@ -157,65 +158,107 @@ class LoyaltyService {
       { $set: { rank, rank_lock: isLocked } },
       { new: true }
     );
-    if (!updatedUser) throw new Error('User không tồn tại');
+    if (!updatedUser) throw ApiError.NOT_FOUND('User không tồn tại');
     return updatedUser;
   }
 
   /**
-   * Lấy thống kê tổng quan (Sử dụng Aggregation cho hiệu năng cao)
+   * Tái thẩm định hạng cho danh sách khách hàng (Admin Manual Action)
    */
-  async getLoyaltyStats() {
+  async recalculateRanks(filters = {}) {
     const config = await this.getConfig();
+    const { rank, search } = filters;
+    
+    const query = { role: 'user', rank_lock: { $ne: true } };
+    if (rank) query.rank = rank;
+    if (search) {
+      query.$or = [
+        { email: { $regex: search, $options: 'i' } },
+        { full_name: { $regex: search, $options: 'i' } }
+      ];
+    }
 
-    const aggregationResult = await User.aggregate([
-      { $match: { role: 'user' } },
-      {
-        $group: {
-          _id: null,
-          total_points: { $sum: { $ifNull: ['$loyalty_points', 0] } },
-          total_users: { $sum: 1 },
-          bronze_count: { $sum: { $cond: [{ $eq: ['$rank', LOYALTY_RANKS.BRONZE] }, 1, 0] } },
-          silver_count: { $sum: { $cond: [{ $eq: ['$rank', LOYALTY_RANKS.SILVER] }, 1, 0] } },
-          gold_count: { $sum: { $cond: [{ $eq: ['$rank', LOYALTY_RANKS.GOLD] }, 1, 0] } },
-          diamond_count: { $sum: { $cond: [{ $eq: ['$rank', LOYALTY_RANKS.DIAMOND] }, 1, 0] } }
-        }
+    const users = await User.find(query).select('_id rank total_spent').lean();
+    const thresholds = config.tier_thresholds;
+    const updates = [];
+
+    for (const user of users) {
+      let newRank = LOYALTY_RANKS.BRONZE;
+      if (user.total_spent >= thresholds[LOYALTY_RANKS.DIAMOND]) {
+        newRank = LOYALTY_RANKS.DIAMOND;
+      } else if (user.total_spent >= thresholds[LOYALTY_RANKS.GOLD]) {
+        newRank = LOYALTY_RANKS.GOLD;
+      } else if (user.total_spent >= thresholds[LOYALTY_RANKS.SILVER]) {
+        newRank = LOYALTY_RANKS.SILVER;
       }
-    ]);
 
-    const baseStats = aggregationResult[0] || {
-      total_points: 0,
-      total_users: 0,
-      bronze_count: 0,
-      silver_count: 0,
-      gold_count: 0,
-      diamond_count: 0
-    };
+      if (newRank !== user.rank) {
+        updates.push({
+          updateOne: {
+            filter: { _id: user._id },
+            update: { $set: { rank: newRank } }
+          }
+        });
+      }
+    }
 
-    // Tính Near Upgrade bằng một pipeline khác (phức tạp hơn để chạy chung)
-    // Hoặc tính toán nhanh cho các hạng phổ biến
-    const nearUpgradeCount = await User.countDocuments({
-      role: 'user',
-      $or: [
-        { rank: LOYALTY_RANKS.BRONZE, total_spent: { $gte: config.tier_thresholds[LOYALTY_RANKS.SILVER] * 0.8, $lt: config.tier_thresholds[LOYALTY_RANKS.SILVER] } },
-        { rank: LOYALTY_RANKS.SILVER, total_spent: { $gte: config.tier_thresholds[LOYALTY_RANKS.GOLD] * 0.8, $lt: config.tier_thresholds[LOYALTY_RANKS.GOLD] } },
-        { rank: LOYALTY_RANKS.GOLD, total_spent: { $gte: config.tier_thresholds[LOYALTY_RANKS.DIAMOND] * 0.8, $lt: config.tier_thresholds[LOYALTY_RANKS.DIAMOND] } }
-      ]
-    });
+    if (updates.length > 0) {
+      await User.bulkWrite(updates);
+    }
 
     return {
-      totalPointsIssued: baseStats.total_points,
-      totalUsers: baseStats.total_users,
-      ranks: {
-        [LOYALTY_RANKS.BRONZE]: baseStats.bronze_count,
-        [LOYALTY_RANKS.SILVER]: baseStats.silver_count,
-        [LOYALTY_RANKS.GOLD]: baseStats.gold_count,
-        [LOYALTY_RANKS.DIAMOND]: baseStats.diamond_count
-      },
-      vipCount: baseStats.gold_count + baseStats.diamond_count,
-      nearUpgradeCount: nearUpgradeCount
+      total_scanned: users.length,
+      total_updated: updates.length
     };
   }
 
+  /**
+   * Lấy thống kê tổng quan (Refactored: JS Processing)
+   */
+  async getLoyaltyStats() {
+    const config = await this.getConfig();
+    const users = await User.find({ role: 'user' }).lean();
+
+    const stats = users.reduce((acc, u) => {
+      acc.totalPointsIssued += (u.loyalty_points || 0);
+      acc.totalUsers++;
+      
+      const rank = u.rank || LOYALTY_RANKS.BRONZE;
+      acc.ranks[rank] = (acc.ranks[rank] || 0) + 1;
+      
+      // Tính Near Upgrade (Sử dụng logic JS thay vì query DB riêng lẻ)
+      const thresholds = config.tier_thresholds;
+      let nextRank = null;
+      if (rank === LOYALTY_RANKS.BRONZE) nextRank = LOYALTY_RANKS.SILVER;
+      else if (rank === LOYALTY_RANKS.SILVER) nextRank = LOYALTY_RANKS.GOLD;
+      else if (rank === LOYALTY_RANKS.GOLD) nextRank = LOYALTY_RANKS.DIAMOND;
+
+      if (nextRank && u.total_spent >= thresholds[nextRank] * 0.8 && u.total_spent < thresholds[nextRank]) {
+        acc.nearUpgradeCount++;
+      }
+
+      return acc;
+    }, {
+      totalPointsIssued: 0,
+      totalUsers: 0,
+      ranks: {
+        [LOYALTY_RANKS.BRONZE]: 0,
+        [LOYALTY_RANKS.SILVER]: 0,
+        [LOYALTY_RANKS.GOLD]: 0,
+        [LOYALTY_RANKS.DIAMOND]: 0
+      },
+      nearUpgradeCount: 0
+    });
+
+    return {
+      ...stats,
+      vipCount: stats.ranks[LOYALTY_RANKS.GOLD] + stats.ranks[LOYALTY_RANKS.DIAMOND]
+    };
+  }
+
+  /**
+   * Lấy danh sách khách hàng (Refactored: JS Merging)
+   */
   async getCustomers(query = {}) {
     const { rank, search, page = 1, limit = 10 } = query;
     const pageNum = Number(page);
@@ -230,40 +273,40 @@ class LoyaltyService {
       ];
     }
 
-    const customers = await User.aggregate([
-      { $match: match },
-      {
-        $lookup: {
-          from: 'orders',
-          localField: '_id',
-          foreignField: 'user_id',
-          as: 'all_orders'
-        }
-      },
-      {
-        $project: {
-          email: 1,
-          full_name: 1,
-          phone: 1,
-          address: 1,
-          loyalty_points: 1,
-          total_spent: 1,
-          rank: 1,
-          avatar_url: 1,
-          createdAt: 1,
-          rank_lock: 1,
-          total_orders: { $size: '$all_orders' }
-        }
-      },
-      { $sort: { total_spent: -1 } },
-      { $skip: (pageNum - 1) * limitNum },
-      { $limit: limitNum }
-    ]);
+    // 1. Lấy danh sách User (Read-only, dùng lean)
+    const users = await User.find(match)
+      .select('email full_name phone address loyalty_points total_spent rank avatar_url createdAt rank_lock')
+      .sort({ total_spent: -1 })
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum)
+      .lean();
 
     const total = await User.countDocuments(match);
 
+    // 2. Lấy số lượng đơn hàng cho tập User hiện tại (JS Mapping)
+    const userIds = users.map(u => u._id);
+    
+    // Sử dụng countDocuments cho từng user là không tối ưu, 
+    // ta nên dùng 1 lệnh aggregate đơn giản để lấy count cho cả group này
+    const orderCounts = await Order.aggregate([
+      { $match: { user_id: { $in: userIds } } },
+      { $group: { _id: '$user_id', count: { $sum: 1 } } }
+    ]);
+
+    // Chuyển orderCounts thành dictionary để tra cứu nhanh (O(1))
+    const countsMap = orderCounts.reduce((acc, item) => {
+      acc[item._id.toString()] = item.count;
+      return acc;
+    }, {});
+
+    // 3. Trộn dữ liệu
+    const items = users.map(user => ({
+      ...user,
+      total_orders: countsMap[user._id.toString()] || 0
+    }));
+
     return {
-      items: customers,
+      items,
       total,
       page: pageNum,
       limit: limitNum

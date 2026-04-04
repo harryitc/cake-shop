@@ -13,3 +13,14 @@ export const useLoyaltyQuery = () => {
     enabled: typeof window !== "undefined" ? !!authStorage.getToken() : false,
   });
 };
+
+export const useLoyaltyConfigQuery = () => {
+  return useQuery({
+    queryKey: ["loyalty-config"],
+    queryFn: async () => {
+      const data = await loyaltyApi.getConfig();
+      return data;
+    },
+    enabled: typeof window !== "undefined" ? !!authStorage.getToken() : false,
+  });
+};
