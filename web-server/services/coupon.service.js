@@ -1,8 +1,8 @@
 const Coupon = require('../schemas/Coupon.schema');
 const Order = require('../schemas/Order.schema');
 const Cake = require('../schemas/Cake.schema');
-const { createError } = require('../utils/response.utils');
-const { HTTP_STATUS, ERROR_CODES, ORDER_STATUS } = require('../config/constants');
+const ApiError = require('../utils/error.factory');
+const { ORDER_STATUS } = require('../config/constants');
 
 class CouponService {
   /**
@@ -10,7 +10,7 @@ class CouponService {
    */
   async createCoupon(data) {
     const existing = await Coupon.findOne({ code: data.code.toUpperCase() });
-    if (existing) throw createError('Mã giảm giá đã tồn tại', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.DUPLICATE_ERROR);
+    if (existing) throw ApiError.BAD_REQUEST('Mã giảm giá đã tồn tại');
     
     return await Coupon.create(data);
   }
@@ -33,20 +33,20 @@ class CouponService {
     const coupon = await Coupon.findOne({ code: code.toUpperCase(), is_active: true });
     
     if (!coupon) {
-      throw createError('Mã giảm giá không tồn tại hoặc đã bị vô hiệu hóa', HTTP_STATUS.NOT_FOUND, ERROR_CODES.COUPON_INVALID);
+      throw ApiError.NOT_FOUND('Mã giảm giá không tồn tại hoặc đã bị vô hiệu hóa');
     }
 
     const now = new Date();
     if (now < coupon.start_date) {
-      throw createError('Mã giảm giá chưa đến thời gian sử dụng', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_NOT_STARTED);
+      throw ApiError.BAD_REQUEST('Mã giảm giá chưa đến thời gian sử dụng');
     }
     if (now > coupon.end_date) {
-      throw createError('Mã giảm giá đã hết hạn', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_EXPIRED);
+      throw ApiError.BAD_REQUEST('Mã giảm giá đã hết hạn');
     }
 
     // 1. Kiểm tra giới hạn tổng lượt dùng toàn hệ thống
     if (coupon.usage_limit !== null && coupon.used_count >= coupon.usage_limit) {
-      throw createError('Mã giảm giá đã hết lượt sử dụng', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_LIMIT_REACHED);
+      throw ApiError.BAD_REQUEST('Mã giảm giá đã hết lượt sử dụng');
     }
 
     // 2. Kiểm tra giới hạn lượt dùng của từng người dùng
@@ -58,13 +58,13 @@ class CouponService {
       });
 
       if (usedByUserCount >= coupon.usage_limit_per_user) {
-        throw createError(`Bạn đã sử dụng mã này tối đa ${coupon.usage_limit_per_user} lần`, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_LIMIT_REACHED);
+        throw ApiError.BAD_REQUEST(`Bạn đã sử dụng mã này tối đa ${coupon.usage_limit_per_user} lần`);
       }
     }
 
     // 3. Kiểm tra giá trị đơn hàng tối thiểu
     if (orderTotal < coupon.min_order_value) {
-      throw createError(`Giá trị đơn hàng tối thiểu để dùng mã này là ${coupon.min_order_value.toLocaleString()}đ`, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_MIN_VALUE_NOT_MET);
+      throw ApiError.BAD_REQUEST(`Giá trị đơn hàng tối thiểu để dùng mã này là ${coupon.min_order_value.toLocaleString()}đ`);
     }
 
     // 4. Kiểm tra điều kiện danh mục sản phẩm (nếu có)
@@ -73,7 +73,7 @@ class CouponService {
     if (coupon.applicable_categories && coupon.applicable_categories.length > 0) {
       // Nếu có giới hạn danh mục nhưng giỏ hàng trống (truyền sai tham số)
       if (!cartItems || cartItems.length === 0) {
-        throw createError('Không tìm thấy thông tin sản phẩm để áp dụng mã giảm giá theo danh mục', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_INVALID);
+        throw ApiError.BAD_REQUEST('Không tìm thấy thông tin sản phẩm để áp dụng mã giảm giá theo danh mục');
       }
 
       // Lấy thông tin category của các sản phẩm trong giỏ hàng
@@ -101,7 +101,7 @@ class CouponService {
       });
 
       if (validItems.length === 0) {
-        throw createError('Mã giảm giá không áp dụng cho các sản phẩm trong giỏ hàng của bạn', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_INVALID);
+        throw ApiError.BAD_REQUEST('Mã giảm giá không áp dụng cho các sản phẩm trong giỏ hàng của bạn');
       }
 
       // Chỉ tính giảm giá trên tổng tiền của các sản phẩm thuộc danh mục hợp lệ
@@ -154,7 +154,7 @@ class CouponService {
       });
       
       if (existing) {
-        throw createError('Mã giảm giá đã tồn tại', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.DUPLICATE_ERROR);
+        throw ApiError.BAD_REQUEST('Mã giảm giá đã tồn tại');
       }
       data.code = normalizedCode;
     }

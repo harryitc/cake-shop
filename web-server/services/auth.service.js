@@ -2,9 +2,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../schemas/User.schema');
-const { createError } = require('../utils/response.utils');
+const ApiError = require('../utils/error.factory');
 const { sendResetPasswordEmail } = require('../utils/email.utils');
-const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
 
 /**
  * Đăng ký tài khoản mới
@@ -15,7 +14,7 @@ const register = async ({ email, password, full_name, phone, birthday, address }
   // Check duplicate
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    throw createError('Email đã được sử dụng', HTTP_STATUS.CONFLICT, ERROR_CODES.DUPLICATE_EMAIL);
+    throw ApiError.CONFLICT('Email đã được sử dụng');
   }
 
   // Hash password
@@ -60,13 +59,13 @@ const login = async ({ email, password }) => {
   const user = await User.findOne({ email });
   if (!user) {
     // Luôn trả cùng 1 message để tránh user enumeration
-    throw createError('Email hoặc mật khẩu không đúng', HTTP_STATUS.UNAUTHORIZED, ERROR_CODES.INVALID_CREDENTIALS);
+    throw ApiError.UNAUTHORIZED('Email hoặc mật khẩu không đúng');
   }
 
   // Compare password
   const isMatch = await bcrypt.compare(password, user.password_hash);
   if (!isMatch) {
-    throw createError('Email hoặc mật khẩu không đúng', HTTP_STATUS.UNAUTHORIZED, ERROR_CODES.INVALID_CREDENTIALS);
+    throw ApiError.UNAUTHORIZED('Email hoặc mật khẩu không đúng');
   }
 
   // Generate JWT
@@ -94,7 +93,7 @@ const login = async ({ email, password }) => {
 const getProfile = async (userId) => {
   const user = await User.findById(userId).select('-password_hash -reset_password_token -reset_password_expires');
   if (!user) {
-    throw createError('Không tìm thấy người dùng', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    throw ApiError.NOT_FOUND('Không tìm thấy người dùng');
   }
   return user;
 };
@@ -122,7 +121,7 @@ const updateProfile = async (userId, updateData) => {
   ).select('-password_hash');
 
   if (!user) {
-    throw createError('Không tìm thấy người dùng', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    throw ApiError.NOT_FOUND('Không tìm thấy người dùng');
   }
 
   return user;
@@ -137,12 +136,12 @@ const updateProfile = async (userId, updateData) => {
 const changePassword = async (userId, oldPassword, newPassword) => {
   const user = await User.findById(userId);
   if (!user) {
-    throw createError('Không tìm thấy người dùng', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    throw ApiError.NOT_FOUND('Không tìm thấy người dùng');
   }
 
   const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
   if (!isMatch) {
-    throw createError('Mật khẩu cũ không chính xác', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.INVALID_PASSWORD);
+    throw ApiError.BAD_REQUEST('Mật khẩu cũ không chính xác');
   }
 
   const salt = await bcrypt.genSalt(10);
@@ -160,7 +159,7 @@ const changePassword = async (userId, oldPassword, newPassword) => {
 const forgotPassword = async (email) => {
   const user = await User.findOne({ email });
   if (!user) {
-    throw createError('Không tìm thấy tài khoản với email này', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    throw ApiError.NOT_FOUND('Không tìm thấy tài khoản với email này');
   }
 
   // Tạo token ngẫu nhiên
@@ -192,7 +191,7 @@ const resetPassword = async (token, newPassword) => {
   });
 
   if (!user) {
-    throw createError('Token không hợp lệ hoặc đã hết hạn', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.INVALID_TOKEN);
+    throw ApiError.BAD_REQUEST('Token không hợp lệ hoặc đã hết hạn');
   }
 
   const salt = await bcrypt.genSalt(10);

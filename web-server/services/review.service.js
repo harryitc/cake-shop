@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 const Review = require('../schemas/Review.schema');
 const Cake = require('../schemas/Cake.schema');
 const Order = require('../schemas/Order.schema');
-const { createError } = require('../utils/response.utils');
-const { HTTP_STATUS, ERROR_CODES, ORDER_STATUS } = require('../config/constants');
+const ApiError = require('../utils/error.factory');
+const { ORDER_STATUS } = require('../config/constants');
 
 class ReviewService {
   /**
@@ -17,19 +17,19 @@ class ReviewService {
     // 1. Kiểm tra quyền đánh giá (Đơn hàng phải DONE và đúng của user này)
     const order = await Order.findOne({ _id: order_id, user_id: userId, status: ORDER_STATUS.DONE });
     if (!order) {
-      throw createError('Bạn chỉ có thể đánh giá những đơn hàng đã hoàn thành', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.ORDER_NOT_COMPLETED);
+      throw ApiError.BAD_REQUEST('Bạn chỉ có thể đánh giá những đơn hàng đã hoàn thành');
     }
 
     // 2. Kiểm tra xem bánh này có trong đơn hàng không
     const hasCake = order.items.some(item => item.cake_id.toString() === cake_id);
     if (!hasCake) {
-      throw createError('Sản phẩm này không nằm trong đơn hàng của bạn', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.PRODUCT_NOT_IN_ORDER);
+      throw ApiError.BAD_REQUEST('Sản phẩm này không nằm trong đơn hàng của bạn');
     }
 
     // 3. Kiểm tra xem đã đánh giá chưa (Review Schema có unique index nhưng check trước cho chắc)
     const existingReview = await Review.findOne({ user: userId, cake: cake_id, order: order_id });
     if (existingReview) {
-      throw createError('Bạn đã đánh giá sản phẩm này trong đơn hàng này rồi', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.ALREADY_REVIEWED);
+      throw ApiError.BAD_REQUEST('Bạn đã đánh giá sản phẩm này trong đơn hàng này rồi');
     }
 
     // 4. Tạo Review mới
@@ -120,7 +120,7 @@ class ReviewService {
    */
   async updateReviewStatus(reviewId, isApproved) {
     const review = await Review.findByIdAndUpdate(reviewId, { is_approved: isApproved }, { new: true });
-    if (!review) throw createError('Không tìm thấy đánh giá', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    if (!review) throw ApiError.NOT_FOUND('Không tìm thấy đánh giá');
     
     // Tính lại rating sau khi ẩn/hiện review
     await this.recalculateCakeRating(review.cake);
@@ -135,7 +135,7 @@ class ReviewService {
       { reply, repliedAt: new Date() }, 
       { new: true }
     );
-    if (!review) throw createError('Không tìm thấy đánh giá', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    if (!review) throw ApiError.NOT_FOUND('Không tìm thấy đánh giá');
     return review;
   }
 }

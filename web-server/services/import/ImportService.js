@@ -1,5 +1,6 @@
 const ExcelJS = require('exceljs');
 const ImportHistory = require('../../schemas/ImportHistory.schema.js');
+const ApiError = require('../../utils/error.factory');
 const { IMPORT_MODES, IMPORT_STATUS } = require('../../config/constants');
 
 class ImportService {
@@ -77,7 +78,7 @@ class ImportService {
           // Validate logic (Joi hoặc custom)
           if (config.validate) {
             const { error, value } = config.validate(rowData);
-            if (error) throw new Error(error.message);
+            if (error) throw ApiError.BAD_REQUEST(error.message);
             batch.push({ _row: i, ...value });
           } else {
             batch.push({ _row: i, ...rowData });

@@ -6,9 +6,9 @@ const User = require('../schemas/User.schema');
 const CouponService = require('./coupon.service');
 const LoyaltyService = require('./loyalty.service');
 const excelService = require('./excel.service');
-const { createError } = require('../utils/response.utils');
+const ApiError = require('../utils/error.factory');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../utils/email.utils');
-const { HTTP_STATUS, ERROR_CODES, ORDER_STATUS } = require('../config/constants');
+const { ORDER_STATUS } = require('../config/constants');
 
 const VALID_TRANSITIONS = {
   [ORDER_STATUS.PENDING]: [ORDER_STATUS.CONFIRMED, ORDER_STATUS.REJECTED],
@@ -24,7 +24,7 @@ const createOrder = async (userId, address, couponCode = null, pointsToUse = 0) 
   try {
     const user = await User.findById(userId).session(session);
     if (!user) {
-      throw createError('Người dùng không tồn tại', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+      throw ApiError.NOT_FOUND('Người dùng không tồn tại');
     }
 
     const cartItems = await CartItem.find({ user_id: userId })
@@ -32,7 +32,7 @@ const createOrder = async (userId, address, couponCode = null, pointsToUse = 0) 
       .session(session);
 
     if (!cartItems || cartItems.length === 0) {
-      throw createError('Giỏ hàng trống', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
+      throw ApiError.BAD_REQUEST('Giỏ hàng trống');
     }
 
     let total_price = 0;
@@ -41,7 +41,7 @@ const createOrder = async (userId, address, couponCode = null, pointsToUse = 0) 
     // Kiểm tra tồn kho trước khi tính toán
     for (const item of cartItems) {
       if (!item.cake_id) {
-        throw createError('Một sản phẩm trong giỏ hàng không còn tồn tại', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
+        throw ApiError.BAD_REQUEST('Một sản phẩm trong giỏ hàng không còn tồn tại');
       }
 
       let price_at_buy = item.cake_id.price;
@@ -52,7 +52,7 @@ const createOrder = async (userId, address, couponCode = null, pointsToUse = 0) 
       if (item.variant_id) {
         const variant = item.cake_id.variants.find(v => v._id.toString() === item.variant_id.toString());
         if (!variant) {
-          throw createError(`Không tìm thấy biến thể cho sản phẩm "${item.cake_id.name}"`, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
+          throw ApiError.BAD_REQUEST(`Không tìm thấy biến thể cho sản phẩm "${item.cake_id.name}"`);
         }
         price_at_buy = variant.price;
         variant_size = variant.size;
@@ -61,7 +61,7 @@ const createOrder = async (userId, address, couponCode = null, pointsToUse = 0) 
 
       if (current_stock < item.quantity) {
         const productLabel = variant_size ? `"${item.cake_id.name} (${variant_size})"` : `"${item.cake_id.name}"`;
-        throw createError(`Sản phẩm ${productLabel} không đủ số lượng trong kho (còn lại: ${current_stock})`, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
+        throw ApiError.BAD_REQUEST(`Sản phẩm ${productLabel} không đủ số lượng trong kho (còn lại: ${current_stock})`);
       }
 
       total_price += price_at_buy * item.quantity;
@@ -109,7 +109,7 @@ const createOrder = async (userId, address, couponCode = null, pointsToUse = 0) 
 
     if (pointsToUse > 0) {
       if (user.loyalty_points < pointsToUse) {
-        throw createError('Số dư điểm không đủ', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
+        throw ApiError.BAD_REQUEST('Số dư điểm không đủ');
       }
 
       const maxDiscountPercent = loyaltyConfig.max_point_discount_percentage / 100;
@@ -221,11 +221,11 @@ const getOrderById = async (orderId, userId, role) => {
     .populate('user_id', 'email full_name phone avatar_url')
     .populate('items.cake_id', 'name price image_url slug');
   if (!order) {
-    throw createError('Đơn hàng không tồn tại', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    throw ApiError.NOT_FOUND('Đơn hàng không tồn tại');
   }
 
   if (role !== 'admin' && order.user_id._id.toString() !== userId) {
-    throw createError('Đơn hàng không tồn tại', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    throw ApiError.NOT_FOUND('Đơn hàng không tồn tại');
   }
 
   return order;
@@ -238,12 +238,12 @@ const updateStatus = async (orderId, newStatus) => {
   try {
     const order = await Order.findById(orderId).session(session);
     if (!order) {
-      throw createError('Đơn hàng không tồn tại', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+      throw ApiError.NOT_FOUND('Đơn hàng không tồn tại');
     }
 
     const allowedTransitions = VALID_TRANSITIONS[order.status];
     if (!allowedTransitions || !allowedTransitions.includes(newStatus)) {
-      throw createError(`Không thể chuyển trạng thái từ ${order.status} sang ${newStatus}`, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
+      throw ApiError.BAD_REQUEST(`Không thể chuyển trạng thái từ ${order.status} sang ${newStatus}`);
     }
 
     // Hoàn kho nếu hủy đơn

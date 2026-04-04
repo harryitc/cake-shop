@@ -3,6 +3,7 @@ const Order = require('../schemas/Order.schema.js');
 const PointHistory = require('../schemas/PointHistory.schema.js');
 const LoyaltyConfig = require('../schemas/LoyaltyConfig.schema.js');
 const { LOYALTY_RANKS, POINT_TYPES } = require('../config/constants');
+const ApiError = require('../utils/error.factory');
 const mongoose = require('mongoose');
 
 class LoyaltyService {
@@ -102,7 +103,7 @@ class LoyaltyService {
       { new: true, session }
     );
 
-    if (!updatedUser) throw new Error('User không tồn tại');
+    if (!updatedUser) throw ApiError.NOT_FOUND('User không tồn tại');
 
     // Đảm bảo điểm không âm (Fix lại nếu bị âm sau khi trừ)
     if (updatedUser.loyalty_points < 0) {
@@ -157,7 +158,7 @@ class LoyaltyService {
       { $set: { rank, rank_lock: isLocked } },
       { new: true }
     );
-    if (!updatedUser) throw new Error('User không tồn tại');
+    if (!updatedUser) throw ApiError.NOT_FOUND('User không tồn tại');
     return updatedUser;
   }
 
