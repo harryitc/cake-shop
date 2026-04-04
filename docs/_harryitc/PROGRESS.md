@@ -116,6 +116,7 @@ updated_at: 2026-03-28
 | 9 | V3 Expansion | ✅ DONE |
 | 10 | Import/Export System | ✅ DONE |
 | 11 | Loyalty Program | ✅ DONE |
+| 12 | Backend Refactor (Clean Query) | [/] IN PROGRESS |
 
 ---
 
@@ -140,3 +141,17 @@ updated_at: 2026-03-28
     - [x] User: Point usage at Checkout (Max 20% discount logic)
 
 **Status: ✅ DONE**
+
+## Phase 12 — 🛠️ Backend Refactor (Simple Query - JS Processing) (Completed ✅)
+> **Spec:** [`epic_11_backend_refactor/`](./4_epic_and_stories/epic_11_backend_refactor/OVERVIEW.md)
+
+- [x] **[V6-1] Service Transformation (Refactor)**
+    - [x] Loyalty Service: Chuyển Aggregation sang JS Processing hoàn tất
+    - [x] Analytics Service: Thay thế toàn bộ Aggregations bằng JS logic (Top 5, Timeline)
+    - [x] Order Service: Tách nhỏ hàm createOrder và đơn giản hóa getOrders
+    - [x] Review Service: Tính lại rating bằng JS thay vì Aggregation
+    - [x] Cake Service: Tối ưu chuẩn Standard Query và bổ sung .lean()
+    - [x] Coupon Service: Làm sạch logic validateCoupon theo chuẩn mới
+- [x] **[V6-2] Verification & Cleanup**
+    - [x] Đảm bảo dữ liệu chính xác 100% sau refactor
+    - [x] Xóa mã cũ và tối ưu hiệu năng

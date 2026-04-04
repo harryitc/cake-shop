@@ -48,32 +48,26 @@ class ReviewService {
   }
 
   /**
-   * Tính toán lại điểm đánh giá trung bình cho Cake
-   * @param {string} cakeId 
+   * Tính toán lại điểm đánh giá trung bình cho Cake (Refactored: JS Processing)
    */
   async recalculateCakeRating(cakeId) {
-    const stats = await Review.aggregate([
-      { $match: { cake: new mongoose.Types.ObjectId(cakeId), is_approved: true } },
-      {
-        $group: {
-          _id: '$cake',
-          avgRating: { $avg: '$rating' },
-          count: { $sum: 1 },
-        },
-      },
-    ]);
+    // 1. Lấy tất cả rating hợp lệ của sản phẩm này (Simple Query)
+    const approvedReviews = await Review.find({ 
+      cake: cakeId, 
+      is_approved: true 
+    }).select('rating').lean();
 
-    if (stats.length > 0) {
-      await Cake.findByIdAndUpdate(cakeId, {
-        average_rating: parseFloat(stats[0].avgRating.toFixed(1)),
-        review_count: stats[0].count,
-      });
-    } else {
-      await Cake.findByIdAndUpdate(cakeId, {
-        average_rating: 0,
-        review_count: 0,
-      });
-    }
+    const count = approvedReviews.length;
+    
+    // 2. Tính toán bằng JS
+    const totalRating = approvedReviews.reduce((sum, r) => sum + (r.rating || 0), 0);
+    const avgRating = count > 0 ? Number((totalRating / count).toFixed(1)) : 0;
+
+    // 3. Cập nhật vào Cake
+    await Cake.findByIdAndUpdate(cakeId, {
+      average_rating: avgRating,
+      review_count: count,
+    });
   }
 
   /**
