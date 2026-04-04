@@ -10,6 +10,7 @@ import { useWishlist } from "../../../hooks/use-wishlist";
 import { useMeQuery } from "../../auth/hooks";
 import { useLoyaltyQuery, useLoyaltyConfigQuery } from "../../loyalty/hooks";
 import { getAvatarUrl, getImageUrl } from "@/lib/utils";
+import { CakeModelViewer } from "./CakeModelViewer";
 
 export const CakeDetail = ({ id }: { id: string }) => {
   const [viewMode, setViewMode] = useState<'3d' | '2d'>('2d');

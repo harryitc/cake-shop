@@ -35,7 +35,7 @@ const LoyaltyConfigForm: React.FC = () => {
       cancelText: 'Hủy',
       onOk: async () => {
         try {
-          const result = await recalculateMutation.mutateAsync({});
+          const result: { total_scanned: number; total_updated: number } | any = await recalculateMutation.mutateAsync({});
           msg.success(`Thành công! Đã quét ${result.total_scanned} khách hàng và cập nhật ${result.total_updated} người.`);
         } catch (error: any) {
           msg.error(error.message || "Lỗi khi tái thẩm định hạng");
@@ -265,7 +265,7 @@ const LoyaltyConfigForm: React.FC = () => {
                   onOk: async () => {
                     const rankValue = (document.getElementById('rank-select') as HTMLSelectElement)?.value;
                     try {
-                      const result = await recalculateMutation.mutateAsync({ rank: rankValue || undefined });
+                      const result: { total_scanned: number; total_updated: number } | any = await recalculateMutation.mutateAsync({ rank: rankValue || undefined });
                       msg.success(`Thành công! Đã quét ${result.total_scanned} khách hàng và cập nhật ${result.total_updated} người.`);
                     } catch (error: any) {
                       msg.error(error.message || "Lỗi khi tái thẩm định hạng");
