@@ -139,6 +139,10 @@ updated_at: 2026-03-28
 - [x] **[V5-3] Trải nghiệm Khách hàng (User Loyalty)**
     - [x] User: Loyalty dashboard in Profile (Badge, Progress, History)
     - [x] User: Point usage at Checkout (Max 20% discount logic)
+    - [x] User: Sync dynamic Loyalty configuration (Thresholds, Ratios) from API
+- [x] **[V5-4] Quản trị Nâng cao (Loyalty Admin Pro)**
+    - [x] Admin: Manual Rank Recalculation engine (Bulk update)
+    - [x] Admin: Dynamic filtering for Rank Recalculation
 
 **Status: ✅ DONE**
 

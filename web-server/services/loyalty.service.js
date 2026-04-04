@@ -163,6 +163,56 @@ class LoyaltyService {
   }
 
   /**
+   * Tái thẩm định hạng cho danh sách khách hàng (Admin Manual Action)
+   */
+  async recalculateRanks(filters = {}) {
+    const config = await this.getConfig();
+    const { rank, search } = filters;
+    
+    const query = { role: 'user', rank_lock: { $ne: true } };
+    if (rank) query.rank = rank;
+    if (search) {
+      query.$or = [
+        { email: { $regex: search, $options: 'i' } },
+        { full_name: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const users = await User.find(query).select('_id rank total_spent').lean();
+    const thresholds = config.tier_thresholds;
+    const updates = [];
+
+    for (const user of users) {
+      let newRank = LOYALTY_RANKS.BRONZE;
+      if (user.total_spent >= thresholds[LOYALTY_RANKS.DIAMOND]) {
+        newRank = LOYALTY_RANKS.DIAMOND;
+      } else if (user.total_spent >= thresholds[LOYALTY_RANKS.GOLD]) {
+        newRank = LOYALTY_RANKS.GOLD;
+      } else if (user.total_spent >= thresholds[LOYALTY_RANKS.SILVER]) {
+        newRank = LOYALTY_RANKS.SILVER;
+      }
+
+      if (newRank !== user.rank) {
+        updates.push({
+          updateOne: {
+            filter: { _id: user._id },
+            update: { $set: { rank: newRank } }
+          }
+        });
+      }
+    }
+
+    if (updates.length > 0) {
+      await User.bulkWrite(updates);
+    }
+
+    return {
+      total_scanned: users.length,
+      total_updated: updates.length
+    };
+  }
+
+  /**
    * Lấy thống kê tổng quan (Refactored: JS Processing)
    */
   async getLoyaltyStats() {

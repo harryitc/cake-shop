@@ -48,6 +48,15 @@ class LoyaltyController {
   }
 
   /**
+   * [ADMIN] Tái thẩm định hạng thủ công theo bộ lọc
+   */
+  async recalculateRanks(req, res) {
+    const filters = req.body;
+    const result = await LoyaltyService.recalculateRanks(filters);
+    return sendSuccess(res, result, `Đã quét ${result.total_scanned} khách hàng và cập nhật ${result.total_updated} người.`);
+  }
+
+  /**
    * [ADMIN] Ghi đè hạng thành viên
    */
   async overrideRank(req, res) {
@@ -71,6 +80,14 @@ class LoyaltyController {
       total_spent: user.total_spent,
       history: history.items
     });
+  }
+
+  /**
+   * [USER] Lấy cấu hình loyalty công khai
+   */
+  async getPublicConfig(req, res) {
+    const config = await LoyaltyService.getConfig();
+    return sendSuccess(res, config);
   }
 
   /**

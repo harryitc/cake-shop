@@ -6,7 +6,7 @@ import * as z from "zod";
 import { Form, Input, App, Button, Tag, Divider, Switch, InputNumber } from "antd";
 import { useCreateOrderMutation } from "../hooks";
 import { useMeQuery } from "../../auth/hooks";
-import { useLoyaltyQuery } from "../../loyalty/hooks";
+import { useLoyaltyQuery, useLoyaltyConfigQuery } from "../../loyalty/hooks";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { orderApi } from "../api";
@@ -40,6 +40,7 @@ export const CheckoutPageContent = ({ totalPrice, items }: CheckoutPageContentPr
   const { mutate, isPending } = useCreateOrderMutation();
   const { data: me } = useMeQuery();
   const { data: loyaltyData } = useLoyaltyQuery();
+  const { data: loyaltyConfig } = useLoyaltyConfigQuery();
 
   const [couponLoading, setCouponLoading] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<{
@@ -59,12 +60,14 @@ export const CheckoutPageContent = ({ totalPrice, items }: CheckoutPageContentPr
 
   const currentPoints = loyaltyData?.points ?? me?.loyalty_points ?? 0;
 
-  const pointToVndRatio = 1;
-  const maxDiscountPercentage = 20;
+  const pointToVndRatio = loyaltyConfig?.point_to_vnd_ratio || 0;
+  const maxDiscountPercentage = loyaltyConfig?.max_point_discount_percentage || 0;
 
   const currentTotal = appliedCoupon ? appliedCoupon.finalPrice : totalPrice;
   const maxDiscountFromPoints = Math.floor(currentTotal * (maxDiscountPercentage / 100));
-  const maxPointsAvailable = Math.min(currentPoints, Math.floor(maxDiscountFromPoints / pointToVndRatio));
+  const maxPointsAvailable = pointToVndRatio > 0 
+    ? Math.min(currentPoints, Math.floor(maxDiscountFromPoints / pointToVndRatio))
+    : 0;
 
   // Logic tính điểm mới
   let pointsToUse = 0;
