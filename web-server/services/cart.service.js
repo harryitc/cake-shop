@@ -1,7 +1,6 @@
 const CartItem = require('../schemas/CartItem.schema');
 const Cake = require('../schemas/Cake.schema');
-const { createError } = require('../utils/response.utils');
-const { HTTP_STATUS, ERROR_CODES } = require('../config/constants');
+const ApiError = require('../utils/error.factory');
 
 /**
  * Lấy danh sách giỏ hàng của current user
@@ -65,14 +64,14 @@ const addItem = async (userId, payload) => {
     // Check sản phẩm có tồn tại không
     const cake = await Cake.findById(cake_id);
     if (!cake) {
-      throw createError(`Không tìm thấy sản phẩm bánh: ${cake_id}`, HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+      throw ApiError.NOT_FOUND(`Không tìm thấy sản phẩm bánh: ${cake_id}`);
     }
 
     // Nếu có variant_id, kiểm tra xem variant có tồn tại trong cake không
     if (variant_id) {
       const variantExists = cake.variants.find(v => v._id.toString() === variant_id.toString());
       if (!variantExists) {
-        throw createError(`Không tìm thấy biến thể cho sản phẩm: ${cake_id}`, HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+        throw ApiError.NOT_FOUND(`Không tìm thấy biến thể cho sản phẩm: ${cake_id}`);
       }
     }
 
@@ -95,14 +94,14 @@ const syncCart = async (userId, itemsToAdd) => {
     // Check sản phẩm có tồn tại không
     const cake = await Cake.findById(cake_id);
     if (!cake) {
-      throw createError(`Không tìm thấy sản phẩm bánh: ${cake_id}`, HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+      throw ApiError.NOT_FOUND(`Không tìm thấy sản phẩm bánh: ${cake_id}`);
     }
 
     // Nếu có variant_id, kiểm tra xem variant có tồn tại trong cake không
     if (variant_id) {
       const variantExists = cake.variants.find(v => v._id.toString() === variant_id.toString());
       if (!variantExists) {
-        throw createError(`Không tìm thấy biến thể cho sản phẩm: ${cake_id}`, HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+        throw ApiError.NOT_FOUND(`Không tìm thấy biến thể cho sản phẩm: ${cake_id}`);
       }
     }
 
@@ -126,7 +125,7 @@ const removeItem = async (userId, itemId) => {
   // Phải kiểm tra cả user_id để tránh xoá hộ giỏ hàng người khác
   const item = await CartItem.findOneAndDelete({ _id: itemId, user_id: userId });
   if (!item) {
-    throw createError('Không tìm thấy sản phẩm trong giỏ hàng', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    throw ApiError.NOT_FOUND('Không tìm thấy sản phẩm trong giỏ hàng');
   }
   return true;
 };
@@ -146,7 +145,7 @@ const updateItemQuantity = async (userId, itemId, quantity) => {
   );
 
   if (!item) {
-    throw createError('Không tìm thấy sản phẩm trong giỏ hàng', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    throw ApiError.NOT_FOUND('Không tìm thấy sản phẩm trong giỏ hàng');
   }
 
   return item;

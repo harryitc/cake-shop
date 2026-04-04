@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const Cake = require('../../../schemas/Cake.schema');
 const Category = require('../../../schemas/Category.schema');
+const ApiError = require('../../../utils/error.factory');
 const { IMPORT_ENTITIES } = require('../../../config/constants');
 
 const cakeImportConfig = {
@@ -36,7 +37,7 @@ const cakeImportConfig = {
       if (category) {
         rowData.category = category._id;
       } else {
-        throw new Error(`Danh mục '${rowData.category}' không tồn tại trong hệ thống.`);
+        throw ApiError.BAD_REQUEST(`Danh mục '${rowData.category}' không tồn tại trong hệ thống.`);
       }
     }
 

@@ -8,9 +8,8 @@ import { ArrowLeftOutlined, UserOutlined, InfoCircleOutlined, HeartOutlined, Hea
 import { useState, useEffect } from "react";
 import { useWishlist } from "../../../hooks/use-wishlist";
 import { useMeQuery } from "../../auth/hooks";
-import { useLoyaltyQuery } from "../../loyalty/hooks";
+import { useLoyaltyQuery, useLoyaltyConfigQuery } from "../../loyalty/hooks";
 import { getAvatarUrl, getImageUrl } from "@/lib/utils";
-import { CakeModelViewer } from "./CakeModelViewer";
 
 export const CakeDetail = ({ id }: { id: string }) => {
   const [viewMode, setViewMode] = useState<'3d' | '2d'>('2d');
@@ -21,14 +20,11 @@ export const CakeDetail = ({ id }: { id: string }) => {
   const { isLiked, toggleWishlist, isPending } = useWishlist();
   const { data: user } = useMeQuery();
   const { data: loyalty } = useLoyaltyQuery();
+  const { data: loyaltyConfig } = useLoyaltyConfigQuery();
 
   const getEarnRatio = (rank?: string) => {
-    switch (rank) {
-      case "SILVER": return 0.02;
-      case "GOLD": return 0.03;
-      case "DIAMOND": return 0.05;
-      default: return 0.01;
-    }
+    if (!loyaltyConfig?.point_ratios) return 0;
+    return loyaltyConfig.point_ratios[rank || "BRONZE"] || 0;
   };
 
   useEffect(() => {

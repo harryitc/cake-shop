@@ -1,8 +1,8 @@
 const Coupon = require('../schemas/Coupon.schema');
 const Order = require('../schemas/Order.schema');
 const Cake = require('../schemas/Cake.schema');
-const { createError } = require('../utils/response.utils');
-const { HTTP_STATUS, ERROR_CODES, ORDER_STATUS } = require('../config/constants');
+const ApiError = require('../utils/error.factory');
+const { ORDER_STATUS } = require('../config/constants');
 
 class CouponService {
   /**
@@ -10,7 +10,7 @@ class CouponService {
    */
   async createCoupon(data) {
     const existing = await Coupon.findOne({ code: data.code.toUpperCase() });
-    if (existing) throw createError('Mã giảm giá đã tồn tại', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.DUPLICATE_ERROR);
+    if (existing) throw ApiError.BAD_REQUEST('Mã giảm giá đã tồn tại');
     
     return await Coupon.create(data);
   }
@@ -23,115 +23,62 @@ class CouponService {
   }
 
   /**
-   * Kiểm tra và tính toán giá trị giảm giá của mã
-   * @param {string} code 
-   * @param {number} orderTotal 
-   * @param {string} userId 
-   * @param {Array} cartItems Danh sách các mặt hàng trong giỏ [{ cake_id, quantity, price_at_buy }]
+   * Kiểm tra mã giảm giá (Refactored: Clean Logic)
    */
   async validateCoupon(code, orderTotal, userId = null, cartItems = []) {
     const coupon = await Coupon.findOne({ code: code.toUpperCase(), is_active: true });
-    
-    if (!coupon) {
-      throw createError('Mã giảm giá không tồn tại hoặc đã bị vô hiệu hóa', HTTP_STATUS.NOT_FOUND, ERROR_CODES.COUPON_INVALID);
-    }
+    if (!coupon) throw ApiError.NOT_FOUND('Mã giảm giá đã vô hiệu hóa');
 
     const now = new Date();
-    if (now < coupon.start_date) {
-      throw createError('Mã giảm giá chưa đến thời gian sử dụng', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_NOT_STARTED);
-    }
-    if (now > coupon.end_date) {
-      throw createError('Mã giảm giá đã hết hạn', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_EXPIRED);
-    }
+    if (now < coupon.start_date) throw ApiError.BAD_REQUEST('Mã chưa đến hạn dùng');
+    if (now > coupon.end_date) throw ApiError.BAD_REQUEST('Mã đã hết hạn');
 
-    // 1. Kiểm tra giới hạn tổng lượt dùng toàn hệ thống
+    // 1. Kiểm tra giới hạn lượt dùng
     if (coupon.usage_limit !== null && coupon.used_count >= coupon.usage_limit) {
-      throw createError('Mã giảm giá đã hết lượt sử dụng', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_LIMIT_REACHED);
+      throw ApiError.BAD_REQUEST('Mã đã hết lượt sử dụng');
     }
 
-    // 2. Kiểm tra giới hạn lượt dùng của từng người dùng
+    // 2. Kiểm tra lượt dùng cá nhân (JS check)
     if (userId && coupon.usage_limit_per_user) {
-      const usedByUserCount = await Order.countDocuments({
-        user_id: userId,
-        coupon_code: coupon.code,
-        status: { $ne: ORDER_STATUS.REJECTED } // Không tính đơn bị từ chối/hủy
-      });
-
-      if (usedByUserCount >= coupon.usage_limit_per_user) {
-        throw createError(`Bạn đã sử dụng mã này tối đa ${coupon.usage_limit_per_user} lần`, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_LIMIT_REACHED);
-      }
+      const userOrders = await Order.find({ user_id: userId, coupon_code: coupon.code }).select('status').lean();
+      const validOrdersCount = userOrders.filter(o => o.status !== ORDER_STATUS.REJECTED).length;
+      if (validOrdersCount >= coupon.usage_limit_per_user) throw ApiError.BAD_REQUEST('Bạn đã hết lượt dùng mã');
     }
 
-    // 3. Kiểm tra giá trị đơn hàng tối thiểu
-    if (orderTotal < coupon.min_order_value) {
-      throw createError(`Giá trị đơn hàng tối thiểu để dùng mã này là ${coupon.min_order_value.toLocaleString()}đ`, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_MIN_VALUE_NOT_MET);
-    }
+    if (orderTotal < coupon.min_order_value) throw ApiError.BAD_REQUEST('Chưa đủ giá trị tối thiểu');
 
-    // 4. Kiểm tra điều kiện danh mục sản phẩm (nếu có)
+    // 3. Tính toán phần tiền được giảm
     let baseAmountForDiscount = orderTotal;
-
-    if (coupon.applicable_categories && coupon.applicable_categories.length > 0) {
-      // Nếu có giới hạn danh mục nhưng giỏ hàng trống (truyền sai tham số)
-      if (!cartItems || cartItems.length === 0) {
-        throw createError('Không tìm thấy thông tin sản phẩm để áp dụng mã giảm giá theo danh mục', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_INVALID);
-      }
-
-      // Lấy thông tin category của các sản phẩm trong giỏ hàng
-      const cakeIds = cartItems
-        .filter(item => item && item.cake_id)
-        .map(item => item.cake_id);
+    
+    if (coupon.applicable_categories?.length > 0) {
+      const validItems = await this._getValidItemsForCoupon(cartItems, coupon.applicable_categories);
+      if (validItems.length === 0) throw ApiError.BAD_REQUEST('Mã không áp dụng cho sản phẩm này');
       
-      const cakesInCart = await Cake.find({ _id: { $in: cakeIds } }).select('category_id');
-      
-      const cakeCategoryMap = cakesInCart.reduce((acc, cake) => {
-        if (cake && cake._id && cake.category_id) {
-          acc[cake._id.toString()] = cake.category_id.toString();
-        }
-        return acc;
-      }, {});
-
-      // Lọc các sản phẩm thuộc danh mục được áp dụng
-      const validItems = cartItems.filter(item => {
-        if (!item || !item.cake_id) return false;
-        const categoryId = cakeCategoryMap[item.cake_id.toString()];
-        
-        return categoryId && coupon.applicable_categories && coupon.applicable_categories.some(catId => {
-          return catId && catId.toString() === categoryId;
-        });
-      });
-
-      if (validItems.length === 0) {
-        throw createError('Mã giảm giá không áp dụng cho các sản phẩm trong giỏ hàng của bạn', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.COUPON_INVALID);
-      }
-
-      // Chỉ tính giảm giá trên tổng tiền của các sản phẩm thuộc danh mục hợp lệ
-      baseAmountForDiscount = validItems.reduce((sum, item) => {
-        const price = item.price_at_buy || 0;
-        const qty = item.quantity || 0;
-        return sum + (price * qty);
-      }, 0);
+      baseAmountForDiscount = validItems.reduce((sum, item) => sum + (item.price_at_buy * item.quantity), 0);
     }
 
-    // 5. Tính toán số tiền giảm
-    let discountAmount = 0;
-    if (coupon.type === 'FIXED') {
-      discountAmount = coupon.value;
-    } else if (coupon.type === 'PERCENT') {
-      discountAmount = (baseAmountForDiscount * coupon.value) / 100;
-      if (coupon.max_discount_value) {
-        discountAmount = Math.min(discountAmount, coupon.max_discount_value);
-      }
-    }
+    let discountAmount = coupon.type === 'FIXED' 
+      ? coupon.value 
+      : Math.min((baseAmountForDiscount * coupon.value) / 100, coupon.max_discount_value || Infinity);
 
-    // Đảm bảo số tiền giảm không vượt quá tổng tiền của phần được áp dụng
     discountAmount = Math.floor(Math.min(discountAmount, baseAmountForDiscount));
 
-    return {
-      coupon,
-      discountAmount,
-      finalPrice: orderTotal - discountAmount,
-      appliedOnAmount: baseAmountForDiscount
-    };
+    return { coupon, discountAmount, finalPrice: orderTotal - discountAmount, appliedOnAmount: baseAmountForDiscount };
+  }
+
+  /**
+   * Private Helper: Lọc sản phẩm hợp lệ theo Category
+   */
+  async _getValidItemsForCoupon(cartItems, allowedCategoryIds) {
+    const cakeIds = cartItems.map(item => item.cake_id);
+    const cakes = await Cake.find({ _id: { $in: cakeIds } }).select('category_id').lean();
+    
+    const cakeCatMap = cakes.reduce((acc, c) => ({ ...acc, [c._id.toString()]: c.category_id?.toString() }), {});
+
+    return cartItems.filter(item => {
+      const catId = cakeCatMap[item.cake_id.toString()];
+      return allowedCategoryIds.some(cid => cid.toString() === catId);
+    });
   }
 
   /**
@@ -154,7 +101,7 @@ class CouponService {
       });
       
       if (existing) {
-        throw createError('Mã giảm giá đã tồn tại', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.DUPLICATE_ERROR);
+        throw ApiError.BAD_REQUEST('Mã giảm giá đã tồn tại');
       }
       data.code = normalizedCode;
     }

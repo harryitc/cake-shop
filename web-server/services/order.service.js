@@ -6,9 +6,9 @@ const User = require('../schemas/User.schema');
 const CouponService = require('./coupon.service');
 const LoyaltyService = require('./loyalty.service');
 const excelService = require('./excel.service');
-const { createError } = require('../utils/response.utils');
+const ApiError = require('../utils/error.factory');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../utils/email.utils');
-const { HTTP_STATUS, ERROR_CODES, ORDER_STATUS } = require('../config/constants');
+const { ORDER_STATUS } = require('../config/constants');
 
 const VALID_TRANSITIONS = {
   [ORDER_STATUS.PENDING]: [ORDER_STATUS.CONFIRMED, ORDER_STATUS.REJECTED],
@@ -17,170 +17,37 @@ const VALID_TRANSITIONS = {
   [ORDER_STATUS.REJECTED]: [],
 };
 
+/**
+ * [V6-3.1] Hàm chính tạo đơn hàng (Clean Flow)
+ */
 const createOrder = async (userId, address, couponCode = null, pointsToUse = 0) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const user = await User.findById(userId).session(session);
-    if (!user) {
-      throw createError('Người dùng không tồn tại', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
-    }
+    // 1. Kiểm tra User & Giỏ hàng & Tồn kho
+    const { user, cartItems, items, total_price } = await _validateAndPrepareCart(userId, session);
 
-    const cartItems = await CartItem.find({ user_id: userId })
-      .populate('cake_id')
-      .session(session);
+    // 2. Trừ tồn kho (Atomic)
+    await _updateInventory(items, session);
 
-    if (!cartItems || cartItems.length === 0) {
-      throw createError('Giỏ hàng trống', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
-    }
-
-    let total_price = 0;
-    const items = [];
-
-    // Kiểm tra tồn kho trước khi tính toán
-    for (const item of cartItems) {
-      if (!item.cake_id) {
-        throw createError('Một sản phẩm trong giỏ hàng không còn tồn tại', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
-      }
-
-      let price_at_buy = item.cake_id.price;
-      let variant_size = '';
-      let current_stock = item.cake_id.stock;
-
-      // Nếu có biến thể
-      if (item.variant_id) {
-        const variant = item.cake_id.variants.find(v => v._id.toString() === item.variant_id.toString());
-        if (!variant) {
-          throw createError(`Không tìm thấy biến thể cho sản phẩm "${item.cake_id.name}"`, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
-        }
-        price_at_buy = variant.price;
-        variant_size = variant.size;
-        current_stock = variant.stock;
-      }
-
-      if (current_stock < item.quantity) {
-        const productLabel = variant_size ? `"${item.cake_id.name} (${variant_size})"` : `"${item.cake_id.name}"`;
-        throw createError(`Sản phẩm ${productLabel} không đủ số lượng trong kho (còn lại: ${current_stock})`, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
-      }
-
-      total_price += price_at_buy * item.quantity;
-      items.push({
-        cake_id: item.cake_id._id,
-        quantity: item.quantity,
-        variant_id: item.variant_id || null,
-        variant_size: variant_size,
-        price_at_buy: price_at_buy,
-      });
-    }
-
-    // Trừ tồn kho
-    for (const item of items) {
-      if (item.variant_id) {
-        await Cake.updateOne(
-          { _id: item.cake_id, "variants._id": item.variant_id },
-          { $inc: { "variants.$.stock": -item.quantity } },
-          { session }
-        );
-      } else {
-        await Cake.findByIdAndUpdate(item.cake_id, { $inc: { stock: -item.quantity } }, { session });
-      }
-    }
-
-    // Xử lý Coupon
-    let discount_amount = 0;
-    let final_price = total_price;
-    let validatedCoupon = null;
-
-    if (couponCode) {
-      const couponResult = await CouponService.validateCoupon(couponCode, total_price, userId, items);
-      validatedCoupon = couponResult.coupon;
-      discount_amount = couponResult.discountAmount;
-      final_price = couponResult.finalPrice;
-
-      // Tăng số lần sử dụng mã
-      await CouponService.incrementUsedCount(couponCode, session);
-    }
-
-    // Xử lý dùng điểm (Points Redemption)
-    let points_discount_amount = 0;
-    let points_used = 0;
-    const loyaltyConfig = await LoyaltyService.getConfig();
-
-    if (pointsToUse > 0) {
-      if (user.loyalty_points < pointsToUse) {
-        throw createError('Số dư điểm không đủ', HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
-      }
-
-      const maxDiscountPercent = loyaltyConfig.max_point_discount_percentage / 100;
-      const pointToVndRatio = loyaltyConfig.point_to_vnd_ratio;
-
-      // Giới hạn dùng điểm
-      const maxPointsDiscount = Math.floor(final_price * maxDiscountPercent);
-      points_used = Math.min(pointsToUse, Math.floor(maxPointsDiscount / pointToVndRatio));
-      points_discount_amount = points_used * pointToVndRatio;
-
-      final_price -= points_discount_amount;
-
-      // Trừ điểm của người dùng
-      await LoyaltyService.addPoints(
-        userId,
-        -points_used,
-        `Dùng điểm cho đơn hàng #${userId}_${Date.now()}`,
-        null,
-        null,
-        session
-      );
-    }
-
-    // Tính toán số điểm sẽ tích lũy được (points_earned)
-    const earnRatio = loyaltyConfig.point_ratios[user.rank] || 0.01;
-    const points_earned = Math.floor(final_price * earnRatio);
-
-    const newOrders = await Order.create(
-      [
-        {
-          user_id: userId,
-          total_price,
-          coupon_code: couponCode || '',
-          discount_amount,
-          points_used,
-          points_discount_amount,
-          points_earned, // Lưu số điểm sẽ tích lũy được
-          final_price,
-          status: ORDER_STATUS.PENDING,
-          address,
-          items,
-        },
-      ],
-      { session }
+    // 3. Xử lý Coupon
+    const { validatedCoupon, discount_amount, priceAfterCoupon } = await _handleCoupon(
+      couponCode, total_price, userId, items, session
     );
 
-    const order = newOrders[0];
+    // 4. Xử lý Dùng điểm
+    const { points_used, points_discount_amount, final_price } = await _handlePoints(
+      user, pointsToUse, priceAfterCoupon, session
+    );
 
-    // Cập nhật lại lịch sử điểm với ID đơn hàng thực tế
-    if (points_used > 0) {
-      const PointHistory = require('../schemas/PointHistory.schema');
-      await PointHistory.findOneAndUpdate(
-        { user: userId, points_change: -points_used, order: null },
-        { order: order._id, reason: `Dùng điểm cho đơn hàng #${order._id}` },
-        { session }
-      );
-    }
-
-    await CartItem.deleteMany({ user_id: userId }).session(session);
+    // 5. Lưu đơn hàng & Dọn dẹp
+    const finalOrder = await _finalizeOrder(
+      userId, user, address, total_price, couponCode, discount_amount, 
+      points_used, points_discount_amount, final_price, items, session
+    );
 
     await session.commitTransaction();
-
-    // Trả về order đã được populate đầy đủ để frontend mapper hoạt động chính xác
-    const finalOrder = await Order.findById(order._id)
-      .populate('user_id', 'email full_name phone avatar_url')
-      .populate('items.cake_id', 'name price image_url slug');
-
-    if (finalOrder && finalOrder.user_id.email) {
-      sendOrderConfirmationEmail(finalOrder.user_id.email, finalOrder);
-    }
-
     return finalOrder;
   } catch (error) {
     await session.abortTransaction();
@@ -190,30 +57,161 @@ const createOrder = async (userId, address, couponCode = null, pointsToUse = 0) 
   }
 };
 
+/**
+ * Helper: Kiểm tra User, Giỏ hàng và Tồn kho
+ */
+const _validateAndPrepareCart = async (userId, session) => {
+  const user = await User.findById(userId).session(session);
+  if (!user) throw ApiError.NOT_FOUND('Người dùng không tồn tại');
+
+  const cartItems = await CartItem.find({ user_id: userId }).populate('cake_id').session(session);
+  if (!cartItems?.length) throw ApiError.BAD_REQUEST('Giỏ hàng trống');
+
+  let total_price = 0;
+  const items = [];
+
+  for (const item of cartItems) {
+    if (!item.cake_id) throw ApiError.BAD_REQUEST('Sản phẩm không còn tồn tại');
+
+    let price_at_buy = item.cake_id.price;
+    let variant_size = '';
+    let current_stock = item.cake_id.stock;
+
+    if (item.variant_id) {
+      const variant = item.cake_id.variants.find(v => v._id.toString() === item.variant_id.toString());
+      if (!variant) throw ApiError.BAD_REQUEST(`Không tìm thấy biến thể cho "${item.cake_id.name}"`);
+      price_at_buy = variant.price;
+      variant_size = variant.size;
+      current_stock = variant.stock;
+    }
+
+    if (current_stock < item.quantity) {
+      throw ApiError.BAD_REQUEST(`Sản phẩm "${item.cake_id.name}" không đủ số lượng`);
+    }
+
+    total_price += price_at_buy * item.quantity;
+    items.push({
+      cake_id: item.cake_id._id,
+      quantity: item.quantity,
+      variant_id: item.variant_id || null,
+      variant_size,
+      price_at_buy,
+    });
+  }
+
+  return { user, cartItems, items, total_price };
+};
+
+/**
+ * Helper: Cập nhật tồn kho (Trừ kho)
+ */
+const _updateInventory = async (items, session) => {
+  for (const item of items) {
+    if (item.variant_id) {
+      await Cake.updateOne(
+        { _id: item.cake_id, "variants._id": item.variant_id },
+        { $inc: { "variants.$.stock": -item.quantity } },
+        { session }
+      );
+    } else {
+      await Cake.findByIdAndUpdate(item.cake_id, { $inc: { stock: -item.quantity } }, { session });
+    }
+  }
+};
+
+/**
+ * Helper: Xử lý logic Coupon
+ */
+const _handleCoupon = async (couponCode, total_price, userId, items, session) => {
+  if (!couponCode) return { validatedCoupon: null, discount_amount: 0, priceAfterCoupon: total_price };
+
+  const couponResult = await CouponService.validateCoupon(couponCode, total_price, userId, items);
+  await CouponService.incrementUsedCount(couponCode, session);
+
+  return {
+    validatedCoupon: couponResult.coupon,
+    discount_amount: couponResult.discountAmount,
+    priceAfterCoupon: couponResult.finalPrice
+  };
+};
+
+/**
+ * Helper: Xử lý dùng điểm thưởng
+ */
+const _handlePoints = async (user, pointsToUse, priceAfterCoupon, session) => {
+  if (pointsToUse <= 0) return { points_used: 0, points_discount_amount: 0, final_price: priceAfterCoupon };
+
+  if (user.loyalty_points < pointsToUse) throw ApiError.BAD_REQUEST('Số dư điểm không đủ');
+
+  const config = await LoyaltyService.getConfig();
+  const maxDiscountVnd = Math.floor(priceAfterCoupon * (config.max_point_discount_percentage / 100));
+  
+  const points_used = Math.min(pointsToUse, Math.floor(maxDiscountVnd / config.point_to_vnd_ratio));
+  const points_discount_amount = points_used * config.point_to_vnd_ratio;
+
+  await LoyaltyService.addPoints(user._id, -points_used, 'Dùng điểm cho đơn hàng', null, null, session);
+
+  return { points_used, points_discount_amount, final_price: priceAfterCoupon - points_discount_amount };
+};
+
+/**
+ * Helper: Tạo đơn hàng, xóa giỏ và gửi email
+ */
+const _finalizeOrder = async (userId, user, address, total_price, couponCode, discount_amount, points_used, points_discount_amount, final_price, items, session) => {
+  const config = await LoyaltyService.getConfig();
+  const points_earned = Math.floor(final_price * (config.point_ratios[user.rank] || 0.01));
+
+  const [order] = await Order.create([{
+    user_id: userId, total_price, coupon_code: couponCode || '', 
+    discount_amount, points_used, points_discount_amount, points_earned,
+    final_price, status: ORDER_STATUS.PENDING, address, items,
+  }], { session });
+
+  // Update PointHistory with real order ID
+  if (points_used > 0) {
+    const PointHistory = require('../schemas/PointHistory.schema');
+    await PointHistory.findOneAndUpdate(
+      { user: userId, points_change: -points_used, order: null },
+      { order: order._id, reason: `Dùng điểm cho đơn hàng #${order._id}` },
+      { session }
+    );
+  }
+
+  await CartItem.deleteMany({ user_id: userId }).session(session);
+
+  const finalOrder = await Order.findById(order._id)
+    .populate('user_id', 'email full_name phone avatar_url')
+    .populate('items.cake_id', 'name price image_url slug');
+
+  if (finalOrder?.user_id?.email) sendOrderConfirmationEmail(finalOrder.user_id.email, finalOrder);
+
+  return finalOrder;
+};
+
+/**
+ * [V6-3.2] Lấy danh sách đơn hàng (Standard Logic)
+ */
 const getOrders = async (userId, role) => {
-  let query = {};
-  // Nếu là user bình thường, chỉ lấy đơn của họ
-  // Nếu là admin và có truyền userId, lấy đơn của user đó. Nếu không truyền, lấy tất cả.
-  if (role !== 'admin') {
-    query.user_id = userId;
-  } else if (userId) {
+  // 1. Xây dựng Query Object minh bạch
+  const query = {};
+  if (role !== 'admin' || userId) {
     query.user_id = userId;
   }
 
+  // 2. Fetch dữ liệu với lean()
   const orders = await Order.find(query)
     .populate('user_id', 'email full_name phone avatar_url')
     .populate('items.cake_id', 'name price image_url slug')
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .lean();
 
-  const formattedOrders = orders.map((order) => {
-    const orderObj = order.toObject();
-    orderObj.items_count = order.items.length;
-    return orderObj;
-  });
+  // 3. Transform dữ liệu bằng JS
+  const items = orders.map((order) => ({
+    ...order,
+    items_count: order.items.length
+  }));
 
-  return {
-    items: formattedOrders,
-  };
+  return { items };
 };
 
 const getOrderById = async (orderId, userId, role) => {
@@ -221,11 +219,11 @@ const getOrderById = async (orderId, userId, role) => {
     .populate('user_id', 'email full_name phone avatar_url')
     .populate('items.cake_id', 'name price image_url slug');
   if (!order) {
-    throw createError('Đơn hàng không tồn tại', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    throw ApiError.NOT_FOUND('Đơn hàng không tồn tại');
   }
 
   if (role !== 'admin' && order.user_id._id.toString() !== userId) {
-    throw createError('Đơn hàng không tồn tại', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    throw ApiError.NOT_FOUND('Đơn hàng không tồn tại');
   }
 
   return order;
@@ -238,12 +236,12 @@ const updateStatus = async (orderId, newStatus) => {
   try {
     const order = await Order.findById(orderId).session(session);
     if (!order) {
-      throw createError('Đơn hàng không tồn tại', HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+      throw ApiError.NOT_FOUND('Đơn hàng không tồn tại');
     }
 
     const allowedTransitions = VALID_TRANSITIONS[order.status];
     if (!allowedTransitions || !allowedTransitions.includes(newStatus)) {
-      throw createError(`Không thể chuyển trạng thái từ ${order.status} sang ${newStatus}`, HTTP_STATUS.BAD_REQUEST, ERROR_CODES.BAD_REQUEST);
+      throw ApiError.BAD_REQUEST(`Không thể chuyển trạng thái từ ${order.status} sang ${newStatus}`);
     }
 
     // Hoàn kho nếu hủy đơn

@@ -47,74 +47,83 @@ const getOrderStatusDistribution = async () => {
 /**
  * Top 5 sản phẩm bán chạy nhất
  */
+/**
+ * Top 5 sản phẩm bán chạy nhất (Refactored: JS Processing)
+ */
 const getBestSellers = async () => {
-  return await Order.aggregate([
-    { $match: { status: 'DONE' } },
-    { $unwind: '$items' },
-    {
-      $group: {
-        _id: '$items.cake_id',
-        soldQuantity: { $sum: '$items.quantity' },
-        revenue: { $sum: { $multiply: ['$items.quantity', '$items.price_at_buy'] } },
-      },
-    },
-    { $sort: { soldQuantity: -1 } },
-    { $limit: 5 },
-    {
-      $lookup: {
-        from: 'cakes',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'cakeInfo',
-      },
-    },
-    { $unwind: '$cakeInfo' },
-    {
-      $project: {
-        name: '$cakeInfo.name',
-        image_url: '$cakeInfo.image_url',
-        price: '$cakeInfo.price',
-        soldQuantity: 1,
-        revenue: 1,
-      },
-    },
-  ]);
+  // 1. Lấy đơn hàng hoàn thành (Simple Query)
+  const orders = await Order.find({ status: 'DONE' }).select('items').lean();
+
+  // 2. Tính toán số lượng và doanh thu bằng JS
+  const salesMap = new Map();
+  orders.forEach(order => {
+    order.items.forEach(item => {
+      const idStr = item.cake_id.toString();
+      const existing = salesMap.get(idStr) || { soldQuantity: 0, revenue: 0 };
+      salesMap.set(idStr, {
+        soldQuantity: existing.soldQuantity + item.quantity,
+        revenue: existing.revenue + (item.quantity * item.price_at_buy)
+      });
+    });
+  });
+
+  // 3. Sắp xếp và lấy Top 5 IDs
+  const topSales = [...salesMap.entries()]
+    .sort((a, b) => b[1].soldQuantity - a[1].soldQuantity)
+    .slice(0, 5);
+
+  if (topSales.length === 0) return [];
+
+  // 4. Lấy thông tin chi tiết Bánh (Simple Query)
+  const cakeIds = topSales.map(t => t[0]);
+  const cakes = await Cake.find({ _id: { $in: cakeIds } }).select('name image_url price').lean();
+
+  // 5. Trộn dữ liệu bảo toàn thứ tự sắp xếp
+  return topSales.map(([id, stats]) => {
+    const cake = cakes.find(c => c._id.toString() === id);
+    return {
+      name: cake ? cake.name : 'Unknown',
+      image_url: cake ? cake.image_url : '',
+      price: cake ? cake.price : 0,
+      soldQuantity: stats.soldQuantity,
+      revenue: stats.revenue
+    };
+  });
 };
 
 /**
  * Thống kê doanh thu theo danh mục (chỉ tính đơn DONE)
  */
+/**
+ * Thống kê doanh thu theo danh mục (Refactored: JS Processing)
+ */
 const getCategoryDistribution = async () => {
-  return await Order.aggregate([
-    { $match: { status: 'DONE' } },
-    { $unwind: '$items' },
-    {
-      $lookup: {
-        from: 'cakes',
-        localField: 'items.cake_id',
-        foreignField: '_id',
-        as: 'cake',
-      },
-    },
-    { $unwind: '$cake' },
-    {
-      $lookup: {
-        from: 'categories',
-        localField: 'cake.category',
-        foreignField: '_id',
-        as: 'category',
-      },
-    },
-    { $unwind: '$category' },
-    {
-      $group: {
-        _id: '$category.name',
-        value: { $sum: { $multiply: ['$items.quantity', '$items.price_at_buy'] } },
-      },
-    },
-    { $project: { name: '$_id', value: 1, _id: 0 } },
-    { $sort: { value: -1 } },
+  const [orders, cakes] = await Promise.all([
+    Order.find({ status: 'DONE' }).select('items').lean(),
+    Cake.find().select('category').populate('category', 'name').lean()
   ]);
+
+  // Tạo Map CakeID -> CategoryName
+  const cakeCategoryMap = new Map();
+  cakes.forEach(cake => {
+    if (cake.category) {
+      cakeCategoryMap.set(cake._id.toString(), cake.category.name);
+    }
+  });
+
+  // Tính doanh thu theo từng Category Name
+  const distributionMap = {};
+  orders.forEach(order => {
+    order.items.forEach(item => {
+      const catName = cakeCategoryMap.get(item.cake_id.toString()) || 'Khác';
+      distributionMap[catName] = (distributionMap[catName] || 0) + (item.quantity * item.price_at_buy);
+    });
+  });
+
+  // Format cho Recharts (Frontend)
+  return Object.keys(distributionMap)
+    .map(name => ({ name, value: distributionMap[name] }))
+    .sort((a, b) => b.value - a.value);
 };
 
 /**
@@ -131,27 +140,38 @@ const getRecentOrders = async () => {
 /**
  * Biểu đồ doanh thu 30 ngày gần nhất
  */
+/**
+ * Biểu đồ doanh thu 30 ngày gần nhất (Refactored: JS Processing)
+ */
 const getRevenueTimeline = async () => {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  return await Order.aggregate([
-    {
-      $match: {
-        status: 'DONE',
-        createdAt: { $gte: thirtyDaysAgo },
-      },
-    },
-    {
-      $group: {
-        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-        revenue: { $sum: '$total_price' },
-        orderCount: { $sum: 1 },
-      },
-    },
-    { $sort: { _id: 1 } },
-    { $project: { date: '$_id', revenue: 1, orderCount: 1, _id: 0 } },
-  ]);
+  const orders = await Order.find({
+    status: 'DONE',
+    createdAt: { $gte: thirtyDaysAgo },
+  }).select('total_price createdAt').lean();
+
+  const timelineMap = {};
+  
+  // Khởi tạo 30 ngày gần đây để đảm bảo biểu đồ không bị "đứt đoạn"
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    timelineMap[dateStr] = { date: dateStr, revenue: 0, orderCount: 0 };
+  }
+
+  // Đổ dữ liệu thật vào
+  orders.forEach(order => {
+    const dateStr = order.createdAt.toISOString().split('T')[0];
+    if (timelineMap[dateStr]) {
+      timelineMap[dateStr].revenue += (order.total_price || 0);
+      timelineMap[dateStr].orderCount += 1;
+    }
+  });
+
+  return Object.values(timelineMap).sort((a, b) => a.date.localeCompare(b.date));
 };
 
 module.exports = {
