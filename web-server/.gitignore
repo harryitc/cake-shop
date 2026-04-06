@@ -1,3 +1,5 @@
 public/uploads
 .env*
 node_modules
+
+coverage
