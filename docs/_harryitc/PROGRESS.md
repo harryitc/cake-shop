@@ -116,7 +116,58 @@ updated_at: 2026-03-28
 | 9 | V3 Expansion | ✅ DONE |
 | 10 | Import/Export System | ✅ DONE |
 | 11 | Loyalty Program | ✅ DONE |
-| 12 | Backend Refactor (Clean Query) | [/] IN PROGRESS |
+| 12 | Backend Refactor (Clean Query) | ✅ DONE |
+| 13 | Backend Restructuring (Route-Centric) | [/] IN PROGRESS |
+
+---
+
+## Phase 13 — 🛠️ Backend Restructuring (Route-Centric)
+> **Spec:** [`epic_12_backend_restructuring/`](./4_epic_and_stories/epic_12_backend_restructuring/OVERVIEW.md)
+
+- [x] **[V7-1] Module Pilot: Category**
+    - [x] Tạo `validations/category.validation.js`
+    - [x] Chuyển logic vào `routes/category.routes.js`
+    - [ ] Cleanup Controller/Service (Bỏ qua theo yêu cầu)
+- [x] **[V7-2] Module Auth**
+    - [x] Tạo `validations/auth.validation.js`
+    - [x] Chuyển logic vào `routes/auth.routes.js`
+- [x] **[V7-3] Module Cake**
+    - [x] Tạo `validations/cake.validation.js`
+    - [x] Chuyển logic vào `routes/cake.routes.js`
+- [x] **[V7-4] Module Cart & Wishlist**
+    - [x] Tạo validations
+    - [x] Chuyển logic vào routes
+- [x] **[V7-5] Module Order & Checkout**
+    - [x] Tạo validations
+    - [x] Chuyển logic vào routes
+- [x] **[V7-6] Module Coupon & Review**
+    - [x] Tạo validations
+    - [x] Chuyển logic vào routes
+- [x] **[V7-7] Module Loyalty Engine**
+    - [x] Tạo validations
+    - [x] Chuyển logic vào routes
+- [x] **[V7-8] Module Analytics & Import**
+    - [x] Chuyển logic vào routes
+- [x] **[V7-9] Module Upload**
+    - [x] Chuyển logic vào routes
+
+---
+
+## 📊 Tổng tiến độ Tái cấu trúc (Phase 13)
+
+| Module | Status |
+|--------|--------|
+| Category | ✅ DONE |
+| Auth | ✅ DONE |
+| Cake | ✅ DONE |
+| Cart & Wishlist | ✅ DONE |
+| Order & Checkout | ✅ DONE |
+| Coupon & Review | ✅ DONE |
+| Loyalty Engine | ✅ DONE |
+| Analytics & Import | ✅ DONE |
+| Upload | ✅ DONE |
+
+**Kết quả:** Hệ thống đã chuyển đổi hoàn toàn sang kiến trúc Route-Centric. Logic tập trung, dễ bảo trì và bám sát dự án tham khảo.
 
 ---
 
